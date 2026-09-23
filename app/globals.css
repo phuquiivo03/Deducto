@@ -1,45 +1,58 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Fraunces:wght@500;600&display=swap");
 @import "tailwindcss";
 @config "../tailwind.config.ts";
+
 :root {
-  --background: #f6f1e7;
-  --foreground: #2b2925;
+  --bg: #f5f0e4;
+
+  --card: #ffffff;
+
+  --border: #e7dfcc;
+
+  --text: #2c2a24;
+
+  --soft: #6f6858;
+
+  --gold: #b08328;
+
+  --gold-bg: #f4e7c6;
+
+  --green: #5e8a62;
+
+  --green-bg: #e4efe1;
+
+  --red: #bd5f51;
+
+  --red-bg: #f5e2dd;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   margin: 0;
-  font-family: Manrope, sans-serif;
+
+  background: var(--bg);
+
+  color: var(--text);
+
+  font-family: Inter, sans-serif;
+
+  overflow: hidden;
 }
 
-html {
-  background: var(--background);
-}
-
-.card {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  padding: 20px;
-  margin-bottom: 16px;
+h1,
+h2,
+h3 {
+  font-family: Outfit, sans-serif;
 }
 
 button {
-  cursor: pointer;
+  font-family: inherit;
 }

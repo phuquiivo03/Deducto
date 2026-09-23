@@ -1,21 +1,9 @@
-"use client";
+import DetectiveBoard from "@/components/detective-board/DetectiveBoard";
 
-import { useState } from "react";
-
-import Container from "@/components/layout/Container";
-import IntroCard from "@/components/Game/IntroCard";
-import InvestigationBoard from "@/components/Game/InvestigationBoard";
-
-export default function Page() {
-  const [started, setStarted] = useState(false);
-
+export default function Home() {
   return (
-    <Container>
-      {started ? (
-        <InvestigationBoard />
-      ) : (
-        <IntroCard start={() => setStarted(true)} />
-      )}
-    </Container>
+    <main className="h-screen overflow-hidden">
+      <DetectiveBoard />
+    </main>
   );
 }
