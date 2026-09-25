@@ -57,7 +57,7 @@ leading-tight
           className="
 font-semibold
 text-[16px]
-font-[Outfit]
+font-display
 "
         >
           The Ashcombe Case

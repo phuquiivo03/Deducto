@@ -13,11 +13,23 @@ import MobileNav from "./MobileNav";
 import {
   entities as initialEntities,
   relationships as initialRelationships,
-  clues,
+  clues as initialClues,
   initialNotes,
 } from "@/data/detective-board";
 
-import { Entity, Note, Relationship } from "@/types/detective";
+import {
+  findRelationshipByPair,
+  pairRelationshipId,
+  canonicalPair,
+} from "@/lib/relationship-pairs";
+
+import {
+  Clue,
+  Entity,
+  Note,
+  Relationship,
+  RelationshipStatus,
+} from "@/types/detective";
 
 export default function DetectiveBoard() {
   const [entities, setEntities] =
@@ -26,15 +38,17 @@ export default function DetectiveBoard() {
   const [relationships, setRelationships] =
     useState<Relationship[]>(initialRelationships);
 
+  const [clues, setClues] = useState<Clue[]>(initialClues);
+
   const [notes, setNotes] = useState<Note[]>(initialNotes);
 
   const [selected, setSelected] = useState<string | null>(null);
 
   const [view, setView] = useState<"board" | "grid">("board");
-
   const updateRelationship = (
     id: string,
-    status: "confirmed" | "impossible",
+    status: RelationshipStatus,
+    label?: string,
   ) => {
     setRelationships((prev) =>
       prev.map((r) =>
@@ -42,10 +56,49 @@ export default function DetectiveBoard() {
           ? {
               ...r,
               status,
+              ...(label !== undefined ? { label } : {}),
             }
           : r,
       ),
     );
+  };
+
+  const removeRelationship = (id: string) => {
+    setRelationships((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const setPairStatus = (
+    idA: string,
+    idB: string,
+    status: RelationshipStatus,
+    label?: string,
+  ) => {
+    setRelationships((prev) => {
+      const existing = findRelationshipByPair(prev, idA, idB);
+      if (existing) {
+        return prev.map((r) =>
+          r.id === existing.id
+            ? {
+                ...r,
+                status,
+                ...(label !== undefined ? { label } : {}),
+              }
+            : r,
+        );
+      }
+      const [a, b] = canonicalPair(idA, idB);
+      return [
+        ...prev,
+        {
+          id: pairRelationshipId(idA, idB),
+          a,
+          b,
+          label: label ?? "?",
+          status,
+          reason: "",
+        },
+      ];
+    });
   };
 
   return (
@@ -66,7 +119,21 @@ flex-1
 min-h-0
 "
       >
-        <CluePanel clues={clues} onSelect={(id) => setSelected(id)} />
+        <CluePanel
+          clues={clues}
+          onSelect={(id) => {
+            const clue = clues.find((c) => c.id === id);
+            const nextStatus =
+              clue?.status === "analyzed"
+                ? "used"
+                : clue?.status === "used"
+                  ? "new"
+                  : "analyzed";
+            setClues((prev) =>
+              prev.map((c) => (c.id === id ? { ...c, status: nextStatus } : c)),
+            );
+          }}
+        />
 
         <main
           className="
@@ -83,7 +150,11 @@ flex-col
 min-w-0
 "
           >
-            <BoardToolbar view={view} setView={setView} />
+            <BoardToolbar
+              view={view}
+              setView={setView}
+              entities={entities}
+            />
 
             {view === "board" && (
               <BoardCanvas
@@ -94,6 +165,9 @@ min-w-0
                 setSelected={setSelected}
                 notes={notes}
                 setNotes={setNotes}
+                onSetPairStatus={setPairStatus}
+                onUpdateRelationship={updateRelationship}
+                onRemoveRelationship={removeRelationship}
               />
             )}
 
@@ -105,7 +179,11 @@ overflow-auto
 p-6
 "
               >
-                <GridView entities={entities} />
+                <GridView
+                  entities={entities}
+                  relationships={relationships}
+                  onSetPairStatus={setPairStatus}
+                />
               </div>
             )}
           </div>

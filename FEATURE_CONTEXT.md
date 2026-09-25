@@ -374,11 +374,22 @@ impossible
 
 ### GridView.tsx
 
-Alternative entity display.
+Alternative **cross-type relationship grids** (no full N×N — avoids duplicate pairs and same-type cells).
 
-Does not modify data.
+Input:
 
-Only visual representation.
+```ts
+entities;
+relationships;
+onSetPairStatus(idA, idB, status);
+```
+
+Behavior:
+
+- Three blocks: Suspects×Weapons, Suspects×Locations, Weapons×Locations.
+- Each cell is one unique pair; no suspect×suspect, weapon×weapon, or mirrored A×B / B×A cells.
+- Status: `confirmed` | `impossible` | `unknown`; click cycles unknown → confirmed → impossible → unknown.
+- Upserts into `relationships[]` via parent callback (same source of truth as board lines and Inspector).
 
 # 6. Data Flow
 
@@ -581,15 +592,3 @@ UI
 ```
 
 Any new interaction should follow React data flow.
-
-```
-
-```
-
-```
-
-```
-
-```
-
-```

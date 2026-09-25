@@ -1,6 +1,7 @@
 "use client";
 
 import { Note } from "@/types/detective";
+import { useEffect, useRef } from "react";
 
 interface Props {
   note: Note;
@@ -21,6 +22,15 @@ export default function StickyNote({
 
   onChange,
 }: Props) {
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+
+    if (editorRef.current.innerText !== note.text) {
+      editorRef.current.innerText = note.text;
+    }
+  }, [note.text]);
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     const startX = e.clientX;
 
@@ -70,6 +80,7 @@ export default function StickyNote({
         transform: `rotate(${note.rot}deg)`,
       }}
       className="
+      card
 absolute
 w-[150px]
 min-h-[96px]
@@ -116,17 +127,17 @@ hover:text-red-500
       </button>
 
       <div
+        ref={editorRef}
         contentEditable
         suppressContentEditableWarning
         onPointerDown={(e) => e.stopPropagation()}
         onInput={(e) => onChange(e.currentTarget.innerText)}
         className="
+        card
 outline-none
 min-h-[70px]
 "
-      >
-        {note.text}
-      </div>
+      ></div>
     </div>
   );
 }

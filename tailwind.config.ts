@@ -2,9 +2,8 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
-    "./src/pages/**/*.{ts,tsx}",
-    "./src/components/**/*.{ts,tsx}",
-    "./src/app/**/*.{ts,tsx}",
+    './app/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
   ],
 
   theme: {
@@ -28,8 +27,9 @@ const config: Config = {
       },
 
       fontFamily: {
-        sans: ["Manrope", "sans-serif"],
-        serif: ["Fraunces", "serif"],
+        sans: ['var(--font-playwrite-vn)', 'cursive', 'sans-serif'],
+        display: ['var(--font-momo-trust-display)', 'sans-serif'],
+        serif: ['var(--font-momo-trust-display)', 'sans-serif'],
       },
 
       borderRadius: {

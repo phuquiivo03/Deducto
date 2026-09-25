@@ -1,6 +1,6 @@
 "use client";
 
-import { Entity, Relationship } from "@/types/detective";
+import { Entity, Relationship, RelationshipStatus } from "@/types/detective";
 
 interface Props {
   entity?: Entity;
@@ -9,10 +9,7 @@ interface Props {
 
   entities: Record<string, Entity>;
 
-  onUpdateRelationship: (
-    id: string,
-    status: "confirmed" | "impossible",
-  ) => void;
+  onUpdateRelationship: (id: string, status: RelationshipStatus) => void;
 }
 
 export default function InspectorPanel({
@@ -38,7 +35,7 @@ p-5
         <h3
           className="
 font-semibold
-font-[Outfit]
+font-display
 "
         >
           Inspector
@@ -92,7 +89,7 @@ font-bold
           className="
 text-xl
 font-semibold
-font-[Outfit]
+font-display
 "
         >
           {entity.name}

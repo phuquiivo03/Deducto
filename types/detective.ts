@@ -1,6 +1,10 @@
 export type EntityType = "suspect" | "weapon" | "location";
 
-export type RelationshipStatus = "confirmed" | "impossible" | "unknown";
+export type RelationshipStatus =
+  | "confirmed"
+  | "impossible"
+  | "unknown"
+  | "empty";
 
 export interface Fact {
   ok: boolean;

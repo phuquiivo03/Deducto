@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Fraunces:wght@500;600&display=swap");
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
@@ -37,22 +36,26 @@ body {
 
 body {
   margin: 0;
-
   background: var(--bg);
 
   color: var(--text);
 
-  font-family: Inter, sans-serif;
-
   overflow: hidden;
+}
+
+.card span,
+.card p,
+.card div.card {
+  font-family: "Permanent Marker", cursive;
 }
 
 h1,
 h2,
 h3 {
-  font-family: Outfit, sans-serif;
+  font-family: var(--font-momo-trust-display), sans-serif;
 }
 
 button {
   font-family: inherit;
+  cursor: pointer;
 }

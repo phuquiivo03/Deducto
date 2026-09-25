@@ -13,6 +13,10 @@ export const entities: Record<string, Entity> = {
     facts: [
       {
         ok: true,
+        text: "An art dealer who was invited to the dinner.",
+      },
+      {
+        ok: true,
         text: "Right-handed",
       },
       {
@@ -183,132 +187,14 @@ export const entities: Record<string, Entity> = {
   },
 };
 
-export const relationships: Relationship[] = [
-  {
-    id: "r1",
-    a: "violet",
-    b: "dagger",
-
-    label: "HAS WEAPON",
-
-    status: "confirmed",
-
-    reason:
-      "Clue #2 places Violet at the scene, and Clue #1 found the dagger nearby.",
-  },
-
-  {
-    id: "r2",
-
-    a: "dagger",
-    b: "garden",
-
-    label: "FOUND AT",
-
-    status: "confirmed",
-
-    reason:
-      "The Crystal Dagger was found near the garden fountain, still damp.",
-  },
-
-  {
-    id: "r3",
-
-    a: "violet",
-    b: "garden",
-
-    label: "WAS AT",
-
-    status: "confirmed",
-
-    reason: "Violet was connected to the garden location.",
-  },
-
-  {
-    id: "r4",
-
-    a: "grant",
-    b: "conservatory",
-
-    label: "AVOIDS",
-
-    status: "impossible",
-
-    reason: "Professor Grant avoids enclosed spaces.",
-  },
-
-  {
-    id: "r5",
-
-    a: "grant",
-    b: "candlestick",
-
-    label: "?",
-
-    status: "unknown",
-
-    reason: "No clue yet connects Grant to the candlestick.",
-  },
-
-  {
-    id: "r6",
-
-    a: "chen",
-    b: "library",
-
-    label: "WAS AT",
-
-    status: "confirmed",
-
-    reason: "A witness places Mr. Chen in the library until midnight.",
-  },
-
-  {
-    id: "r7",
-
-    a: "chen",
-    b: "poison",
-
-    label: "?",
-
-    status: "unknown",
-
-    reason: "Chen had kitchen access near where the vial was stored.",
-  },
-
-  {
-    id: "r8",
-
-    a: "violet",
-    b: "poison",
-
-    label: "X",
-
-    status: "impossible",
-
-    reason: "Violet is already confirmed with the Crystal Dagger.",
-  },
-
-  {
-    id: "r9",
-
-    a: "chen",
-    b: "candlestick",
-
-    label: "?",
-
-    status: "unknown",
-
-    reason: "No clue yet connects Chen to the candlestick.",
-  },
-];
+export const relationships: Relationship[] = [];
 
 export const clues: Clue[] = [
   {
     id: 1,
     status: "analyzed",
     text: "The Crystal Dagger was found near the garden fountain, still damp.",
-    entities: ["dagger", "garden"],
+    entities: [],
   },
 
   {
