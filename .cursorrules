@@ -201,3 +201,5 @@ This comprehensive guide outlines best practices, conventions, and standards for
     - Use proper links
     - Use proper headings
     - Use proper lists
+
+Always update to FEATURE_CONTEXT.md whenever add or update some feature

@@ -1,7 +1,33 @@
 export type GameLevel = "easy" | "medium" | "hard" | string;
-export type RelationshipStatus = "confirmed" | "impossible" | "unknown";
+export type RelationshipStatus =
+  | "confirmed"
+  | "impossible"
+  | "unknown"
+  | "empty";
 export type Handedness = "LEFT" | "RIGHT";
+export type ClueType = "ATTRIBUTE" | "RELATION" | "LOCATION" | "EXCLUSION";
 
+export type ClueRelation =
+  | "EQUAL"
+  | "NOT_EQUAL"
+  | "REQUIRED"
+  | "AT"
+  | "NOT_AT"
+  | "FOUND_AT"
+  | "NOT_FOUND_AT";
+
+export type ClueAttribute =
+  | "handedness"
+  | "hairColor"
+  | "height"
+  | "birthday"
+  | "weight"
+  | "material"
+  | "type"
+  | "weapon"
+  | "location"
+  | "motive"
+  | "found_at";
 export interface ILocationAttributes {
   type?: string;
   characteristic?: string;
@@ -60,24 +86,24 @@ export interface IMotive {
 
 export interface IClue {
   id: string;
-  type: string;
-  attribute: string;
+  type: ClueType;
+  attribute: ClueAttribute;
   value: string;
-  relation: string;
+  relation: ClueRelation;
   location_id?: string;
   suspect_id?: string;
   weapon_id?: string;
 }
 
 export interface IResultAnswer {
-  murder: ISuspect;
-  weapon: IWeapon;
-  motive: IMotive;
-  location: Location;
+  murder_id: string;
+  weapon_id: string;
+  motive_id: string;
+  location_id: string;
 }
 
 export interface IResult {
-  id: string;
+  id?: string;
   game_id: string;
   anwser: IResultAnswer;
 }
@@ -94,7 +120,7 @@ export interface IGameMetadata {
 export interface IGame {
   id: string;
   creator: string;
-  game_metadata: string | IGameMetadata; // ID tham chiếu đến game_metadata hoặc object được populate
+  gameMetadata: string | IGameMetadata; // ID tham chiếu đến game_metadata hoặc object được populate
   title: string;
   description: string;
   banner: string;
@@ -120,4 +146,9 @@ export interface IRelationship {
   status: RelationshipStatus;
 
   reason: string;
+}
+
+export interface IResultResponse {
+  success: boolean;
+  message?: string;
 }

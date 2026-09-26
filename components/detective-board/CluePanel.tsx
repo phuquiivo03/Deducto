@@ -3,7 +3,7 @@ import { Clue } from "@/types/detective";
 interface Props {
   clues: Clue[];
 
-  onSelect: (id: number) => void;
+  onSelect: (id: string) => void;
 }
 
 export default function CluePanel({ clues, onSelect }: Props) {
@@ -53,7 +53,7 @@ pb-5
 space-y-2
 "
       >
-        {clues.map((clue) => (
+        {clues.map((clue, index) => (
           <button
             key={clue.id}
             onClick={() => onSelect(clue.id)}
@@ -84,7 +84,7 @@ font-semibold
 text-[#B08328]
 "
               >
-                CLUE #{String(clue.id).padStart(2, "0")}
+                CLUE #{index + 1}
               </span>
 
               <span

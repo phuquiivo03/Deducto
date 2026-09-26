@@ -1,0 +1,156 @@
+generator client {
+	provider = "prisma-client"
+	output   = "../generated/prisma"
+}
+
+datasource db {
+	provider = "postgresql"
+}
+
+enum ClueType {
+	ATTRIBUTE
+	RELATION
+	LOCATION
+	EXCLUSION
+}
+
+enum ClueRelation {
+	EQUAL
+	NOT_EQUAL
+	REQUIRED
+	AT
+	NOT_AT
+	FOUND_AT
+	NOT_FOUND_AT
+}
+
+enum ClueAttribute {
+	handedness
+	hairColor
+	height
+	birthday
+	weight
+	material
+	type
+	weapon
+	location
+	motive
+	found_at
+}
+
+model GameMetadata {
+	id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	suspects  Suspect[]
+	locations Location[]
+	weapons   Weapon[]
+	motives   Motive[]
+	clues     Clue[]
+	game      Game?
+
+	@@map("game_metadata")
+}
+
+model Game {
+	id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	creator        String
+	title          String
+	description    String
+	banner         String
+	level          String
+	createdAt      DateTime     @default(now()) @map("created_at")
+	gameMetadataId String       @unique @map("game_metadata_id") @db.Uuid
+	gameMetadata   GameMetadata @relation(fields: [gameMetadataId], references: [id], onDelete: Cascade)
+	result         Result?
+
+	@@map("games")
+}
+
+model Suspect {
+	id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	gameMetadataId String       @map("game_metadata_id") @db.Uuid
+	name           String
+	avatar         String?
+	age            Int?
+	gender         String?
+	description    String?
+	attributes     Json?
+	gameMetadata   GameMetadata @relation(fields: [gameMetadataId], references: [id], onDelete: Cascade)
+	clues          Clue[]       @relation("ClueSuspect")
+	murderResults  Result[]     @relation("ResultMurder")
+
+	@@map("suspects")
+}
+
+model Location {
+	id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	gameMetadataId  String       @map("game_metadata_id") @db.Uuid
+	name            String
+	description     String?
+	icon            String
+	attributes      Json?
+	gameMetadata    GameMetadata @relation(fields: [gameMetadataId], references: [id], onDelete: Cascade)
+	clues           Clue[]       @relation("ClueLocation")
+	locationResults Result[]     @relation("ResultLocation")
+
+	@@map("locations")
+}
+
+model Weapon {
+	id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	gameMetadataId String       @map("game_metadata_id") @db.Uuid
+	name           String
+	description    String?
+	icon           String
+	attributes     Json?
+	gameMetadata   GameMetadata @relation(fields: [gameMetadataId], references: [id], onDelete: Cascade)
+	clues          Clue[]       @relation("ClueWeapon")
+	weaponResults  Result[]     @relation("ResultWeapon")
+
+	@@map("weapons")
+}
+
+model Motive {
+	id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	gameMetadataId String       @map("game_metadata_id") @db.Uuid
+	name           String
+	description    String?
+	icon           String
+	gameMetadata   GameMetadata @relation(fields: [gameMetadataId], references: [id], onDelete: Cascade)
+	motiveResults  Result[]     @relation("ResultMotive")
+
+	@@map("motives")
+}
+
+model Clue {
+	id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	gameMetadataId String        @map("game_metadata_id") @db.Uuid
+	type           ClueType
+	attribute      ClueAttribute
+	value          String
+	relation       ClueRelation
+	suspectId      String?       @map("suspect_id") @db.Uuid
+	locationId     String?       @map("location_id") @db.Uuid
+	weaponId       String?       @map("weapon_id") @db.Uuid
+	gameMetadata   GameMetadata  @relation(fields: [gameMetadataId], references: [id], onDelete: Cascade)
+	suspect        Suspect?      @relation("ClueSuspect", fields: [suspectId], references: [id], onDelete: SetNull)
+	location       Location?     @relation("ClueLocation", fields: [locationId], references: [id], onDelete: SetNull)
+	weapon         Weapon?       @relation("ClueWeapon", fields: [weaponId], references: [id], onDelete: SetNull)
+
+	@@map("clues")
+}
+
+model Result {
+	id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	gameId     String   @unique @map("game_id") @db.Uuid
+	murderId   String   @map("murder_id") @db.Uuid
+	weaponId   String   @map("weapon_id") @db.Uuid
+	motiveId   String   @map("motive_id") @db.Uuid
+	locationId String   @map("location_id") @db.Uuid
+	game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+	murder     Suspect  @relation("ResultMurder", fields: [murderId], references: [id], onDelete: Restrict)
+	weapon     Weapon   @relation("ResultWeapon", fields: [weaponId], references: [id], onDelete: Restrict)
+	motive     Motive   @relation("ResultMotive", fields: [motiveId], references: [id], onDelete: Restrict)
+	location   Location @relation("ResultLocation", fields: [locationId], references: [id], onDelete: Restrict)
+
+	@@map("results")
+}

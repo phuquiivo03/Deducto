@@ -1,4 +1,4 @@
-export type EntityType = "suspect" | "weapon" | "location";
+export type EntityType = "suspect" | "weapon" | "location" | "motive";
 
 export type RelationshipStatus =
   | "confirmed"
@@ -37,7 +37,7 @@ export interface Relationship {
 }
 
 export interface Clue {
-  id: number;
+  id: string;
 
   status: "new" | "analyzed" | "used";
 
@@ -56,3 +56,7 @@ export interface Note {
 
   text: string;
 }
+
+export type Entities = Record<string, Entity>;
+
+
