@@ -18,6 +18,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
+    "@supabase/ssr": "^0.12.7",
     "child_process": "^1.0.2",
     "dotenv": "^18.0.4",
     "next": "16.3.6",
