@@ -9,6 +9,7 @@ const TYPE_ORDER: Record<EntityType, number> = {
   suspect: 0,
   weapon: 1,
   location: 2,
+  motive: 3,
 };
 
 export function canonicalPair(idA: string, idB: string): [string, string] {
@@ -37,7 +38,7 @@ export function getPairStatus(
   idB: string,
 ): RelationshipStatus {
   const rel = findRelationshipByPair(relationships, idA, idB);
-  return rel?.status ?? "unknown";
+  return rel?.status ?? "empty";
 }
 
 const STATUS_CYCLE: RelationshipStatus[] = [
@@ -70,6 +71,9 @@ export const MATRIX_TYPE_PAIRS: [EntityType, EntityType][] = [
   ["suspect", "weapon"],
   ["suspect", "location"],
   ["weapon", "location"],
+  ["weapon", "motive"],
+  ["location", "motive"],
+  ["suspect", "motive"],
 ];
 
 const MATRIX_BLOCK_TITLES: Record<string, string> = {

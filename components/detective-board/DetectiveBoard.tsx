@@ -30,15 +30,18 @@ import {
   Relationship,
   RelationshipStatus,
 } from "@/types/detective";
+import { gameToEntities } from "@/lib/game-to-entities";
+import { sampleGame } from "@/data/sample-be";
+import { gameToClues } from "@/lib/clues.helper";
 
 export default function DetectiveBoard() {
-  const [entities, setEntities] =
-    useState<Record<string, Entity>>(initialEntities);
+  const [entities, setEntities] = useState<Record<string, Entity>>(
+    gameToEntities(sampleGame),
+  );
 
-  const [relationships, setRelationships] =
-    useState<Relationship[]>(initialRelationships);
+  const [relationships, setRelationships] = useState<Relationship[]>([]);
 
-  const [clues, setClues] = useState<Clue[]>(initialClues);
+  const [clues, setClues] = useState<Clue[]>(gameToClues(sampleGame));
 
   const [notes, setNotes] = useState<Note[]>(initialNotes);
 
@@ -150,11 +153,7 @@ flex-col
 min-w-0
 "
           >
-            <BoardToolbar
-              view={view}
-              setView={setView}
-              entities={entities}
-            />
+            <BoardToolbar view={view} setView={setView} entities={entities} />
 
             {view === "board" && (
               <BoardCanvas
