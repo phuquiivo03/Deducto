@@ -3,6 +3,7 @@ import confetti from "canvas-confetti";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { IAnswerResponse } from "@/features/game/game.schemas";
 import type { EntityType } from "@/types/detective";
+import { useGameStore } from "@/store/game.store";
 
 const TYPE_ORDER: EntityType[] = ["suspect", "weapon", "location", "motive"];
 
@@ -201,7 +202,7 @@ export default function AccusationResultModal({
   );
 
   const allCorrect = correctCount === 4;
-
+  const { setIsSolved } = useGameStore();
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -212,8 +213,8 @@ export default function AccusationResultModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
   useEffect(() => {
-    console.log(allCorrect, allRevealed);
     if (allCorrect && allRevealed) {
+      setIsSolved(true);
       fire(0.25, {
         spread: 26,
         startVelocity: 55,

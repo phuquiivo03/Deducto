@@ -59,8 +59,9 @@ model Game {
 	level          String
 	createdAt      DateTime     @default(now()) @map("created_at")
 	gameMetadataId String       @unique @map("game_metadata_id") @db.Uuid
-	gameMetadata   GameMetadata @relation(fields: [gameMetadataId], references: [id], onDelete: Cascade)
-	result         Result?
+	gameMetadata    GameMetadata     @relation(fields: [gameMetadataId], references: [id], onDelete: Cascade)
+	result          Result?
+	userSubmissions UserSubmission[]
 
 	@@map("games")
 }
@@ -153,4 +154,16 @@ model Result {
 	location   Location @relation("ResultLocation", fields: [locationId], references: [id], onDelete: Restrict)
 
 	@@map("results")
+}
+
+model UserSubmission {
+	userId    String   @map("user_id")
+	gameId    String   @map("game_id")
+	timeTaken Int      @map("time_taken")
+	createdAt DateTime @default(now()) @map("created_at")
+	game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+	@@id([userId, gameId])
+	@@index([gameId])
+	@@map("user_submissions")
 }

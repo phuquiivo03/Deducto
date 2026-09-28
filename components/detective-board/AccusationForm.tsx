@@ -7,6 +7,7 @@ import type { IAnswerResponse } from "@/features/game/game.schemas";
 import type { AppResponse } from "@/features/type";
 import { useDetectiveBoardStore } from "@/store";
 import { Entity, EntityType } from "@/types/detective";
+import { useGameStore } from "@/store/game.store";
 
 const TYPE_LABELS: Record<EntityType, { title: string; hint: string }> = {
   suspect: {
@@ -72,13 +73,9 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResultOpen, setIsResultOpen] = useState(false);
 
-  const {
-    setAnswer,
-    answer,
-    game,
-    resultResponse,
-    setResultResponse,
-  } = useDetectiveBoardStore();
+  const { setAnswer, answer, resultResponse, setResultResponse } =
+    useDetectiveBoardStore();
+  const { game } = useGameStore();
 
   const resultCards = useMemo(() => {
     const allSelected = TYPE_ORDER.every((type) => selection[type]);
@@ -161,6 +158,8 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
     if (game) {
       setAnswer({
         game_id: game.id,
+        user_id: "sampleIds",
+        time_taken: 1000,
         answer: {
           murder_id: selection.suspect,
           weapon_id: selection.weapon,

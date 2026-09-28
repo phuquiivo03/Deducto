@@ -10,6 +10,7 @@ function CasePage({ id }: { id: string }) {
   const [gameReady, setGameReady] = useState<boolean>(false);
   const game = useGameStore((state) => state.game);
   const setGame = useGameStore((state) => state.setGame);
+  const setIsSolved = useGameStore((state) => state.setIsSolved);
   useEffect(() => {
     setGameReady(false);
     fetch(`/api/game/${id}`)
@@ -17,6 +18,15 @@ function CasePage({ id }: { id: string }) {
       .then((data) => {
         if (data.success && data.data) {
           setGame(data.data);
+          setGameReady(true);
+        }
+      });
+
+    fetch(`/api/game/${id}/resolved`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setIsSolved(data.data);
           setGameReady(true);
         }
       });

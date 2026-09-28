@@ -622,3 +622,19 @@ Validation logic lives in `features/game/game.services.ts` (`validateResult`), c
 - Supabase rows use `game_metadata`; `features/game/game.mapper.ts` maps that to `IGame.gameMetadata` in `game.repositories` before the API responds.
 - Zustand `useGameStore` starts with `game: null`; the intro **Start** control stays disabled until the fetch completes.
 - `DetectiveBoard` reads `game` from the store and must call all hooks before any early return when `game` is missing.
+
+---
+
+# 13. User submissions
+
+`user_submissions` stores one row per player per game. It is not seeded.
+
+Columns match `IUserSubmission` in `features/submission/submission.schemas.ts`:
+
+- Primary key is the pair `(user_id, game_id)`
+- `game_id` (text foreign key to `games.id`, cascade delete)
+- `user_id` (text; no users table yet)
+- `time_taken` (integer)
+- `created_at` (defaults to now)
+
+`game_id` stays indexed for joins. Row level security is enabled, same as the other game tables.

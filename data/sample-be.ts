@@ -250,6 +250,8 @@ export const sampleGame: IGame = {
 export const sampleResult: IAnswer = {
   id: sampleIds.result,
   game_id: sampleIds.game,
+  user_id: "sampleIds",
+  time_taken: 1000,
   answer: {
     murder_id: sampleIds.suspects.violet,
     weapon_id: sampleIds.weapons.letterOpener,

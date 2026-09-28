@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Entity } from "@/types/detective";
 
 import AccusationForm from "./AccusationForm";
+import { useGameStore } from "@/store/game.store";
 
 interface Props {
   view: "board" | "grid";
@@ -16,7 +17,7 @@ interface Props {
 
 export default function BoardToolbar({ view, setView, entities }: Props) {
   const [accusationOpen, setAccusationOpen] = useState(false);
-
+  const { isSolved } = useGameStore();
   return (
     <>
       <div
@@ -69,6 +70,7 @@ items-center
           <button
             type="button"
             onClick={() => setAccusationOpen(true)}
+            disabled={isSolved}
             className="
 px-4
 py-2
@@ -92,7 +94,7 @@ transition
 cursor-pointer
 "
           >
-            Make accusation 🛎️
+            {isSolved ? "Case Solved ✅" : "Make accusation 🛎️"}
           </button>
 
           <button

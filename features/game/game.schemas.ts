@@ -137,6 +137,8 @@ export type IAnswerAnswer = z.infer<typeof resultAnswerSchema>;
 export const answerSchema = z.object({
   id: z.string().optional(),
   game_id: z.string(),
+  user_id: z.string(),
+  time_taken: z.number(),
   answer: resultAnswerSchema,
 });
 export type IAnswer = z.infer<typeof answerSchema>;

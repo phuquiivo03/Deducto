@@ -28,3 +28,4 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     return Response.json(response, { status: 500 });
   }
 }
+
