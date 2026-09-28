@@ -620,6 +620,8 @@ Validation logic lives in `features/game/game.services.ts` (`validateResult`), c
 
 - Case page `app/case/[id]/page.tsx` fetches `GET /api/game/[id]`, then calls `setGame` on success.
 - Supabase rows use `game_metadata`; `features/game/game.mapper.ts` maps that to `IGame.gameMetadata` in `game.repositories` before the API responds.
+- Game tables have RLS enabled with **public SELECT** policies on case content (`games`, `game_metadata`, suspects, locations, weapons, motives, clues). Prisma-created tables also need `GRANT` for `anon` / `authenticated` (migration `20260928172000_game_public_read_rls`).
+- **`results`** has no public read policy; `getResult` uses `infrastructure/supabase/service.ts` (service role) so answers are not exposed to the browser API.
 - Zustand `useGameStore` starts with `game: null`; the intro **Start** control stays disabled until the fetch completes.
 - `DetectiveBoard` reads `game` from the store and must call all hooks before any early return when `game` is missing.
 
@@ -632,9 +634,49 @@ Validation logic lives in `features/game/game.services.ts` (`validateResult`), c
 Columns match `IUserSubmission` in `features/submission/submission.schemas.ts`:
 
 - Primary key is the pair `(user_id, game_id)`
-- `game_id` (text foreign key to `games.id`, cascade delete)
-- `user_id` (text; no users table yet)
+- `game_id` (uuid foreign key to `games.id`, cascade delete)
+- `user_id` (uuid foreign key to `users.id`, cascade delete)
 - `time_taken` (integer)
 - `created_at` (defaults to now)
 
-`game_id` stays indexed for joins. Row level security is enabled, same as the other game tables.
+`game_id` stays indexed for joins. Row level security is enabled. Authenticated users may select and insert only rows where `user_id = auth.uid()`.
+
+Successful accusation inserts use the session user id from `getSessionUserId()` in the result API, not the client payload alone.
+
+---
+
+# 14. Users and authentication
+
+## `users` table
+
+Prisma model `User` maps to `users` and aligns with `features/user/user.schemas.ts`:
+
+- `id` (uuid; matches `auth.users.id` for Google sign-in)
+- `name`, `email` (unique), optional `avatar`
+- `created_at`, `updated_at`
+
+Seeded system user (see `sampleIds.user` in `data/sample-ids.ts`):
+
+- id `b1000001-0001-4001-8001-000000000060`
+- name `System`, email `system@deducto.local`
+- Used as `games.creator_id` for the sample case
+
+`games.creator` (text) was replaced by `games.creator_id` → `users.id` (`onDelete: Restrict`). API `IGame.creator` remains a string and holds the creator user id; `game.mapper.ts` reads `creator_id`.
+
+## Google OAuth (Supabase)
+
+- Browser client: `infrastructure/supabase/client.ts`
+- Server client: `infrastructure/supabase/server.ts`
+- Session refresh: root `proxy.ts` → `infrastructure/supabase/update-session.ts` (`getUser()` on matched routes)
+- OAuth callback: `app/auth/callback/route.ts` exchanges the code, upserts `users` from Google metadata, redirects to `next` or `/`
+- Sign-in UI: `IntroCard` → `signInWithGoogle()` in `features/user/user.sign-in.ts`
+- **Start investigation** requires a signed-in user on the intro screen
+
+Dashboard setup (manual):
+
+- Enable Google provider under Authentication → Providers
+- Add redirect URL `http://localhost:3000/auth/callback` (and production URL when deployed)
+
+RLS on `users`: public read; authenticated insert/update only for `id = auth.uid()`.
+
+Prisma-created tables need explicit `GRANT` for Supabase API roles (`anon`, `authenticated`, `service_role`); see migration `20260928171000_supabase_api_grants`.

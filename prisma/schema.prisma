@@ -50,19 +50,34 @@ model GameMetadata {
 	@@map("game_metadata")
 }
 
+model User {
+	id          String           @id @db.Uuid
+	name        String
+	email       String           @unique
+	avatar      String?
+	createdAt   DateTime         @default(now()) @map("created_at")
+	updatedAt   DateTime         @updatedAt @map("updated_at")
+	createdGames Game[]          @relation("GameCreator")
+	submissions UserSubmission[]
+
+	@@map("users")
+}
+
 model Game {
-	id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-	creator        String
+	id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	creatorId      String           @map("creator_id") @db.Uuid
 	title          String
 	description    String
 	banner         String
 	level          String
-	createdAt      DateTime     @default(now()) @map("created_at")
-	gameMetadataId String       @unique @map("game_metadata_id") @db.Uuid
-	gameMetadata    GameMetadata     @relation(fields: [gameMetadataId], references: [id], onDelete: Cascade)
-	result          Result?
+	createdAt      DateTime         @default(now()) @map("created_at")
+	gameMetadataId String           @unique @map("game_metadata_id") @db.Uuid
+	creator        User             @relation("GameCreator", fields: [creatorId], references: [id], onDelete: Restrict)
+	gameMetadata   GameMetadata     @relation(fields: [gameMetadataId], references: [id], onDelete: Cascade)
+	result         Result?
 	userSubmissions UserSubmission[]
 
+	@@index([creatorId])
 	@@map("games")
 }
 
@@ -157,10 +172,11 @@ model Result {
 }
 
 model UserSubmission {
-	userId    String   @map("user_id")
-	gameId    String   @map("game_id")
+	userId    String   @map("user_id") @db.Uuid
+	gameId    String   @map("game_id") @db.Uuid
 	timeTaken Int      @map("time_taken")
 	createdAt DateTime @default(now()) @map("created_at")
+	user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 	game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
 	@@id([userId, gameId])

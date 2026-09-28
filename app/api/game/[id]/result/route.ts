@@ -3,6 +3,7 @@ import {
   type IAnswer,
   type IAnswerResponse,
 } from "@/features/game/game.schemas";
+import { getSessionUserId } from "@/features/user/user.auth";
 import gameServices from "@/features/game/game.services";
 import { AppResponse } from "@/features/type";
 export async function POST(request: Request) {
@@ -12,7 +13,11 @@ export async function POST(request: Request) {
     if (!parseResult.success) {
       throw new Error(parseResult.error.message);
     }
-    const result = await gameServices.validateResult(parseResult.data);
+    const sessionUserId = await getSessionUserId();
+    const result = await gameServices.validateResult(
+      parseResult.data,
+      sessionUserId,
+    );
     const response: AppResponse<IAnswerResponse> = {
       data: result,
       success: true,

@@ -2,7 +2,10 @@ import { IAnswer, IAnswerResponse, IGame } from "@/features/game/game.schemas";
 import gameRepositories from "./game.repositories";
 import submissionRepositories from "../submission/submission.repositories";
 
-const validateResult = async (data: IAnswer): Promise<IAnswerResponse> => {
+const validateResult = async (
+  data: IAnswer,
+  sessionUserId: string | null,
+): Promise<IAnswerResponse> => {
   const resultFromDatabase = await gameRepositories.getResult(data.game_id);
   if (!resultFromDatabase) {
     throw new Error("Result not found");
@@ -31,11 +34,13 @@ const validateResult = async (data: IAnswer): Promise<IAnswerResponse> => {
     response.motive &&
     response.location
   ) {
-    await submissionRepositories.create({
-      game_id: data.game_id,
-      user_id: data.user_id,
-      time_taken: data.time_taken,
-    });
+    if (sessionUserId) {
+      await submissionRepositories.create({
+        game_id: data.game_id,
+        user_id: sessionUserId,
+        time_taken: data.time_taken,
+      });
+    }
   }
   return response;
 };

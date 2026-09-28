@@ -3,7 +3,7 @@ import { sampleIds } from "@/data/sample-ids";
 
 export const sampleGame: IGame = {
   id: sampleIds.game,
-  creator: "system",
+  creator: sampleIds.user,
   title: "The Missing Sapphire",
   description:
     "A priceless sapphire disappeared during a private dinner. Four guests were present, but only one of them stole it.",
@@ -250,7 +250,7 @@ export const sampleGame: IGame = {
 export const sampleResult: IAnswer = {
   id: sampleIds.result,
   game_id: sampleIds.game,
-  user_id: "sampleIds",
+  user_id: sampleIds.user,
   time_taken: 1000,
   answer: {
     murder_id: sampleIds.suspects.violet,

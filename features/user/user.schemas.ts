@@ -6,6 +6,7 @@ export const userSchema = z.object({
   email: z.string(),
   avatar: z.string().optional(),
   created_at: z.string(),
+  updated_at: z.string().optional(),
 });
 
 export type IUser = z.infer<typeof userSchema>;

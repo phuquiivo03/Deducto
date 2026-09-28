@@ -32,6 +32,19 @@ async function main() {
   const metadata = sampleGame.gameMetadata;
 
   await prisma.$transaction(async (tx) => {
+    await tx.user.upsert({
+      where: { id: sampleIds.user },
+      create: {
+        id: sampleIds.user,
+        name: "System",
+        email: "system@deducto.local",
+      },
+      update: {
+        name: "System",
+        email: "system@deducto.local",
+      },
+    });
+
     await tx.game.deleteMany({ where: { id: sampleGame.id } });
     await tx.gameMetadata.deleteMany({ where: { id: metadata.id } });
 
@@ -93,7 +106,7 @@ async function main() {
     await tx.game.create({
       data: {
         id: sampleGame.id,
-        creator: sampleGame.creator,
+        creatorId: sampleIds.user,
         title: sampleGame.title,
         description: sampleGame.description,
         banner: sampleGame.banner,

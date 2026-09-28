@@ -1,5 +1,6 @@
+import { createServiceClient } from "@/infrastructure/supabase/service";
 import { createClient } from "@/infrastructure/supabase/server";
-import { IAnswer, IAnswerAnswer, IGame } from "./game.schemas";
+import { IAnswerAnswer, IGame } from "./game.schemas";
 import { mapGameFromDb, type GameDbRow } from "./game.mapper";
 
 const getGame = async (id: string): Promise<IGame | null> => {
@@ -10,21 +11,29 @@ const getGame = async (id: string): Promise<IGame | null> => {
       "*, game_metadata(*, clues(*), locations(*), suspects(*), weapons(*), motives(*))",
     )
     .eq("id", id)
-    .single();
-  if (error || !data) {
+    .maybeSingle();
+  if (error) {
+    console.error("getGame:", error.message);
+    return null;
+  }
+  if (!data) {
     return null;
   }
   return mapGameFromDb(data as GameDbRow);
 };
 
 const getResult = async (id: string): Promise<IAnswerAnswer | null> => {
-  const supabase = await createClient();
-  const result = await supabase
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
     .from("results")
     .select("*")
     .eq("game_id", id)
-    .single();
-  return result.data;
+    .maybeSingle();
+  if (error) {
+    console.error("getResult:", error.message);
+    return null;
+  }
+  return data;
 };
 
 const gameRepositories = {

@@ -1,5 +1,6 @@
 /** Stable UUIDs for sample game seed data */
 export const sampleIds = {
+  user: "b1000001-0001-4001-8001-000000000060",
   game: "b1000001-0001-4001-8001-000000000001",
   metadata: "b1000001-0001-4001-8001-000000000002",
   result: "b1000001-0001-4001-8001-000000000003",

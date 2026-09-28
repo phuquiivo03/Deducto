@@ -3,7 +3,7 @@ import type { IGame, IGameMetadata } from "@/features/game/game.schemas";
 /** Row shape returned by Supabase nested select on `games`. */
 export interface GameDbRow {
 	id: string;
-	creator: string;
+	creator_id: string;
 	title: string;
 	description: string;
 	banner: string;
@@ -20,7 +20,7 @@ export function mapGameFromDb(row: GameDbRow | null): IGame | null {
 
 	return {
 		id: row.id,
-		creator: row.creator,
+		creator: row.creator_id,
 		title: row.title,
 		description: row.description,
 		banner: row.banner,

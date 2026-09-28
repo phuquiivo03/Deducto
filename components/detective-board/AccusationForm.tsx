@@ -7,6 +7,7 @@ import type { IAnswerResponse } from "@/features/game/game.schemas";
 import type { AppResponse } from "@/features/type";
 import { useDetectiveBoardStore } from "@/store";
 import { Entity, EntityType } from "@/types/detective";
+import { useAuthUser } from "@/hooks/use-auth-user";
 import { useGameStore } from "@/store/game.store";
 
 const TYPE_LABELS: Record<EntityType, { title: string; hint: string }> = {
@@ -76,6 +77,7 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
   const { setAnswer, answer, resultResponse, setResultResponse } =
     useDetectiveBoardStore();
   const { game } = useGameStore();
+  const { user, isLoading: isAuthLoading } = useAuthUser();
 
   const resultCards = useMemo(() => {
     const allSelected = TYPE_ORDER.every((type) => selection[type]);
@@ -144,6 +146,18 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
+    if (isAuthLoading) {
+      setSubmitError("Checking your sign-in. Try again in a moment.");
+      setSubmitSuccess(false);
+      return;
+    }
+
+    if (!user) {
+      setSubmitError("Sign in with Google before submitting your accusation.");
+      setSubmitSuccess(false);
+      return;
+    }
+
     const missing = TYPE_ORDER.filter((type) => !selection[type]);
     if (missing.length > 0) {
       setSubmitError(
@@ -158,7 +172,7 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
     if (game) {
       setAnswer({
         game_id: game.id,
-        user_id: "sampleIds",
+        user_id: user.id,
         time_taken: 1000,
         answer: {
           murder_id: selection.suspect,

@@ -1,12 +1,10 @@
--- The first apply created this table with uuid keys, then failed the
--- foreign key because games.id is text. Drop the partial table so this
--- migration can be reapplied.
+-- Drop partial table from a failed apply so this migration can run cleanly.
 DROP TABLE IF EXISTS "user_submissions";
 
 -- CreateTable
 CREATE TABLE "user_submissions" (
-    "id" TEXT NOT NULL DEFAULT gen_random_uuid()::text,
-    "game_id" TEXT NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "game_id" UUID NOT NULL,
     "user_id" TEXT NOT NULL,
     "time_taken" TIMESTAMP(3) NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
