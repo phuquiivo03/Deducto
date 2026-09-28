@@ -278,6 +278,7 @@ Features:
 - Drag movement
 - Selection
 - Display facts summary
+- Lined note-paper styling (margin rule, push pin, ruled lines)
 
 Important:
 
@@ -592,3 +593,32 @@ UI
 ```
 
 Any new interaction should follow React data flow.
+
+---
+
+# 11. Accusation and result reveal
+
+## Accusation form
+
+`AccusationForm` lets the player pick one suspect, weapon, location, and motive, then POSTs to `/api/game/[id]/result` with `IAnswer` (`game_id` + `answer` ids).
+
+On success, the API returns `AppResponse<IAnswerResponse>`; the client stores `data.data` in Zustand (`resultResponse`).
+
+## Result popup (`AccusationResultModal`)
+
+After a successful submit, the form is replaced by a modal with four flip cards (2×2 grid):
+
+- Categories: Suspect (murder), Weapon, Motive, Location.
+- Each card starts face-down; one tap reveals the chosen entity name and Correct/Wrong from `IAnswerResponse` (`murder`, `weapon`, `motive`, `location` booleans).
+- When all four cards are flipped, a summary appears: full congratulations if all are correct, otherwise “X of 4 correct” with **Try again** (returns to the form with prior selection).
+
+Validation logic lives in `features/game/game.services.ts` (`validateResult`), comparing submitted ids to the stored game result.
+
+---
+
+# 12. Case load and game store
+
+- Case page `app/case/[id]/page.tsx` fetches `GET /api/game/[id]`, then calls `setGame` on success.
+- Supabase rows use `game_metadata`; `features/game/game.mapper.ts` maps that to `IGame.gameMetadata` in `game.repositories` before the API responds.
+- Zustand `useGameStore` starts with `game: null`; the intro **Start** control stays disabled until the fetch completes.
+- `DetectiveBoard` reads `game` from the store and must call all hooks before any early return when `game` is missing.

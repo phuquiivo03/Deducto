@@ -16,7 +16,7 @@ export interface Entity {
   type: EntityType;
   name: string;
   meta: string;
-
+  icon: string;
   x: number;
   y: number;
 
@@ -58,5 +58,3 @@ export interface Note {
 }
 
 export type Entities = Record<string, Entity>;
-
-

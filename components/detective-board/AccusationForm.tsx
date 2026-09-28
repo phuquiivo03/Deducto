@@ -2,8 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { Entity, EntityType } from "@/types/detective";
+import AccusationResultModal from "@/components/detective-board/AccusationResultModal";
+import type { IAnswerResponse } from "@/features/game/game.schemas";
+import type { AppResponse } from "@/features/type";
 import { useDetectiveBoardStore } from "@/store";
+import { Entity, EntityType } from "@/types/detective";
 
 const TYPE_LABELS: Record<EntityType, { title: string; hint: string }> = {
   suspect: {
@@ -66,8 +69,29 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
   });
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const { setAnswer, answer, game, setResultResponse } =
-    useDetectiveBoardStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResultOpen, setIsResultOpen] = useState(false);
+
+  const {
+    setAnswer,
+    answer,
+    game,
+    resultResponse,
+    setResultResponse,
+  } = useDetectiveBoardStore();
+
+  const resultCards = useMemo(() => {
+    const allSelected = TYPE_ORDER.every((type) => selection[type]);
+    if (!allSelected) {
+      return null;
+    }
+
+    return TYPE_ORDER.map((type) => ({
+      type,
+      title: TYPE_LABELS[type].title,
+      name: entities[selection[type]]?.name ?? "Unknown",
+    }));
+  }, [selection, entities]);
 
   useEffect(() => {
     if (!submitSuccess || answer === null || game === null) {
@@ -75,27 +99,37 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
     }
 
     let cancelled = false;
+    setIsSubmitting(true);
 
     fetch(`/api/game/${game.id}/result`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(answer),
+      body: JSON.stringify({
+        ...answer,
+      }),
     })
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to submit result");
         }
-        return response.json();
+        return response.json() as Promise<AppResponse<IAnswerResponse>>;
       })
       .then((data) => {
-        if (!cancelled) {
-          setResultResponse(data);
+        if (cancelled) {
+          return;
         }
+        if (!data.success || data.data === undefined || data.data === null) {
+          throw new Error(data.message ?? "Failed to submit result");
+        }
+        setResultResponse(data.data);
+        setIsResultOpen(true);
+        setIsSubmitting(false);
       })
       .catch(() => {
         if (!cancelled) {
           setSubmitError("Could not submit the accusation. Try again.");
           setSubmitSuccess(false);
+          setIsSubmitting(false);
         }
       });
 
@@ -104,9 +138,6 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
     };
   }, [submitSuccess, answer, game, setResultResponse]);
 
-  if (!open) {
-    return null;
-  }
   const handleSelect = (type: EntityType, id: string) => {
     setSelection((prev) => ({ ...prev, [type]: id }));
     setSubmitError(null);
@@ -127,23 +158,48 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
 
     setSubmitError(null);
     setSubmitSuccess(true);
-    if (game)
+    if (game) {
       setAnswer({
         game_id: game.id,
-        anwser: {
+        answer: {
           murder_id: selection.suspect,
           weapon_id: selection.weapon,
           motive_id: selection.motive,
           location_id: selection.location,
         },
       });
+    }
   };
 
   const handleClose = () => {
     setSubmitError(null);
     setSubmitSuccess(false);
+    setIsSubmitting(false);
+    setIsResultOpen(false);
+    setResultResponse(null);
     onClose();
   };
+
+  const handleResultRetry = () => {
+    setIsResultOpen(false);
+    setSubmitSuccess(false);
+    setIsSubmitting(false);
+  };
+
+  if (!open) {
+    return null;
+  }
+
+  if (isResultOpen && resultResponse && resultCards) {
+    return (
+      <AccusationResultModal
+        result={resultResponse}
+        cards={resultCards}
+        onClose={handleClose}
+        onRetry={handleResultRetry}
+      />
+    );
+  }
 
   return (
     <div
@@ -229,7 +285,7 @@ text-[#23211C]
               Name the culprit
             </h2>
             <p className="mt-1 text-xs text-[#6F6858]">
-              Choose one suspect, weapon, and location.
+              Choose one suspect, weapon, location, and motive.
             </p>
           </div>
 
@@ -299,6 +355,7 @@ ${
                           value={entity.id}
                           checked={isSelected}
                           onChange={() => handleSelect(type, entity.id)}
+                          disabled={isSubmitting}
                           className="
 size-4
 accent-[#B08328]
@@ -339,27 +396,28 @@ text-[#9B2C2C]
             </p>
           )}
 
-          {submitSuccess && (
+          {isSubmitting && (
             <p
               role="status"
               className="
 rounded-lg
 border
-border-[#C6E0C6]
-bg-[#F2FAF2]
+border-[#E7DFCC]
+bg-[#F5F0E4]/80
 px-3
 py-2
 text-xs
 font-semibold
-text-[#2F6B2F]
+text-[#6F6858]
 "
             >
-              All fields selected — accusation is ready to submit.
+              Submitting your accusation…
             </p>
           )}
 
           <button
             type="submit"
+            disabled={isSubmitting}
             className="
 w-full
 rounded-xl
@@ -374,9 +432,11 @@ shadow-md
 transition
 hover:brightness-105
 active:brightness-95
+disabled:cursor-not-allowed
+disabled:opacity-60
 "
           >
-            Submit accusation
+            {isSubmitting ? "Submitting…" : "Submit accusation"}
           </button>
         </form>
       </div>

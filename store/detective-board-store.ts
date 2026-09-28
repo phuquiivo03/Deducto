@@ -5,8 +5,7 @@ import { sampleGame } from "@/data/sample-be";
 import { gameToClues } from "@/lib/clues.helper";
 import { gameToEntities } from "@/lib/game-to-entities";
 import type { Clue, Entity, Note, Relationship } from "@/types/detective";
-import type { IResult, IResultResponse } from "@/types/apiDto";
-import type { IGame } from "@/types/apiDto";
+import type { IAnswer, IAnswerResponse } from "@/features/game/game.schemas";
 
 export interface DetectiveBoardState {
   entities: Record<string, Entity>;
@@ -15,11 +14,10 @@ export interface DetectiveBoardState {
   notes: Note[];
   selected: string | null;
   view: "board" | "grid";
-  answer: IResult | null;
-  game: IGame | null;
-  setAnswer: (answer: IResult) => void;
-  resultResponse: IResultResponse | null;
-  setResultResponse: (resultResponse: IResultResponse) => void;
+  answer: IAnswer | null;
+  setAnswer: (answer: IAnswer) => void;
+  resultResponse: IAnswerResponse | null;
+  setResultResponse: (resultResponse: IAnswerResponse | null) => void;
 }
 
 export const useDetectiveBoardStore = create<DetectiveBoardState>((set) => ({
@@ -30,12 +28,12 @@ export const useDetectiveBoardStore = create<DetectiveBoardState>((set) => ({
   selected: null,
   view: "board",
   answer: null,
-  game: sampleGame,
-  setAnswer: (answer: IResult) => {
+
+  setAnswer: (answer: IAnswer) => {
     set((state) => ({ ...state, answer }));
   },
   resultResponse: null,
-  setResultResponse: (resultResponse: IResultResponse) => {
+  setResultResponse: (resultResponse: IAnswerResponse | null) => {
     set((state) => ({ ...state, resultResponse }));
   },
 }));

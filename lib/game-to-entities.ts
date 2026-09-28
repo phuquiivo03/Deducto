@@ -6,7 +6,7 @@ import {
   IMotive,
   ISuspect,
   IWeapon,
-} from "@/types/apiDto";
+} from "@/features/game/game.schemas";
 import { Entities, Entity, Fact } from "@/types/detective";
 
 const BOARD_MIN = 50;
@@ -118,6 +118,7 @@ function mapSuspect(suspect: ISuspect): Entity {
     type: "suspect",
     name: suspect.name,
     meta: buildSuspectMeta(suspect),
+    icon: suspect.avatar ?? "🧑",
     x,
     y,
     facts: factsFromDescriptionAndAttributes(
@@ -134,6 +135,7 @@ function mapWeapon(weapon: IWeapon): Entity {
     type: "weapon",
     name: weapon.name,
     meta: buildWeaponMeta(weapon),
+    icon: weapon.icon ?? "🔪",
     x,
     y,
     facts: factsFromDescriptionAndAttributes(
@@ -150,6 +152,7 @@ function mapLocation(location: ILocation): Entity {
     type: "location",
     name: location.name,
     meta: buildLocationMeta(location),
+    icon: location.icon ?? "🌳",
     x,
     y,
     facts: factsFromDescriptionAndAttributes(
@@ -166,6 +169,7 @@ function mapMotive(motive: IMotive): Entity {
     type: "motive",
     name: motive.name,
     meta: buildMotiveMeta(motive),
+    icon: motive.icon ?? "🔪",
     x,
     y,
     facts: factsFromDescriptionAndAttributes(motive.description, undefined),
@@ -178,7 +182,6 @@ function mapMotive(motive: IMotive): Entity {
 export function gameToEntities(game: IGame): Entities {
   const metadata = assertMetadata(game);
   const entities: Entities = {};
-
   for (const suspect of metadata.suspects) {
     entities[suspect.id] = mapSuspect(suspect);
   }

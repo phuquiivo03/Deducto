@@ -1,21 +1,30 @@
-import { sampleResult } from "@/data/sample-be";
-import type { IResult } from "@/types/apiDto";
+import {
+  answerSchema,
+  type IAnswer,
+  type IAnswerResponse,
+} from "@/features/game/game.schemas";
+import gameServices from "@/features/game/game.services";
+import { AppResponse } from "@/features/type";
 export async function POST(request: Request) {
-  const answer = (await request.json()) as IResult;
-  if (answer.game_id !== sampleResult.game_id) {
-    return Response.json({ error: "Game not found" }, { status: 404 });
+  try {
+    const body = await request.json();
+    const parseResult = answerSchema.safeParse(body);
+    if (!parseResult.success) {
+      throw new Error(parseResult.error.message);
+    }
+    const result = await gameServices.validateResult(parseResult.data);
+    const response: AppResponse<IAnswerResponse> = {
+      data: result,
+      success: true,
+      message: null,
+    };
+    return Response.json(response, { status: 200 });
+  } catch (e) {
+    const response: AppResponse<boolean> = {
+      data: false,
+      success: false,
+      message: e instanceof Error ? e.message : "An unknown error occurred",
+    };
+    return Response.json(response, { status: 400 });
   }
-  if (answer.anwser.murder_id !== sampleResult.anwser.murder_id) {
-    return Response.json({ error: "Answer not found" }, { status: 404 });
-  }
-  if (answer.anwser.weapon_id !== sampleResult.anwser.weapon_id) {
-    return Response.json({ error: "Answer not found" }, { status: 404 });
-  }
-  if (answer.anwser.motive_id !== sampleResult.anwser.motive_id) {
-    return Response.json({ error: "Answer not found" }, { status: 404 });
-  }
-  if (answer.anwser.location_id !== sampleResult.anwser.location_id) {
-    return Response.json({ error: "Answer not found" }, { status: 404 });
-  }
-  return Response.json({ success: true });
 }

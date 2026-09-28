@@ -6,7 +6,7 @@ export const entities: Record<string, Entity> = {
     type: "suspect",
     name: "Lady Violet",
     meta: "Art dealer · Right-handed",
-
+    icon: "🦹‍♀️",
     x: 70,
     y: 70,
 
@@ -35,7 +35,7 @@ export const entities: Record<string, Entity> = {
     type: "suspect",
     name: "Professor Grant",
     meta: "Historian · Left-handed",
-
+    icon: "🧑‍🏫",
     x: 1000,
     y: 50,
 
@@ -60,7 +60,7 @@ export const entities: Record<string, Entity> = {
     type: "suspect",
     name: "Mr. Chen",
     meta: "Chef · Ambidextrous",
-
+    icon: "👨‍🍳",
     x: 70,
     y: 560,
 
@@ -81,7 +81,7 @@ export const entities: Record<string, Entity> = {
     type: "weapon",
     name: "Crystal Dagger",
     meta: "Found near the garden",
-
+    icon: "🔪",
     x: 560,
     y: 270,
 
@@ -102,7 +102,7 @@ export const entities: Record<string, Entity> = {
     type: "weapon",
     name: "Candlestick",
     meta: "Missing from the study",
-
+    icon: "🕯️",
     x: 1080,
     y: 300,
 
@@ -119,7 +119,7 @@ export const entities: Record<string, Entity> = {
     type: "weapon",
     name: "Poison Vial",
     meta: "Locked in the cabinet",
-
+    icon: "🧪",
     x: 640,
     y: 700,
 
@@ -136,7 +136,7 @@ export const entities: Record<string, Entity> = {
     type: "location",
     name: "Garden",
     meta: "Empty at 11:15 PM",
-
+    icon: "🌳",
     x: 540,
     y: 560,
 
@@ -157,7 +157,7 @@ export const entities: Record<string, Entity> = {
     type: "location",
     name: "Library",
     meta: "Occupied until midnight",
-
+    icon: "📚",
     x: 70,
     y: 800,
 
@@ -174,7 +174,7 @@ export const entities: Record<string, Entity> = {
     type: "location",
     name: "Conservatory",
     meta: "Locked after 10 PM",
-
+    icon: "🌳",
     x: 1080,
     y: 600,
 

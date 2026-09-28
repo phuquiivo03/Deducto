@@ -1,6 +1,12 @@
 import Card from "./Card";
 
-export default function IntroCard({ start }: { start: () => void }) {
+export default function IntroCard({
+  start,
+  disabled = false,
+}: {
+  start: () => void;
+  disabled?: boolean;
+}) {
   return (
     <Card>
       <span className="inline-block text-xs font-bold text-gold bg-goldBg px-3 py-1 rounded-full mb-3">
@@ -44,7 +50,9 @@ flex justify-between
       </div>
 
       <button
+        type="button"
         onClick={start}
+        disabled={disabled}
         className="
 w-full
 mt-5
@@ -53,6 +61,8 @@ text-paper
 rounded-xl
 py-4
 font-bold
+disabled:opacity-50
+disabled:cursor-not-allowed
 "
       >
         Start investigation

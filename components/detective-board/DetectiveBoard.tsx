@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import TopBar from "./TopBar";
 import CluePanel from "./CluePanel";
@@ -10,12 +10,7 @@ import InspectorPanel from "./InspectorPanel";
 import GridView from "./GridView";
 import MobileNav from "./MobileNav";
 
-import {
-  entities as initialEntities,
-  relationships as initialRelationships,
-  clues as initialClues,
-  initialNotes,
-} from "@/data/detective-board";
+import { initialNotes } from "@/data/detective-board";
 
 import {
   findRelationshipByPair,
@@ -31,17 +26,16 @@ import {
   RelationshipStatus,
 } from "@/types/detective";
 import { gameToEntities } from "@/lib/game-to-entities";
-import { sampleGame } from "@/data/sample-be";
 import { gameToClues } from "@/lib/clues.helper";
-
+import { useGameStore } from "@/store/game.store";
 export default function DetectiveBoard() {
-  const [entities, setEntities] = useState<Record<string, Entity>>(
-    gameToEntities(sampleGame),
-  );
+  const game = useGameStore((state) => state.game);
+
+  const [entities, setEntities] = useState<Record<string, Entity>>({});
 
   const [relationships, setRelationships] = useState<Relationship[]>([]);
 
-  const [clues, setClues] = useState<Clue[]>(gameToClues(sampleGame));
+  const [clues, setClues] = useState<Clue[]>([]);
 
   const [notes, setNotes] = useState<Note[]>(initialNotes);
 
@@ -103,6 +97,18 @@ export default function DetectiveBoard() {
       ];
     });
   };
+
+  useEffect(() => {
+    if (!game) return;
+    setEntities(gameToEntities(game));
+    setClues(gameToClues(game));
+    setRelationships([]);
+    setNotes(initialNotes);
+    setSelected(null);
+    setView("board");
+  }, [game]);
+
+  if (!game) return null;
 
   return (
     <div

@@ -202,4 +202,5 @@ This comprehensive guide outlines best practices, conventions, and standards for
     - Use proper headings
     - Use proper lists
 
-Always update to FEATURE_CONTEXT.md whenever add or update some feature
+Always update to FEATURE_CONTEXT.md whenever add or update some feature.
+Do not run any install package command (npm i / npx i) - just notice, I will install myself

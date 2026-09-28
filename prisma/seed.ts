@@ -3,7 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Prisma, PrismaClient } from "../generated/prisma/client";
 import { sampleGame, sampleResult } from "@/data/sample-be";
 import { sampleIds } from "@/data/sample-ids";
-import type { IGameMetadata } from "@/types/apiDto";
+import type { IGameMetadata } from "@/features/game/game.schemas";
 
 function isGameMetadata(value: string | IGameMetadata): value is IGameMetadata {
   return typeof value !== "string";
@@ -107,10 +107,10 @@ async function main() {
       data: {
         id: sampleResult.id ?? sampleIds.result,
         gameId: sampleResult.game_id,
-        murderId: sampleResult.anwser.murder_id,
-        weaponId: sampleResult.anwser.weapon_id,
-        motiveId: sampleResult.anwser.motive_id,
-        locationId: sampleResult.anwser.location_id,
+        murderId: sampleResult.answer.murder_id,
+        weaponId: sampleResult.answer.weapon_id,
+        motiveId: sampleResult.answer.motive_id,
+        locationId: sampleResult.answer.location_id,
       },
     });
   });

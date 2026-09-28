@@ -10,7 +10,7 @@ import {
   IWeapon,
   IMotive,
   IGame,
-} from "@/types/apiDto";
+} from "@/features/game/game.schemas";
 import { Clue } from "@/types/detective";
 
 type EntityType = "suspect" | "weapon" | "location" | "motive";

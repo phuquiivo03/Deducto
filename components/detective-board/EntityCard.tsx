@@ -14,6 +14,15 @@ interface Props {
   onStartConnect: (e: React.PointerEvent) => void;
 }
 
+const PAPER_LINES =
+  "repeating-linear-gradient(" +
+  "to bottom," +
+  "transparent," +
+  "transparent 21px," +
+  "#E5DCC8 21px," +
+  "#E5DCC8 22px" +
+  ")";
+
 export default function EntityCard({
   entity,
 
@@ -25,6 +34,13 @@ export default function EntityCard({
 
   onStartConnect,
 }: Props) {
+  const typeLabel =
+    entity.type === "suspect"
+      ? "Suspect"
+      : entity.type === "weapon"
+        ? "Weapon"
+        : "Location";
+
   return (
     <div
       data-entity-id={entity.id}
@@ -64,6 +80,8 @@ export default function EntityCard({
         left: entity.x,
 
         top: entity.y,
+
+        backgroundImage: PAPER_LINES,
       }}
       className={`
         card
@@ -72,85 +90,113 @@ absolute
 z-10
 
 w-[196px]
+min-h-[108px]
 
-bg-white
+bg-[#FBF7EC]
 
 border
+border-[#D9CEB0]
 
-rounded-xl
+rounded-sm
 
-p-3
+pt-7
+pb-3
+pl-9
+pr-3
 
-shadow-sm
+shadow-[2px_3px_8px_rgba(42,36,24,0.14),0_1px_0_rgba(255,255,255,0.6)_inset]
 
 cursor-grab
 
 select-none
 
-transition
+transition-shadow
 
-${selected ? "border-[#B08328] ring-4 ring-[#F4E7C6]" : "border-[#E7DFCC]"}
+${
+  selected
+    ? "border-[#B08328] ring-2 ring-[#F4E7C6] shadow-[3px_5px_14px_rgba(42,36,24,0.2)]"
+    : "hover:shadow-[3px_4px_10px_rgba(42,36,24,0.18)]"
+}
 
 `}
     >
       <div
         className="
-flex
-items-center
-gap-2
-mb-2
+absolute
+top-0
+bottom-0
+left-7
+w-px
+bg-[#D4A08A]/70
+pointer-events-none
 "
+        aria-hidden
+      />
+
+      <div
+        className="
+absolute
+top-[-7px]
+left-1/2
+z-10
+-translate-x-1/2
+flex
+flex-col
+items-center
+pointer-events-none
+"
+        aria-hidden
       >
         <div
           className="
-w-8
-h-8
-rounded-lg
-bg-[#F3EEE0]
-flex
-items-center
-justify-center
-text-[#6F6858]
+w-3
+h-3
+rounded-full
+bg-[#B08328]
+shadow-[0_1px_2px_rgba(0,0,0,0.25)]
 "
-        >
-          {entity.type === "suspect"
-            ? "🦹‍♀️"
-            : entity.type === "weapon"
-              ? "⚔"
-              : "📍"}
-        </div>
-
-        <span
-          className="
-text-[10px]
-font-bold
-text-[#9C9482]
-uppercase
-"
-        >
-          {entity.type}
-        </span>
+        />
+        <div className="w-px h-1.5 bg-[#8A6420]" />
       </div>
 
-      <span
+      <p
         className="
+text-[9px]
+font-bold
+uppercase
+tracking-[0.14em]
+text-[#A89B82]
+leading-[22px]
+-mb-px
+"
+      >
+        {typeLabel}
+      </p>
+
+      <p
+        className="
+font-display
 font-semibold
 text-sm
+text-[#2C281F]
+leading-[22px]
 "
       >
-        {entity.name}
-      </span>
+        <span>{entity.icon}</span> {entity.name}
+      </p>
 
-      <span
-        className="
-        block
+      {entity.meta ? (
+        <p
+          className="
 text-xs
-text-[#6F6858]
-mt-1
+text-[#5C5648]
+leading-[22px]
+line-clamp-2
 "
-      >
-        {entity.meta}
-      </span>
+        >
+          {entity.meta}
+        </p>
+      ) : null}
 
       <button
         type="button"
@@ -167,7 +213,7 @@ translate-x-1/2
 rounded-full
 border-2
 border-[#B08328]
-bg-white
+bg-[#FBF7EC]
 shadow-sm
 cursor-crosshair
 hover:bg-[#F4E7C6]
