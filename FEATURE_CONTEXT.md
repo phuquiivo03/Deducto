@@ -680,3 +680,87 @@ Dashboard setup (manual):
 RLS on `users`: public read; authenticated insert/update only for `id = auth.uid()`.
 
 Prisma-created tables need explicit `GRANT` for Supabase API roles (`anon`, `authenticated`, `service_role`); see migration `20260928171000_supabase_api_grants`.
+
+---
+
+# 15. Create game
+
+## Flow
+
+- Page: `app/create/page.tsx` → client `CreateGameWizard`.
+- Signed-in users enter a prompt and difficulty, then **Generate case** (`POST /api/generate`).
+- Bedrock returns `{ game, result }` (see `infrastructure/ai/system_prompt.md`). The service parses JSON via `lib/extract-json.ts` and validates with `generatedCaseSchema`.
+- The draft lives in Zustand `store/create-game.store.ts`. Users edit overview fields, entities, clues (template-based), and the solution tuple.
+- **Create case** validates with `createGameInputSchema` (Zod + reference checks), then `POST /api/game`.
+- On success, Prisma creates `game_metadata` (nested suspects, weapons, locations, motives, clues), `games`, and `results` in one transaction. AI ids are remapped to new UUIDs in `features/game/game.repositories.ts` (`createGame`).
+- Client redirects to `/case/{id}`.
+
+## API
+
+| Route | Method | Auth | Body | Response |
+|-------|--------|------|------|----------|
+| `/api/generate` | POST | required | `{ prompt, level }` | `AppResponse<IGeneratedCase>` |
+| `/api/game` | POST | required | `ICreateGameInput` | `AppResponse<{ id }>` |
+
+Schemas: `features/game/game.schemas.ts` (`generateRequestSchema`, `generatedCaseSchema`, `createGameInputSchema`).
+
+## Clue templates
+
+- `lib/clue-templates.ts` mirrors system prompt section 6.6 (E1–E4, L1–L4, R1–R4, A1, A2).
+- `detectTemplate`, `buildClue`, and `resolveClueValueForSubmit` keep clue sentences aligned with entity names before save.
+- UI: `components/create-game/ClueList.tsx`, `ClueEditor.tsx`; preview uses `clueToText` from `lib/clues.helper.ts`.
+
+## UI components
+
+- `components/create-game/`: `PromptPanel`, `GeneratingState`, `CaseEditor`, entity editors, `SolutionPicker`, `ValidationSummary`.
+- Theme tokens match the detective board (`paper`, `ink`, `gold`, `line`).
+
+## Notes
+
+- Generation requires AWS Bedrock env vars (`AWS_REGION`, `BEDROCK_MODEL_ID`, credentials). `maxTokens` is 8192 in `infrastructure/ai/bedrock.ts`.
+- Changing the solution after generation shows a warning; clues were generated for the original `result`.
+- Entity counts are fixed after generation (no add/remove suspects/weapons/locations/motives).
+
+---
+
+# 16. Landing page
+
+## Overview
+
+- Route: `app/page.tsx` (marketing home, scrollable).
+- Play flow: **Open a case** links to the seeded sample game (`lib/landing-constants.ts` → `/case/{sampleIds.game}`). Sign-in and **Start investigation** remain on `IntroCard` at `/case/[id]`.
+- **Create a case** links to `/create`.
+
+## Components
+
+- `components/landing/`: `LandingNav`, `LandingHero`, `CaseGuide`, `LandingClose`, `OpenCaseLink`.
+- Assets: `public/images/landing/hero-desk.png`, `guide-evidence.png`.
+
+## Guide section
+
+- Four steps (read clues → connect dots → deduce → solve) with scroll-driven crossfade via `IntersectionObserver` (no extra motion dependency).
+- `prefers-reduced-motion`: all four steps shown in a static grid (`GuideReducedMotion`).
+
+## Global scroll
+
+- `body` in `app/globals.css` is scrollable for the landing page.
+- Case play routes keep `h-screen overflow-hidden` on `main` / `DetectiveBoard` so the board does not scroll the document.
+
+---
+
+# 17. Case store
+
+## Overview
+
+- Route: `app/store/page.tsx` (`/store`).
+- Catalog of detective cases with three collections via query `tab`: `public` (default), `solved`, `my`.
+- Data loads on the server through `gameServices.findPublic`, `findSolved`, and `findByUserId` (same sources as `GET /api/game?tab=…`). Public tab does not require sign-in; solved and my require a session or show a Google sign-in empty state.
+
+## UI
+
+- `components/store/`: `StoreTabs`, `StoreShelf`, `CaseCard`, `StoreSignInEmpty`.
+- `app/store/loading.tsx`: skeleton grid while the page loads.
+- Search (`q` in the URL) filters the current tab’s list client-side by title, description, and creator.
+- Price controls (free-only checkbox, min/max inputs) are present in the UI; filtering by price is not wired until cases expose a catalog price (see `listedSchema` in `game.schemas.ts`).
+- Cards link to `/case/[id]`. Theme tokens match landing (`paper`, `ink`, `gold`, `line`, `rounded-card`).
+- Landing nav includes a **Store** link (`components/landing/landing-nav.tsx`).

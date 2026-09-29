@@ -2,9 +2,10 @@ import "./globals.css";
 import { momoTrustDisplay, permanentMarker, playwriteVN } from "./fonts";
 
 export const metadata = {
-  title: "The Ashcombe Case",
-  description: "Detective investigation board",
-};
+	title: 'Deducto',
+	description:
+		'Build a detective board, connect the clues, and solve the case.',
+}
 
 export default function RootLayout({
   children,

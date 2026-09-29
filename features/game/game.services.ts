@@ -1,4 +1,14 @@
-import { IAnswer, IAnswerResponse, IGame } from "@/features/game/game.schemas";
+import {
+  IAnswer,
+  IAnswerResponse,
+  ICreateGameInput,
+  IGame,
+  IGeneratedCase,
+  GameLevelStrict,
+  generatedCaseSchema,
+  IShortGame,
+} from "@/features/game/game.schemas";
+import { extractJson } from "@/lib/extract-json";
 import gameRepositories from "./game.repositories";
 import submissionRepositories from "../submission/submission.repositories";
 
@@ -62,10 +72,65 @@ const isResolved = async (userId: string, gameId: string): Promise<boolean> => {
   }
   return true;
 };
+
+const generate = async (
+  prompt: string,
+  level: GameLevelStrict,
+  userId: string,
+): Promise<IGeneratedCase> => {
+  const createdAt = new Date().toISOString();
+  const requestText = [
+    `Level: ${level}`,
+    `Creator: ${userId}`,
+    `Created at: ${createdAt}`,
+    "",
+    prompt,
+  ].join("\n");
+
+  const raw = await gameRepositories.askAi(requestText);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(extractJson(raw));
+  } catch {
+    throw new Error("Could not parse case JSON from the model");
+  }
+
+  const result = generatedCaseSchema.safeParse(parsed);
+  if (!result.success) {
+    throw new Error(result.error.message);
+  }
+
+  return result.data;
+};
+
+const create = async (
+  input: ICreateGameInput,
+  creatorId: string,
+): Promise<string> => {
+  return gameRepositories.createGame(input, creatorId);
+};
+
+const findPublic = async (): Promise<IShortGame[]> => {
+  return gameRepositories.findPublic();
+};
+
+const findSolved = async (userId: string): Promise<IShortGame[]> => {
+  return gameRepositories.findResolved(userId);
+};
+
+const findByUserId = async (userId: string): Promise<IShortGame[]> => {
+  return gameRepositories.findByUserId(userId);
+};
+
 const gameServices = {
   validateResult,
   getById,
   isResolved,
+  generate,
+  create,
+  findPublic,
+  findSolved,
+  findByUserId,
 };
 
 export default gameServices;

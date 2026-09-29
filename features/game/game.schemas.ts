@@ -190,3 +190,151 @@ export const resultResponseSchema = z.object({
   location: z.boolean(),
 });
 export type IAnswerResponse = z.infer<typeof resultResponseSchema>;
+
+export const gameLevelStrictSchema = z.enum(["easy", "medium", "hard"]);
+export type GameLevelStrict = z.infer<typeof gameLevelStrictSchema>;
+
+export const generatedGameSchema = gameSchema.extend({
+  gameMetadata: gameMetadataSchema,
+});
+export type IGeneratedGame = z.infer<typeof generatedGameSchema>;
+
+export const generatedCaseSchema = z.object({
+  game: generatedGameSchema,
+  result: resultAnswerSchema,
+});
+export type IGeneratedCase = z.infer<typeof generatedCaseSchema>;
+
+export const generateRequestSchema = z.object({
+  prompt: z.string().min(10).max(1000),
+  level: gameLevelStrictSchema,
+});
+export type IGenerateRequest = z.infer<typeof generateRequestSchema>;
+
+export const createGameInputSchema = z
+  .object({
+    title: z.string().min(1),
+    description: z.string().min(1),
+    banner: z.string().min(1),
+    level: gameLevelStrictSchema,
+    gameMetadata: gameMetadataSchema,
+    result: resultAnswerSchema,
+  })
+  .superRefine((data, ctx) => {
+    const meta = data.gameMetadata;
+    const suspectIds = new Set(meta.suspects.map((s) => s.id));
+    const weaponIds = new Set(meta.weapons.map((w) => w.id));
+    const locationIds = new Set(meta.locations.map((l) => l.id));
+    const motiveIds = new Set(meta.motives.map((m) => m.id));
+
+    const allIds: string[] = [
+      meta.id,
+      ...meta.suspects.map((s) => s.id),
+      ...meta.weapons.map((w) => w.id),
+      ...meta.locations.map((l) => l.id),
+      ...meta.motives.map((m) => m.id),
+      ...meta.clues.map((c) => c.id),
+    ];
+    const seen = new Set<string>();
+    for (const id of allIds) {
+      if (seen.has(id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate id: ${id}`,
+          path: ["gameMetadata"],
+        });
+      }
+      seen.add(id);
+    }
+
+    if (!suspectIds.has(data.result.murder_id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "murder_id must reference a suspect",
+        path: ["result", "murder_id"],
+      });
+    }
+    if (!weaponIds.has(data.result.weapon_id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "weapon_id must reference a weapon",
+        path: ["result", "weapon_id"],
+      });
+    }
+    if (!locationIds.has(data.result.location_id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "location_id must reference a location",
+        path: ["result", "location_id"],
+      });
+    }
+    if (!motiveIds.has(data.result.motive_id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "motive_id must reference a motive",
+        path: ["result", "motive_id"],
+      });
+    }
+
+    meta.clues.forEach((clue, index) => {
+      if (clue.suspect_id && !suspectIds.has(clue.suspect_id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Invalid suspect_id",
+          path: ["gameMetadata", "clues", index, "suspect_id"],
+        });
+      }
+      if (clue.weapon_id && !weaponIds.has(clue.weapon_id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Invalid weapon_id",
+          path: ["gameMetadata", "clues", index, "weapon_id"],
+        });
+      }
+      if (clue.location_id && !locationIds.has(clue.location_id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Invalid location_id",
+          path: ["gameMetadata", "clues", index, "location_id"],
+        });
+      }
+      if (!clue.value.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Clue value cannot be empty",
+          path: ["gameMetadata", "clues", index, "value"],
+        });
+      }
+    });
+
+    const checkNonEmpty = (
+      items: { id: string; name: string }[],
+      kind: string,
+      basePath: (string | number)[],
+    ) => {
+      items.forEach((item, index) => {
+        if (!item.name.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `${kind} name cannot be empty`,
+            path: [...basePath, index, "name"],
+          });
+        }
+      });
+    };
+    checkNonEmpty(meta.suspects, "Suspect", ["gameMetadata", "suspects"]);
+    checkNonEmpty(meta.weapons, "Weapon", ["gameMetadata", "weapons"]);
+    checkNonEmpty(meta.locations, "Location", ["gameMetadata", "locations"]);
+    checkNonEmpty(meta.motives, "Motive", ["gameMetadata", "motives"]);
+  });
+export type ICreateGameInput = z.infer<typeof createGameInputSchema>;
+export const shortGameShema = gameSchema.pick({
+  id: true,
+  creator: true,
+  title: true,
+  description: true,
+  banner: true,
+  level: true,
+  created_at: true,
+});
+export type IShortGame = z.infer<typeof shortGameShema>;

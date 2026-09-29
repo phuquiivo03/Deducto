@@ -39,8 +39,6 @@ body {
   background: var(--bg);
 
   color: var(--text);
-
-  overflow: hidden;
 }
 
 .card span,

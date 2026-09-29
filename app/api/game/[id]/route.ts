@@ -1,6 +1,7 @@
 import { IGame } from "@/features/game/game.schemas";
 import gameServices from "@/features/game/game.services";
 import { AppResponse } from "@/features/type";
+
 interface RouteContext {
   params: Promise<{
     id: string;

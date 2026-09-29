@@ -17,6 +17,8 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1142.0",
+    "@google/genai": "^2.24.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@supabase/ssr": "^0.12.7",
@@ -24,6 +26,7 @@
     "child_process": "^1.0.2",
     "dotenv": "^18.0.4",
     "next": "16.3.6",
+    "openai": "^7.23.0",
     "pg": "^8.23.0",
     "react": "19.2.8",
     "react-confetti": "^6.4.0",
