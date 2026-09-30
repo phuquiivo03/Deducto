@@ -191,6 +191,7 @@ Display:
 
 - Case title
 - Investigation progress
+- Profile control (avatar + name when signed in, Log in when signed out)
 
 Input:
 
@@ -203,6 +204,8 @@ Calculates:
 ```
 confirmed relationships count
 ```
+
+Signed-in profile opens a menu: **My cases** (`/store?tab=my`) and **Exit** (sign out). Signed-out **Log in** opens a modal with Google OAuth via `BoardProfile` in `board-profile.tsx`.
 
 ### CluePanel.tsx
 

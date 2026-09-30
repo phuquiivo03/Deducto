@@ -1,4 +1,7 @@
 import { Relationship } from "@/types/detective";
+import { useRouter } from "next/navigation";
+
+import BoardProfile from "./board-profile";
 
 interface Props {
   relationships: Relationship[];
@@ -6,7 +9,7 @@ interface Props {
 
 export default function TopBar({ relationships }: Props) {
   const count = relationships.filter((r) => r.status === "confirmed").length;
-
+  const router = useRouter();
   return (
     <header
       className="
@@ -20,33 +23,37 @@ border-b
 border-[#E7DFCC]
 "
     >
-      <div
+      <button
+        onClick={() => router.back()}
         className="
 w-9
 h-9
 rounded-xl
-bg-gradient-to-br
-from-[#3B3730]
-to-[#23211C]
+
 flex
 items-center
 justify-center
-shadow-sm
+hover:text-red-400
+cursor-pointer
 "
       >
         <svg
-          width="18"
-          height="18"
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#F1E6C8"
-          strokeWidth="1.8"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          className="lucide lucide-arrow-left-from-line preview-icon"
         >
-          <circle cx="10.5" cy="10.5" r="6.2" />
-
-          <line x1="15.1" y1="15.1" x2="20" y2="20" />
+          <path d="m9 6-6 6 6 6" />
+          <path d="M3 12h14" />
+          <path d="M21 19V5" />
         </svg>
-      </div>
+      </button>
 
       <div
         className="
@@ -109,6 +116,8 @@ text-[#2C2A24]
 
         <span>of 9 relationships confirmed</span>
       </div>
+
+      <BoardProfile />
     </header>
   );
 }

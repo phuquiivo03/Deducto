@@ -1,4 +1,4 @@
-import LandingNav from "@/components/landing/landing-nav";
+import Header from "@/components/layout/Header";
 import { StoreShelf } from "@/components/store/store-shelf";
 import { StoreSignInEmpty } from "@/components/store/store-sign-in-empty";
 import { StoreTabs } from "@/components/store/store-tabs";
@@ -42,7 +42,7 @@ export default async function StorePage({ searchParams }: StorePageProps) {
 
   return (
     <div className="min-h-dvh bg-paper text-ink">
-      <LandingNav />
+      <Header />
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-10">
         <header className="mb-8 md:mb-10">
           <h1 className="font-display text-3xl md:text-4xl text-ink tracking-tight">
