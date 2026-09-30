@@ -2,6 +2,8 @@
 
 import type { IGameMetadata } from '@/features/game/game.schemas'
 import { useCreateGameStore } from '@/store/create-game.store'
+import Card from '@/components/ui/Card'
+import { StickyTag } from '@/components/ui/sticky-tag'
 
 import { FieldShell, inputClass } from './field-shell'
 
@@ -40,19 +42,21 @@ export default function SolutionPicker({
 	const changed = resultChanged(result, originalResult)
 
 	return (
-		<section
+		<Card
 			id="section-solution"
-			className="rounded-card border border-line bg-card p-5 shadow-card space-y-4"
+			decoration="tack"
+			tone="postit"
+			className="space-y-4 mb-0"
 		>
-			<h2 className="font-serif text-lg text-ink">Solution</h2>
+			<h2 className="font-heading text-2xl text-pencil">Solution</h2>
 			{changed ? (
-				<div className="rounded-lg bg-goldBg border border-gold/30 px-3 py-2 text-xs text-ink">
+				<div className="border-2 border-dashed border-pencil bg-card px-3 py-2 text-sm text-pencil rounded-wobbly-sm">
 					Clues were generated for the original solution. Changing
 					who-dunnit may make the case inconsistent.
 					<button
 						type="button"
 						onClick={restoreOriginalResult}
-						className="ml-2 underline font-semibold"
+						className="ml-2 wavy-underline font-heading"
 					>
 						Restore original
 					</button>
@@ -126,6 +130,7 @@ export default function SolutionPicker({
 					))}
 				</select>
 			</FieldShell>
-		</section>
+			<StickyTag className="rotate-0">Keep this aligned with your clues</StickyTag>
+		</Card>
 	)
 }

@@ -232,8 +232,8 @@ p-4
         className="
 absolute
 inset-0
-bg-[#1A1814]/55
-backdrop-blur-[2px]
+bg-pencil/55
+
 "
         aria-label="Close accusation form"
         onClick={handleClose}
@@ -251,8 +251,8 @@ max-h-[90vh]
 overflow-y-auto
 rounded-2xl
 border
-border-[#E7DFCC]
-bg-[#FDFCF9]
+border-erased
+bg-card
 shadow-xl
 "
       >
@@ -266,11 +266,11 @@ items-start
 justify-between
 gap-3
 border-b
-border-[#E7DFCC]
-bg-[#F5F0E4]/95
+border-erased
+bg-paper/95
 px-5
 py-4
-backdrop-blur-sm
+
 "
         >
           <div>
@@ -280,7 +280,7 @@ text-[11px]
 font-semibold
 uppercase
 tracking-wide
-text-[#B08328]
+text-pen
 "
             >
               Final accusation
@@ -289,15 +289,15 @@ text-[#B08328]
               id="accusation-form-title"
               className="
 mt-1
-font-display
+font-heading
 text-lg
 font-semibold
-text-[#23211C]
+text-pencil
 "
             >
               Name the culprit
             </h2>
-            <p className="mt-1 text-xs text-[#6F6858]">
+            <p className="mt-1 text-xs text-pencil/70">
               Choose one suspect, weapon, location, and motive.
             </p>
           </div>
@@ -307,16 +307,16 @@ text-[#23211C]
             onClick={handleClose}
             className="
 shrink-0
-rounded-lg
+rounded-wobbly-sm
 border
-border-[#E7DFCC]
-bg-white
+border-erased
+bg-card
 px-2.5
 py-1.5
 text-xs
 font-semibold
-text-[#6F6858]
-hover:bg-[#F5F0E4]
+text-pencil/70
+hover:bg-paper
 "
           >
             Close
@@ -331,10 +331,10 @@ hover:bg-[#F5F0E4]
             return (
               <fieldset key={type} className="space-y-2">
                 <legend className="mb-2 block w-full">
-                  <span className="text-sm font-semibold text-[#23211C]">
+                  <span className="text-sm font-semibold text-pencil">
                     {title}
                   </span>
-                  <span className="mt-0.5 block text-xs text-[#6F6858]">
+                  <span className="mt-0.5 block text-xs text-pencil/70">
                     {hint}
                   </span>
                 </legend>
@@ -351,14 +351,14 @@ flex
 cursor-pointer
 items-center
 gap-3
-rounded-xl
+rounded-wobbly-md
 border
 p-3
 transition
 ${
   isSelected
-    ? "border-[#B08328] bg-[#F4E7C6]/60 shadow-sm"
-    : "border-[#E7DFCC] bg-white hover:border-[#D4C9A8]"
+    ? "border-pen bg-postit/60 shadow-sm"
+    : "border-erased bg-card hover:border-pencil"
 }
 `}
                       >
@@ -371,14 +371,14 @@ ${
                           disabled={isSubmitting}
                           className="
 size-4
-accent-[#B08328]
+accent-pen
 "
                         />
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-semibold">
                             {entity.name}
                           </span>
-                          <span className="block text-xs text-[#6F6858]">
+                          <span className="block text-xs text-pencil/70">
                             {entity.meta}
                           </span>
                         </span>
@@ -394,15 +394,15 @@ accent-[#B08328]
             <p
               role="alert"
               className="
-rounded-lg
+rounded-wobbly-sm
 border
-border-[#E8C4C4]
-bg-[#FDF2F2]
+border-marker/40
+bg-marker/10
 px-3
 py-2
 text-xs
 font-semibold
-text-[#9B2C2C]
+text-marker
 "
             >
               {submitError}
@@ -413,15 +413,15 @@ text-[#9B2C2C]
             <p
               role="status"
               className="
-rounded-lg
+rounded-wobbly-sm
 border
-border-[#E7DFCC]
-bg-[#F5F0E4]/80
+border-erased
+bg-paper/80
 px-3
 py-2
 text-xs
 font-semibold
-text-[#6F6858]
+text-pencil/70
 "
             >
               Submitting your accusation…
@@ -433,15 +433,15 @@ text-[#6F6858]
             disabled={isSubmitting}
             className="
 w-full
-rounded-xl
+rounded-wobbly-md
 bg-gradient-to-br
-from-[#8C6A1E]
-to-[#B08328]
+from-pencil
+to-pen
 py-3.5
 text-sm
 font-bold
-text-[#FDFCF9]
-shadow-md
+text-card
+shadow-hard
 transition
 hover:brightness-105
 active:brightness-95

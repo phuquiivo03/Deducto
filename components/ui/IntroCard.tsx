@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import { signInWithGoogle, signOut } from "@/features/user/user.sign-in";
 import { useAuthUser } from "@/hooks/use-auth-user";
+import { Button } from "@/components/ui/button";
+import { StickyTag } from "@/components/ui/sticky-tag";
 
 import Card from "./Card";
 import GoogleLoginButton from "./GoogleLoginButton";
@@ -48,95 +50,48 @@ export default function IntroCard({
     "Detective";
 
   return (
-    <Card>
-      <span className="inline-block text-xs font-bold text-gold bg-goldBg px-3 py-1 rounded-full mb-3">
-        Case #024
-      </span>
+    <Card decoration="tack" tone="postit" tilt="left" className="mb-0">
+      <StickyTag className="mb-4 rotate-0">Case file</StickyTag>
 
-      <h1
-        className="
-font-serif
-text-3xl
-mb-2
-"
-      >
+      <h1 className="font-heading text-4xl mb-3 text-pencil">
         The Midnight Murder
       </h1>
 
-      <p className="text-sm text-soft mb-4">
+      <p className="text-base text-pencil/80 mb-4">
         A body was found at 11:42 PM inside the old Raven mansion.
       </p>
 
-      <p
-        className="
-text-sm
-leading-relaxed
-mb-5
-"
-      >
+      <p className="text-base leading-relaxed mb-6 text-pencil">
         Jonathan Raven was discovered in his study after dinner party. Three
         guests remained.
       </p>
 
       <div
         className="
-border-t border-line
-pt-4
-flex justify-between
+border-t-2 border-dashed border-pencil
+pt-4 flex justify-between text-base
 "
       >
         <span>Victim</span>
-        <b className="font-serif">Jonathan Raven</b>
+        <b className="font-heading">Jonathan Raven</b>
       </div>
 
-      <div className="mt-5 space-y-3">
-        {isLoading ? (
-          <p className="text-xs text-soft text-center">Checking sign-in…</p>
-        ) : user ? (
-          <div className="rounded-xl border border-line bg-paper/50 px-4 py-3 text-sm">
-            <p className="text-soft text-xs uppercase tracking-wide">
-              Signed in
-            </p>
-            <p className="font-serif font-semibold mt-1">{displayName}</p>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="mt-2 text-xs text-soft underline"
-            >
-              Sign out
-            </button>
-          </div>
-        ) : (
-          <GoogleLoginButton
-            onClick={handleGoogleSignIn}
-            isSigningIn={isSigningIn}
-          />
-        )}
-
+      <div className="mt-6 space-y-4">
         {authError ? (
-          <p className="text-xs text-red-700 text-center">{authError}</p>
+          <p className="text-sm text-marker text-center">{authError}</p>
         ) : null}
 
-        <button
+        <Button
           type="button"
           onClick={start}
           disabled={disabled || !user}
-          className="
-w-full
-bg-ink
-text-paper
-rounded-xl
-py-4
-font-bold
-disabled:opacity-50
-disabled:cursor-not-allowed
-"
+          className="w-full"
         >
           Start investigation
-        </button>
+        </Button>
 
         {!user && !isLoading ? (
-          <p className="text-xs text-soft text-center">
+          <p className="text-sm text-pencil/60 text-center">
             Sign in with Google to play and save your solve.
           </p>
         ) : null}

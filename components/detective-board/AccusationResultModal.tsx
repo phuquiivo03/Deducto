@@ -54,15 +54,15 @@ function FlipCard({
 relative
 h-full
 w-full
-rounded-xl
+rounded-wobbly-md
 border
-border-[#E7DFCC]
+border-erased
 text-left
 transition-transform
 duration-500
 motion-reduce:transition-none
 [disabled]:cursor-default
-${isRevealed ? "" : "cursor-pointer hover:border-[#D4C9A8]"}
+${isRevealed ? "" : "cursor-pointer hover:border-pencil"}
 `}
         style={{
           transformStyle: "preserve-3d",
@@ -78,23 +78,23 @@ flex-col
 items-center
 justify-center
 gap-1
-rounded-xl
+rounded-wobbly-md
 bg-gradient-to-br
-from-[#5C4A1A]
-to-[#3D3214]
+from-pencil
+to-pencil
 p-3
-text-[#F4E7C6]
+text-postit
 shadow-inner
 "
           style={{ backfaceVisibility: "hidden" }}
         >
-          <span className="font-display text-2xl font-bold text-[#E8D4A0]">
+          <span className="font-heading text-2xl font-bold text-postit">
             ?
           </span>
           <span className="text-[11px] font-semibold uppercase tracking-wide">
             {card.title}
           </span>
-          <span className="text-[10px] text-[#C9B88A]">Tap to reveal</span>
+          <span className="text-[10px] text-postit/80">Tap to reveal</span>
         </div>
 
         <div
@@ -106,8 +106,8 @@ flex-col
 items-center
 justify-center
 gap-2
-rounded-xl
-bg-[#FDFCF9]
+rounded-wobbly-md
+bg-card
 p-3
 "
           style={{
@@ -115,10 +115,10 @@ p-3
             transform: "rotateY(180deg)",
           }}
         >
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-[#6F6858]">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-pencil/70">
             {card.title}
           </span>
-          <span className="line-clamp-2 text-center text-sm font-semibold text-[#23211C]">
+          <span className="line-clamp-2 text-center text-sm font-semibold text-pencil">
             {card.name}
           </span>
           <span
@@ -132,8 +132,8 @@ uppercase
 tracking-wide
 ${
   isCorrect
-    ? "border border-[#C6E0C6] bg-[#F2FAF2] text-[#2F6B2F]"
-    : "border border-[#E8C4C4] bg-[#FDF2F2] text-[#9B2C2C]"
+    ? "border border-pen bg-pen/10 text-pen"
+    : "border border-marker/40 bg-marker/10 text-marker"
 }
 `}
           >
@@ -259,8 +259,8 @@ p-4
         className="
 absolute
 inset-0
-bg-[#1A1814]/55
-backdrop-blur-[2px]
+bg-pencil/55
+
 "
         aria-label="Close result"
         onClick={onClose}
@@ -278,8 +278,8 @@ max-h-[90vh]
 overflow-y-auto
 rounded-2xl
 border
-border-[#E7DFCC]
-bg-[#FDFCF9]
+border-erased
+bg-card
 shadow-xl
 "
       >
@@ -293,11 +293,11 @@ items-start
 justify-between
 gap-3
 border-b
-border-[#E7DFCC]
-bg-[#F5F0E4]/95
+border-erased
+bg-paper/95
 px-5
 py-4
-backdrop-blur-sm
+
 "
         >
           <div>
@@ -307,7 +307,7 @@ text-[11px]
 font-semibold
 uppercase
 tracking-wide
-text-[#B08328]
+text-pen
 "
             >
               Verdict
@@ -316,15 +316,15 @@ text-[#B08328]
               id="accusation-result-title"
               className="
 mt-1
-font-display
+font-heading
 text-lg
 font-semibold
-text-[#23211C]
+text-pencil
 "
             >
               Reveal your accusation
             </h2>
-            <p className="mt-1 text-xs text-[#6F6858]">
+            <p className="mt-1 text-xs text-pencil/70">
               Flip each card to see how you did.
             </p>
           </div>
@@ -334,16 +334,16 @@ text-[#23211C]
             onClick={onClose}
             className="
 shrink-0
-rounded-lg
+rounded-wobbly-sm
 border
-border-[#E7DFCC]
-bg-white
+border-erased
+bg-card
 px-2.5
 py-1.5
 text-xs
 font-semibold
-text-[#6F6858]
-hover:bg-[#F5F0E4]
+text-pencil/70
+hover:bg-paper
 "
           >
             Close
@@ -367,34 +367,34 @@ hover:bg-[#F5F0E4]
             <div
               role="status"
               className={`
-rounded-xl
+rounded-wobbly-md
 border
 px-4
 py-4
 text-center
 ${
   allCorrect
-    ? "border-[#C6E0C6] bg-[#F2FAF2]"
-    : "border-[#E7DFCC] bg-[#F5F0E4]/60"
+    ? "border-pen bg-pen/10"
+    : "border-erased bg-paper/60"
 }
 `}
             >
               {allCorrect ? (
                 <>
-                  <p className="font-display text-base font-semibold text-[#2F6B2F]">
+                  <p className="font-heading text-base font-semibold text-pen">
                     Case closed!
                   </p>
-                  <p className="mt-1 text-xs text-[#3D5C3D]">
+                  <p className="mt-1 text-xs text-pen/80">
                     You named the culprit — every part of your accusation was
                     correct. Congratulations, detective.
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="font-display text-base font-semibold text-[#23211C]">
+                  <p className="font-heading text-base font-semibold text-pencil">
                     {correctCount} of 4 correct
                   </p>
-                  <p className="mt-1 text-xs text-[#6F6858]">
+                  <p className="mt-1 text-xs text-pencil/70">
                     The case remains open. Review the board and try again.
                   </p>
                   <button
@@ -403,16 +403,16 @@ ${
                     className="
 mt-3
 w-full
-rounded-xl
+rounded-wobbly-md
 border
-border-[#E7DFCC]
-bg-white
+border-erased
+bg-card
 py-2.5
 text-sm
 font-semibold
-text-[#23211C]
+text-pencil
 transition
-hover:bg-[#F5F0E4]
+hover:bg-paper
 "
                   >
                     Try again

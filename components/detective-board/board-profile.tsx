@@ -102,9 +102,9 @@ export default function BoardProfile() {
 w-[120px]
 h-9
 rounded-full
-bg-[#F7F2E6]
+bg-erased
 border
-border-[#E7DFCC]
+border-erased
 animate-pulse
 "
 				aria-hidden
@@ -122,14 +122,15 @@ animate-pulse
 px-4
 py-1.5
 rounded-full
-bg-[#F7F2E6]
+bg-erased
 border
-border-[#E7DFCC]
+border-erased
 text-xs
 font-semibold
-text-[#2C2A24]
-hover:border-[#D4C9A8]
+text-pencil
+hover:border-pencil
 transition-colors
+
 "
 				>
 					Log in
@@ -153,8 +154,8 @@ p-4
 							className="
 absolute
 inset-0
-bg-[#1A1814]/55
-backdrop-blur-[2px]
+bg-pencil/55
+
 "
 							aria-label="Close sign in"
 							onClick={closeLogin}
@@ -170,8 +171,8 @@ w-full
 max-w-sm
 rounded-2xl
 border
-border-[#E7DFCC]
-bg-[#FDFCF9]
+border-erased
+bg-card
 shadow-xl
 p-6
 space-y-4
@@ -181,15 +182,15 @@ space-y-4
 								<h2
 									id="board-login-title"
 									className="
-font-display
+font-heading
 font-semibold
 text-lg
-text-[#2C2A24]
+text-pencil
 "
 								>
 									Sign in
 								</h2>
-								<p className="text-xs text-[#6F6858] mt-1">
+								<p className="text-xs text-pencil/70 mt-1">
 									Save your solve and open your cases.
 								</p>
 							</div>
@@ -232,12 +233,12 @@ pl-1
 pr-3
 py-1
 rounded-full
-bg-[#F7F2E6]
+bg-erased
 border
-border-[#E7DFCC]
+border-erased
 text-xs
-text-[#2C2A24]
-hover:border-[#D4C9A8]
+text-pencil
+hover:border-pencil
 transition-colors
 max-w-[180px]
 "
@@ -253,7 +254,7 @@ h-7
 rounded-full
 object-cover
 border
-border-[#E7DFCC]
+border-erased
 shrink-0
 "
 						referrerPolicy="no-referrer"
@@ -264,13 +265,13 @@ shrink-0
 w-7
 h-7
 rounded-full
-bg-[#E7DFCC]
+bg-erased
 flex
 items-center
 justify-center
 text-[10px]
 font-bold
-text-[#6F6858]
+text-pencil/70
 shrink-0
 "
 						aria-hidden
@@ -290,10 +291,10 @@ right-0
 top-[calc(100%+6px)]
 z-50
 min-w-[160px]
-rounded-xl
+rounded-wobbly-md
 border
-border-[#E7DFCC]
-bg-white
+border-erased
+bg-card
 shadow-lg
 py-1
 overflow-hidden
@@ -308,8 +309,8 @@ block
 px-4
 py-2.5
 text-sm
-text-[#2C2A24]
-hover:bg-[#F7F2E6]
+text-pencil
+hover:bg-erased
 transition-colors
 "
 					>
@@ -325,8 +326,8 @@ text-left
 px-4
 py-2.5
 text-sm
-text-[#BD5F51]
-hover:bg-[#F5E2DD]
+text-marker
+hover:bg-marker/10
 transition-colors
 "
 					>

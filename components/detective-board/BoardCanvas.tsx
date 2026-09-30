@@ -181,9 +181,9 @@ relative
 relative
 w-[1560px]
 h-[980px]
-bg-[#F5F0E4]
-bg-[radial-gradient(#d8cfb8_1px,transparent_1px)]
-[background-size:22px_22px]
+bg-paper
+bg-[radial-gradient(#e5e0d8_1px,transparent_1px)]
+[background-size:24px_24px]
 "
       >
         <ConnectionLines

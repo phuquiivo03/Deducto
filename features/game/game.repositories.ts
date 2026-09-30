@@ -202,7 +202,7 @@ const findByUserId = async (userId: string): Promise<IShortGame[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("games")
-    .select(SHORT_GAME_COLUMNS)
+    .select(`${SHORT_GAME_COLUMNS}`)
     .eq("creator_id", userId);
   if (error) {
     console.error("findByUserId:", error.message);
@@ -215,7 +215,7 @@ const findResolved = async (id: string): Promise<IShortGame[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("user_submissions")
-    .select(`game_id(${SHORT_GAME_COLUMNS})`)
+    .select(`game_id(${SHORT_GAME_COLUMNS},creator_id(*))`)
     .eq("user_id", id);
   if (error) {
     console.error("findResolved:", error.message);

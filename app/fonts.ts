@@ -1,25 +1,15 @@
-import {
-  Momo_Trust_Display,
-  Permanent_Marker,
-  Playwrite_VN,
-} from "next/font/google";
+import { Kalam, Patrick_Hand } from 'next/font/google'
 
-export const playwriteVN = Playwrite_VN({
-  weight: "variable",
-  display: "swap",
-  variable: "--font-playwrite-vn",
-});
+export const kalam = Kalam({
+	weight: '700',
+	subsets: ['latin', 'latin-ext'],
+	display: 'swap',
+	variable: '--font-kalam',
+})
 
-export const momoTrustDisplay = Momo_Trust_Display({
-  weight: "400",
-  subsets: ["latin", "vietnamese"],
-  display: "swap",
-  variable: "--font-momo-trust-display",
-});
-
-export const permanentMarker = Permanent_Marker({
-  weight: "400",
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-permanent-marker",
-});
+export const patrickHand = Patrick_Hand({
+	weight: '400',
+	subsets: ['latin', 'latin-ext'],
+	display: 'swap',
+	variable: '--font-patrick-hand',
+})

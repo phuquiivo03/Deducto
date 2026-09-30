@@ -1,117 +1,62 @@
-import { Clue } from "@/types/detective";
+import { Clue } from '@/types/detective'
+import { StickyTag } from '@/components/ui/sticky-tag'
 
 interface Props {
-  clues: Clue[];
+	clues: Clue[]
+	onSelect: (id: string) => void
+}
 
-  onSelect: (id: string) => void;
+function statusTone(status: Clue['status']) {
+	if (status === 'used') return 'marker' as const
+	if (status === 'analyzed') return 'pen' as const
+	return 'postit' as const
 }
 
 export default function CluePanel({ clues, onSelect }: Props) {
-  return (
-    <aside
-      className="
-w-[268px]
-bg-white
-border-r
-border-[#E7DFCC]
-flex
-flex-col
+	return (
+		<aside
+			className="
+w-[268px] bg-card border-r-2 border-dashed border-erased
+flex flex-col
 "
-    >
-      <div
-        className="
-p-[18px]
-"
-      >
-        <h2
-          className="
-font-semibold
-text-[15px]
-font-display
-"
-        >
-          Clues
-        </h2>
+		>
+			<div className="p-5">
+				<h2 className="font-heading text-lg text-pencil">Clues</h2>
+				<p className="mt-1 text-sm text-pencil/70">
+					Information you&apos;ve discovered
+				</p>
+			</div>
 
-        <p
-          className="
-mt-1
-text-xs
-text-[#6F6858]
+			<div className="flex-1 overflow-y-auto px-3 pb-5 space-y-3">
+				{clues.map((clue, index) => (
+					<button
+						key={clue.id}
+						type="button"
+						onClick={() => onSelect(clue.id)}
+						className="
+w-full text-left bg-paper border-2 border-pencil
+rounded-wobbly-sm p-3 shadow-paper
+hover:shadow-hard-sm hover:-rotate-1
+transition-transform duration-100
 "
-        >
-          Information you've discovered
-        </p>
-      </div>
-
-      <div
-        className="
-flex-1
-overflow-y-auto
-px-3
-pb-5
-space-y-2
-"
-      >
-        {clues.map((clue, index) => (
-          <button
-            key={clue.id}
-            onClick={() => onSelect(clue.id)}
-            className="
-w-full
-text-left
-bg-[#FDFCF9]
-border
-border-[#E7DFCC]
-rounded-lg
-p-3
-hover:shadow-sm
-transition
-"
-          >
-            <div
-              className="
-flex
-justify-between
-items-center
-mb-2
-"
-            >
-              <span
-                className="
-text-[11px]
-font-semibold
-text-[#B08328]
-"
-              >
-                CLUE #{index + 1}
-              </span>
-
-              <span
-                className="
-text-[10px]
-px-2
-py-0.5
-rounded-full
-bg-[#F4E7C6]
-text-[#8C6A1E]
-"
-              >
-                {clue.status}
-              </span>
-            </div>
-
-            <p
-              className="
-text-sm
-leading-relaxed
-"
-            >
-              {clue.text}
-            </p>
-          </button>
-        ))}
-      </div>
-    </aside>
-  );
+					>
+						<div className="flex justify-between items-center mb-2 gap-2">
+							<span className="text-xs font-heading text-pen">
+								CLUE #{index + 1}
+							</span>
+							<StickyTag
+								tone={statusTone(clue.status)}
+								className="text-xs py-0.5 rotate-0"
+							>
+								{clue.status}
+							</StickyTag>
+						</div>
+						<p className="text-base leading-relaxed text-pencil">
+							{clue.text}
+						</p>
+					</button>
+				))}
+			</div>
+		</aside>
+	)
 }

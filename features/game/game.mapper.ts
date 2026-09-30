@@ -3,6 +3,7 @@ import type {
   IGameMetadata,
   IShortGame,
 } from "@/features/game/game.schemas";
+import { IUser } from "../user/user.schemas";
 
 /** Row shape returned by Supabase nested select on `games`. */
 export interface GameDbRow {
@@ -21,6 +22,7 @@ export interface GameDbRow {
 export interface ShortGameDbRow {
   id: string;
   creator_id: string;
+  creator: IUser | null;
   title: string;
   description: string;
   banner: string;
@@ -31,7 +33,7 @@ export interface ShortGameDbRow {
 export function mapShortGameFromDb(row: ShortGameDbRow): IShortGame {
   return {
     id: row.id,
-    creator: row.creator_id,
+    creator: row.creator?.name || row.creator_id,
     title: row.title,
     description: row.description,
     banner: row.banner,

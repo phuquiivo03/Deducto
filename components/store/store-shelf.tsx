@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 
 import type { IShortGame } from '@/features/game/game.schemas'
 import type { StoreTab } from '@/lib/store-constants'
+import { Input } from '@/components/ui/input'
 
 import { CaseCard } from './case-card'
 
@@ -62,7 +63,7 @@ export function StoreShelf({ games, initialQuery, tab }: StoreShelfProps) {
 
 	if (games.length === 0) {
 		return (
-			<p className="text-center text-sm text-soft py-16 max-w-md mx-auto">
+			<p className="text-center text-lg text-pencil/70 py-16 max-w-md mx-auto">
 				{EMPTY_BY_TAB[tab]}
 			</p>
 		)
@@ -72,70 +73,65 @@ export function StoreShelf({ games, initialQuery, tab }: StoreShelfProps) {
 		<div className="space-y-8">
 			<div
 				className="
-grid gap-6 md:grid-cols-[1fr_auto]
+grid gap-8 md:grid-cols-[1fr_auto]
 md:items-end
 "
 			>
 				<div className="flex flex-col gap-2">
-					<label htmlFor="store-search" className="text-sm font-semibold text-ink">
+					<label
+						htmlFor="store-search"
+						className="text-lg font-heading text-pencil"
+					>
 						Search
 					</label>
-					<input
+					<Input
 						id="store-search"
 						type="search"
 						value={query}
 						onChange={(e) => handleQueryChange(e.target.value)}
 						placeholder="Title, description, or creator"
-						className="
-w-full rounded-xl border border-line bg-card
-px-4 py-2.5 text-sm text-ink placeholder:text-soft
-focus:outline-none focus:ring-2 focus:ring-gold/40
-"
 					/>
 				</div>
 
-				<fieldset className="flex flex-col gap-2 min-w-0 md:min-w-[280px]">
-					<legend className="text-sm font-semibold text-ink mb-1">
+				<fieldset
+					className="
+flex flex-col gap-3 min-w-0 md:min-w-[280px]
+border-2 border-dashed border-pencil rounded-wobbly-md p-4
+"
+				>
+					<legend className="text-lg font-heading text-pencil px-1">
 						Price
 					</legend>
-					<label className="flex items-center gap-2 text-sm text-ink">
+					<label className="flex items-center gap-2 text-base text-pencil">
 						<input
 							type="checkbox"
 							checked={priceFreeOnly}
 							onChange={(e) => setPriceFreeOnly(e.target.checked)}
-							className="rounded border-line"
+							className="h-4 w-4 border-2 border-pencil"
 						/>
 						Free only
 					</label>
 					<div className="flex gap-2">
-						<input
+						<Input
 							type="number"
 							min={0}
 							placeholder="Min"
 							value={priceMin}
 							onChange={(e) => setPriceMin(e.target.value)}
-							className="
-flex-1 rounded-xl border border-line bg-card
-px-3 py-2 text-sm text-ink placeholder:text-soft
-focus:outline-none focus:ring-2 focus:ring-gold/40
-"
+							className="flex-1 text-base"
 							aria-label="Minimum price"
 						/>
-						<input
+						<Input
 							type="number"
 							min={0}
 							placeholder="Max"
 							value={priceMax}
 							onChange={(e) => setPriceMax(e.target.value)}
-							className="
-flex-1 rounded-xl border border-line bg-card
-px-3 py-2 text-sm text-ink placeholder:text-soft
-focus:outline-none focus:ring-2 focus:ring-gold/40
-"
+							className="flex-1 text-base"
 							aria-label="Maximum price"
 						/>
 					</div>
-					<p className="text-xs text-soft leading-relaxed">
+					<p className="text-sm text-pencil/60 leading-relaxed">
 						Price filtering will apply when cases list a price in the
 						catalog.
 					</p>
@@ -143,20 +139,20 @@ focus:outline-none focus:ring-2 focus:ring-gold/40
 			</div>
 
 			{filtered.length === 0 ? (
-				<p className="text-center text-sm text-soft py-12">
+				<p className="text-center text-lg text-pencil/70 py-12">
 					No cases match your search. Try different words or clear the
 					search field.
 				</p>
 			) : (
 				<ul
 					className="
-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6
+grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8
 list-none p-0 m-0
 "
 				>
-					{filtered.map((game) => (
+					{filtered.map((game, index) => (
 						<li key={game.id}>
-							<CaseCard game={game} />
+							<CaseCard game={game} index={index} />
 						</li>
 					))}
 				</ul>

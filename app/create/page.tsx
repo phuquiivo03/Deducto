@@ -1,11 +1,15 @@
 import CreateGameWizard from '@/components/create-game/CreateGameWizard'
+import Header from '@/components/layout/Header'
+import { SiteFooter } from '@/components/layout/site-footer'
 
 export default function CreateGamePage() {
 	return (
-		<main className="min-h-screen bg-paper pb-16">
-			<div className="w-full max-w-4xl mx-auto px-4 pt-6">
+		<div className="min-h-dvh bg-paper text-pencil">
+			<Header />
+			<main className="w-full max-w-5xl mx-auto px-6 py-20">
 				<CreateGameWizard />
-			</div>
-		</main>
+			</main>
+			<SiteFooter />
+		</div>
 	)
 }

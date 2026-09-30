@@ -2,6 +2,9 @@
 
 import type { GameLevelStrict } from '@/features/game/game.schemas'
 import { useCreateGameStore } from '@/store/create-game.store'
+import Card from '@/components/ui/Card'
+import { IconCircle } from '@/components/ui/icon-circle'
+import { FileText } from 'lucide-react'
 
 import { FieldShell, inputClass } from './field-shell'
 
@@ -19,11 +22,15 @@ export default function CaseInfoForm() {
 	)
 
 	return (
-		<section
+		<Card
 			id="section-overview"
-			className="rounded-card border border-line bg-card p-5 shadow-card space-y-4"
+			decoration="tape"
+			className="space-y-4 mb-0"
 		>
-			<h2 className="font-serif text-lg text-ink">Overview</h2>
+			<div className="flex items-center gap-3">
+				<IconCircle icon={FileText} />
+				<h2 className="font-heading text-2xl text-pencil">Overview</h2>
+			</div>
 			<FieldShell
 				label="Title"
 				htmlFor="case-title"
@@ -84,6 +91,6 @@ export default function CaseInfoForm() {
 					<option value="hard">Hard</option>
 				</select>
 			</FieldShell>
-		</section>
+		</Card>
 	)
 }

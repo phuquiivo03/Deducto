@@ -102,10 +102,10 @@ export default function ClueEditor({
 					to edit safely.
 				</p>
 			) : null}
-			<p className="text-sm text-ink bg-paper/80 rounded-lg px-3 py-2">
+			<p className="text-sm text-pencil bg-paper/80 rounded-wobbly-sm px-3 py-2">
 				{preview}
 			</p>
-			<label className="text-xs font-semibold uppercase text-soft">
+			<label className="text-xs font-semibold uppercase text-pencil/70">
 				Template
 				<select
 					value={templateKey}
@@ -122,7 +122,7 @@ export default function ClueEditor({
 			</label>
 
 			{templateKey === 'A1' ? (
-				<label className="text-xs font-semibold uppercase text-soft block">
+				<label className="text-xs font-semibold uppercase text-pencil/70 block">
 					Anchor attribute
 					<select
 						value={clue.attribute}
@@ -146,7 +146,7 @@ export default function ClueEditor({
 			) : null}
 
 			{templateKey === 'A2' ? (
-				<label className="text-xs font-semibold uppercase text-soft block">
+				<label className="text-xs font-semibold uppercase text-pencil/70 block">
 					Fact attribute
 					<select
 						value={clue.attribute}
@@ -168,7 +168,7 @@ export default function ClueEditor({
 			) : null}
 
 			{CLUE_TEMPLATES.find((t) => t.key === templateKey)?.suspectId ? (
-				<label className="text-xs font-semibold uppercase text-soft block">
+				<label className="text-xs font-semibold uppercase text-pencil/70 block">
 					Suspect
 					<select
 						value={clue.suspect_id ?? ''}
@@ -202,7 +202,7 @@ export default function ClueEditor({
 			) : null}
 
 			{CLUE_TEMPLATES.find((t) => t.key === templateKey)?.weaponId ? (
-				<label className="text-xs font-semibold uppercase text-soft block">
+				<label className="text-xs font-semibold uppercase text-pencil/70 block">
 					Weapon
 					<select
 						value={clue.weapon_id ?? ''}
@@ -236,7 +236,7 @@ export default function ClueEditor({
 			) : null}
 
 			{CLUE_TEMPLATES.find((t) => t.key === templateKey)?.locationId ? (
-				<label className="text-xs font-semibold uppercase text-soft block">
+				<label className="text-xs font-semibold uppercase text-pencil/70 block">
 					Location
 					<select
 						value={clue.location_id ?? ''}
@@ -270,7 +270,7 @@ export default function ClueEditor({
 			) : null}
 
 			{templateKey === 'E3' || templateKey === 'A1' ? (
-				<label className="text-xs font-semibold uppercase text-soft block">
+				<label className="text-xs font-semibold uppercase text-pencil/70 block">
 					Value
 					{templateKey === 'A1' ? (
 						<select
@@ -305,7 +305,7 @@ export default function ClueEditor({
 			) : null}
 
 			{templateKey === 'A2' ? (
-				<label className="text-xs font-semibold uppercase text-soft block">
+				<label className="text-xs font-semibold uppercase text-pencil/70 block">
 					Value
 					<input
 						value={clue.value}

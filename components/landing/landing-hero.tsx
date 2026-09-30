@@ -1,56 +1,51 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import {
+  DoodleArrow,
+  DoodleCornerMarks,
+  DoodleScribbleCircle,
+} from "@/components/ui/doodles";
+import { buttonClassName } from "@/components/ui/button";
+
 import { OpenCaseLink } from "./open-case-link";
 
 export default function LandingHero() {
   return (
     <section
       className="
-max-w-7xl mx-auto px-4 md:px-6
-pt-8 md:pt-12 pb-16 md:pb-20
+max-w-5xl mx-auto px-6
+py-20
 min-h-[calc(100dvh-4rem)]
-grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14
+grid grid-cols-1 md:grid-cols-2 gap-8
 items-center
 "
     >
-      <div className="order-2 lg:order-1">
+      <div className="order-2 md:order-1 -rotate-1">
         <h1
           className="
-font-display text-4xl md:text-5xl lg:text-6xl
-text-ink tracking-tight leading-[1.05]
-max-w-[14ch]
+font-heading text-4xl md:text-5xl lg:text-6xl
+text-pencil leading-[1.05] max-w-[14ch]
 "
         >
-          Every clue connects to the truth.
+          Every clue connects to the truth
+          <span className="inline-block text-marker rotate-12 ml-1">!</span>
         </h1>
 
-        <p className="mt-4 text-base text-soft leading-relaxed max-w-[65ch]">
+        <p className="mt-6 text-lg md:text-xl text-pencil/80 leading-relaxed max-w-[65ch]">
           Build a detective board, test your theories, and accuse the killer
           when the evidence lines up.
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center gap-4">
-          <OpenCaseLink
-            className="
-inline-flex items-center justify-center
-rounded-xl bg-ink text-paper
-px-6 py-3.5 text-sm font-bold
-transition-transform active:scale-[0.98]
-hover:bg-[#1f1d19]
-"
-          />
-
+        <div className="relative mt-10 flex flex-wrap items-center gap-6">
+          <OpenCaseLink className={buttonClassName({ size: "default" })} />
+          <DoodleArrow className="hover:hidden absolute -right-5 top-full md:top-[60%] md:-translate-y-1/2 md:left-[11rem] md:right-auto" />
           <Link
             href="/create"
-            className="
-text-sm  text-ink
- decoration-line
-border hover:border-gold
-px-6 py-3.5 shadow-md
-rounded-xl
-font-bold
-"
+            className={buttonClassName({
+              variant: "secondary",
+              size: "default",
+            })}
           >
             Create a case
           </Link>
@@ -59,18 +54,28 @@ font-bold
 
       <div
         className="
-order-1 lg:order-2
-relative aspect-[16/10] w-full
-rounded-card overflow-hidden
-border border-line shadow-card
+order-1 md:order-2 relative rotate-1
+aspect-[16/10] w-full
+border-2 border-pencil overflow-hidden
+rounded-wobbly-md shadow-hard
 "
       >
+        <DoodleCornerMarks />
+        <div
+          className="
+pointer-events-none absolute left-1/2 top-0 z-10
+h-7 w-28 -translate-x-1/2 -translate-y-1/2
+rotate-2 border border-pencil/20 bg-erased/90
+"
+          aria-hidden
+        />
+        <DoodleScribbleCircle className="absolute -right-2 -top-4 z-10" />
         <Image
           src="/images/landing/hero-desk.png"
           alt="Lamp-lit study desk with notes and a magnifying glass"
           fill
           priority
-          sizes="(max-width: 1024px) 100vw, 50vw"
+          sizes="(max-width: 768px) 100vw, 50vw"
           className="object-cover"
         />
       </div>

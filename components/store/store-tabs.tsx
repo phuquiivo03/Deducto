@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import type { StoreTab } from '@/lib/store-constants'
+import { cn } from '@/lib/cn'
 
 const TAB_LABELS: Record<StoreTab, string> = {
 	public: 'Public',
@@ -17,8 +18,8 @@ export function StoreTabs({ activeTab, query }: StoreTabsProps) {
 	return (
 		<div
 			className="
-flex flex-wrap gap-2
-p-1 rounded-xl bg-paper border border-line
+flex flex-wrap gap-3 p-2
+border-2 border-dashed border-pencil rounded-wobbly-md bg-erased/40
 "
 			role="tablist"
 			aria-label="Case collections"
@@ -35,15 +36,13 @@ p-1 rounded-xl bg-paper border border-line
 						href={`/store?${params.toString()}`}
 						role="tab"
 						aria-selected={isActive}
-						className={`
-rounded-lg px-4 py-2 text-sm font-semibold
-transition-colors
-${
-	isActive
-		? 'bg-ink text-paper'
-		: 'text-ink hover:bg-goldBg'
-}
-`}
+						className={cn(
+							'rounded-wobbly px-5 py-2 text-lg border-2 border-pencil',
+							'transition-transform duration-100',
+							isActive
+								? 'bg-marker text-card shadow-hard-sm -rotate-1'
+								: 'bg-card text-pencil hover:bg-pen hover:text-card hover:-rotate-1',
+						)}
 					>
 						{TAB_LABELS[tab]}
 					</Link>
