@@ -21,8 +21,10 @@ export interface GameDbRow {
 /** Row shape for list queries on `games`. */
 export interface ShortGameDbRow {
   id: string;
-  creator_id: string;
-  creator: IUser | null;
+  creator_id: {
+    name: string;
+    avatar: string;
+  } | null;
   title: string;
   description: string;
   banner: string;
@@ -33,7 +35,7 @@ export interface ShortGameDbRow {
 export function mapShortGameFromDb(row: ShortGameDbRow): IShortGame {
   return {
     id: row.id,
-    creator: row.creator?.name || row.creator_id,
+    creator: row.creator_id,
     title: row.title,
     description: row.description,
     banner: row.banner,

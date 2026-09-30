@@ -25,16 +25,16 @@ const STATUS_CELL: Record<
   { symbol: string; className: string }
 > = {
   impossible: {
-    symbol: "×",
-    className: "bg-marker/10 border-marker text-marker",
+    symbol: "X",
+    className: "text-marker",
   },
   unknown: {
     symbol: "?",
-    className: "bg-card border-pencil border-dashed text-pencil/60",
+    className: " border-dashed text-pencil/60",
   },
   confirmed: {
     symbol: "✓",
-    className: "bg-pen/10 border-pen text-pen",
+    className: "text-pen",
   },
   empty: {
     symbol: " ",
@@ -112,7 +112,7 @@ mb-3
         {title}
       </h3>
       <div className="overflow-auto">
-        <table className="border-collapse text-xs">
+        <table className="border-collapse text-xs bg-card">
           <thead>
             <tr>
               <th
@@ -200,7 +200,7 @@ w-full
 min-w-10
 h-9
 rounded
-border
+
 font-semibold
 text-sm
 transition-colors
@@ -208,6 +208,7 @@ hover:opacity-90
 focus:outline-none
 focus-visible:ring-2
 focus-visible:ring-pen
+
 ${cell.className}
 `}
                         aria-label={`${row.name} and ${col.name}: ${status}. Click to change.`}
