@@ -25,20 +25,20 @@ const STATUS_CELL: Record<
   { symbol: string; className: string }
 > = {
   impossible: {
-    symbol: "×",
-    className: "bg-[#F5E2DD] border-[#BD5F51] text-[#BD5F51]",
+    symbol: "X",
+    className: "text-marker",
   },
   unknown: {
     symbol: "?",
-    className: "bg-white border-[#CBC2AC] border-dashed text-[#9C9482]",
+    className: " border-dashed text-pencil/60",
   },
   confirmed: {
     symbol: "✓",
-    className: "bg-[#E4EFE1] border-[#5E8A62] text-[#5E8A62]",
+    className: "text-pen",
   },
   empty: {
     symbol: " ",
-    className: "bg-white border-[#CBC2AC] border-dashed text-[#9C9482]",
+    className: "bg-card border-erased border-dotted text-pencil/40",
   },
 };
 
@@ -60,7 +60,7 @@ function EntityHeader({ entity }: { entity: Entity }) {
         className="
 text-[10px]
 uppercase
-text-[#9C9482]
+text-pencil/60
 font-bold
 truncate
 "
@@ -70,7 +70,7 @@ truncate
       <div
         className="
 font-semibold
-font-display
+font-heading
 truncate
 "
         title={entity.name}
@@ -104,15 +104,15 @@ function RelationshipBlock({
         className="
 text-sm
 font-semibold
-font-display
-text-[#6F6858]
+font-heading
+text-pencil/70
 mb-3
 "
       >
         {title}
       </h3>
       <div className="overflow-auto">
-        <table className="border-collapse text-xs">
+        <table className="border-collapse text-xs bg-card">
           <thead>
             <tr>
               <th
@@ -122,9 +122,9 @@ top-0
 left-0
 z-20
 min-w-28
-bg-[#F7F4ED]
+bg-paper
 border
-border-[#E7DFCC]
+border-erased
 p-2
 "
                 scope="col"
@@ -139,9 +139,9 @@ top-0
 z-10
 min-w-11
 max-w-20
-bg-[#F7F4ED]
+bg-paper
 border
-border-[#E7DFCC]
+border-erased
 p-2
 text-left
 font-normal
@@ -162,9 +162,9 @@ sticky
 left-0
 z-10
 min-w-28
-bg-[#F7F4ED]
+bg-paper
 border
-border-[#E7DFCC]
+border-erased
 p-2
 text-left
 font-normal
@@ -181,7 +181,7 @@ font-normal
                       key={col.id}
                       className="
 border
-border-[#E7DFCC]
+border-erased
 p-0.5
 "
                     >
@@ -200,14 +200,15 @@ w-full
 min-w-10
 h-9
 rounded
-border
+
 font-semibold
 text-sm
 transition-colors
 hover:opacity-90
 focus:outline-none
 focus-visible:ring-2
-focus-visible:ring-[#5E8A62]
+focus-visible:ring-pen
+
 ${cell.className}
 `}
                         aria-label={`${row.name} and ${col.name}: ${status}. Click to change.`}

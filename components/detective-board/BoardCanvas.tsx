@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ZoomIn, ZoomOut } from "lucide-react";
 
 import {
   Entity,
@@ -15,6 +16,18 @@ import EntityCard from "./EntityCard";
 import StickyNote from "./StickyNote";
 import ConnectionLines from "./ConnectionLines";
 import RelationshipPopover from "./RelationshipPopover";
+
+const BOARD_WIDTH = 1560;
+const BOARD_HEIGHT = 980;
+const MIN_BOARD_ZOOM = 0.25;
+const MAX_BOARD_ZOOM = 2;
+const ZOOM_STEP = 0.1;
+
+type ScrollPoint = { left: number; top: number };
+
+function clampBoardZoom(value: number) {
+  return Math.min(MAX_BOARD_ZOOM, Math.max(MIN_BOARD_ZOOM, value));
+}
 
 type DraftState = { fromId: string; x: number; y: number };
 
@@ -86,19 +99,116 @@ export default function BoardCanvas({
   onRemoveRelationship,
 }: Props) {
   const boardRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const zoomRef = useRef(1);
+  const pendingScrollRef = useRef<ScrollPoint | null>(null);
 
+  const [zoom, setZoom] = useState(1);
   const [draft, setDraft] = useState<DraftState | null>(null);
-
   const [picker, setPicker] = useState<PickerState | null>(null);
 
-  const clientToBoard = useCallback((clientX: number, clientY: number) => {
-    const rect = boardRef.current?.getBoundingClientRect();
-    if (!rect) return { x: 0, y: 0 };
-    return {
-      x: clientX - rect.left,
-      y: clientY - rect.top,
-    };
-  }, []);
+  const clientToBoard = useCallback(
+    (clientX: number, clientY: number) => {
+      const rect = boardRef.current?.getBoundingClientRect();
+      if (!rect) return { x: 0, y: 0 };
+      const scale = zoomRef.current || 1;
+      return {
+        x: (clientX - rect.left) / scale,
+        y: (clientY - rect.top) / scale,
+      };
+    },
+    [],
+  );
+
+  const queueZoom = useCallback(
+    (nextZoom: number, anchor?: { x: number; y: number }) => {
+      const el = scrollRef.current;
+      const prev = zoomRef.current;
+      const next = clampBoardZoom(nextZoom);
+      if (next === prev) return;
+
+      if (el) {
+        const pending = pendingScrollRef.current;
+        const scrollLeft = pending?.left ?? el.scrollLeft;
+        const scrollTop = pending?.top ?? el.scrollTop;
+        const ratio = next / prev;
+
+        if (anchor) {
+          pendingScrollRef.current = {
+            left: anchor.x * ratio - (anchor.x - scrollLeft),
+            top: anchor.y * ratio - (anchor.y - scrollTop),
+          };
+        } else {
+          const centerX = scrollLeft + el.clientWidth / 2;
+          const centerY = scrollTop + el.clientHeight / 2;
+          pendingScrollRef.current = {
+            left: centerX * ratio - el.clientWidth / 2,
+            top: centerY * ratio - el.clientHeight / 2,
+          };
+        }
+      }
+
+      zoomRef.current = next;
+      setZoom(next);
+    },
+    [],
+  );
+
+  useLayoutEffect(() => {
+    const pending = pendingScrollRef.current;
+    const el = scrollRef.current;
+    if (!pending || !el) return;
+    el.scrollLeft = pending.left;
+    el.scrollTop = pending.top;
+    pendingScrollRef.current = null;
+  }, [zoom]);
+
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+
+    return listenForBoardZoom(scroller);
+
+    function listenForBoardZoom(boardScroller: HTMLDivElement) {
+      function handleWheel(event: WheelEvent) {
+        if (!event.ctrlKey) return;
+        event.preventDefault();
+
+        const prev = zoomRef.current;
+        const next = clampBoardZoom(prev - event.deltaY * 0.001);
+        const rect = boardScroller.getBoundingClientRect();
+        const pending = pendingScrollRef.current;
+        const scrollLeft = pending?.left ?? boardScroller.scrollLeft;
+        const scrollTop = pending?.top ?? boardScroller.scrollTop;
+
+        queueZoom(next, {
+          x: event.clientX - rect.left + scrollLeft,
+          y: event.clientY - rect.top + scrollTop,
+        });
+      }
+
+      boardScroller.addEventListener("wheel", handleWheel, {
+        passive: false,
+      });
+      return () => {
+        boardScroller.removeEventListener("wheel", handleWheel);
+      };
+    }
+  }, [queueZoom]);
+
+  const handleZoomOut = useCallback(() => {
+    const stepped = Math.round((zoomRef.current - ZOOM_STEP) * 100) / 100;
+    queueZoom(stepped);
+  }, [queueZoom]);
+
+  const handleZoomIn = useCallback(() => {
+    const stepped = Math.round((zoomRef.current + ZOOM_STEP) * 100) / 100;
+    queueZoom(stepped);
+  }, [queueZoom]);
+
+  const handleResetZoom = useCallback(() => {
+    queueZoom(1);
+  }, [queueZoom]);
 
   const handleStartConnect = useCallback(
     (fromId: string, e: React.PointerEvent) => {
@@ -167,25 +277,35 @@ export default function BoardCanvas({
 
   const pickerLabel = pickerExisting?.label ?? "";
 
+  const zoomPercent = Math.round(zoom * 100);
+  const isMinZoom = zoom <= MIN_BOARD_ZOOM + 0.001;
+  const isMaxZoom = zoom >= MAX_BOARD_ZOOM - 0.001;
+
   return (
-    <div
-      className="
-flex-1
-overflow-auto
-relative
+    <div className="relative min-h-0 flex-1">
+      <div ref={scrollRef} className="absolute inset-0 overflow-auto">
+        <div
+          className="relative"
+          style={{
+            width: BOARD_WIDTH * zoom,
+            height: BOARD_HEIGHT * zoom,
+          }}
+        >
+          <div
+            ref={boardRef}
+            style={{
+              width: BOARD_WIDTH,
+              height: BOARD_HEIGHT,
+              transform: `scale(${zoom})`,
+              transformOrigin: "top left",
+            }}
+            className="
+absolute top-0 left-0
+bg-paper
+bg-[radial-gradient(#e5e0d8_1px,transparent_1px)]
+[background-size:24px_24px]
 "
-    >
-      <div
-        ref={boardRef}
-        className="
-relative
-w-[1560px]
-h-[980px]
-bg-[#F5F0E4]
-bg-[radial-gradient(#d8cfb8_1px,transparent_1px)]
-[background-size:22px_22px]
-"
-      >
+          >
         <ConnectionLines
           entities={entities}
           relationships={relationships}
@@ -199,6 +319,7 @@ bg-[radial-gradient(#d8cfb8_1px,transparent_1px)]
             key={entity.id}
             entity={entity}
             selected={selected === entity.id}
+            scale={zoom}
             onSelect={() => setSelected(entity.id)}
             onMove={(x, y) => {
               setEntities((prev) => ({
@@ -221,6 +342,7 @@ bg-[radial-gradient(#d8cfb8_1px,transparent_1px)]
           <StickyNote
             key={note.id}
             note={note}
+            scale={zoom}
             onMove={(x, y) => {
               setNotes((prev) =>
                 prev.map((n) =>
@@ -282,6 +404,66 @@ bg-[radial-gradient(#d8cfb8_1px,transparent_1px)]
             }
           />
         )}
+          </div>
+        </div>
+      </div>
+
+      <div
+        role="group"
+        aria-label="Board zoom"
+        className="
+absolute bottom-4 right-4 z-30
+flex items-center gap-1
+rounded-wobbly-sm border-2 border-pencil
+bg-card p-1 shadow-hard
+"
+      >
+        <button
+          type="button"
+          aria-label="Zoom out"
+          disabled={isMinZoom}
+          onClick={handleZoomOut}
+          className="
+inline-flex h-11 w-11 items-center justify-center
+rounded-wobbly-sm text-pencil
+hover:bg-erased/70
+focus-visible:outline-2 focus-visible:outline-offset-2
+focus-visible:outline-pen
+disabled:pointer-events-none disabled:opacity-40
+"
+        >
+          <ZoomOut className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+        </button>
+        <button
+          type="button"
+          aria-label={`Reset zoom, currently ${zoomPercent} percent`}
+          onClick={handleResetZoom}
+          className="
+min-w-14 px-2 h-11
+rounded-wobbly-sm text-pencil font-body
+hover:bg-erased/70
+focus-visible:outline-2 focus-visible:outline-offset-2
+focus-visible:outline-pen
+"
+        >
+          {zoomPercent}%
+        </button>
+        <button
+          type="button"
+          aria-label="Zoom in"
+          disabled={isMaxZoom}
+          onClick={handleZoomIn}
+          className="
+inline-flex h-11 w-11 items-center justify-center
+rounded-wobbly-sm text-pencil
+hover:bg-erased/70
+focus-visible:outline-2 focus-visible:outline-offset-2
+focus-visible:outline-pen
+disabled:pointer-events-none disabled:opacity-40
+"
+        >
+          <ZoomIn className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+        </button>
       </div>
     </div>
   );

@@ -115,11 +115,14 @@ const findPublic = async (): Promise<IShortGame[]> => {
 };
 
 const findSolved = async (userId: string): Promise<IShortGame[]> => {
-  return gameRepositories.findResolved(userId);
+  const res = await gameRepositories.findResolved(userId);
+  return res;
 };
 
 const findByUserId = async (userId: string): Promise<IShortGame[]> => {
-  return gameRepositories.findByUserId(userId);
+  const res = await gameRepositories.findByUserId(userId);
+  console.log(res);
+  return res;
 };
 
 const gameServices = {

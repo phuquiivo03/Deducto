@@ -29,7 +29,7 @@ function CollapsibleCard({
 	const [open, setOpen] = useState(defaultOpen)
 	return (
 		<div
-			className="rounded-xl border border-line bg-white overflow-hidden"
+			className="rounded-wobbly-sm border-2 border-pencil bg-card overflow-hidden"
 			data-field-path={fieldPath}
 		>
 			<button
@@ -38,15 +38,15 @@ function CollapsibleCard({
 				className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-paper/60"
 			>
 				<span>
-					<span className="font-semibold text-ink">{title}</span>
+					<span className="font-semibold text-pencil">{title}</span>
 					{subtitle ? (
-						<span className="block text-xs text-soft">{subtitle}</span>
+						<span className="block text-xs text-pencil/70">{subtitle}</span>
 					) : null}
 				</span>
-				<span className="text-soft text-sm">{open ? '−' : '+'}</span>
+				<span className="text-pencil/70 text-sm">{open ? '−' : '+'}</span>
 			</button>
 			{open ? (
-				<div className="px-4 pb-4 space-y-3 border-t border-line pt-3">
+				<div className="px-4 pb-4 space-y-3 border-t border-pencil pt-3">
 					{children}
 				</div>
 			) : null}
@@ -403,9 +403,9 @@ function EntitySection({
 	return (
 		<section
 			id={id}
-			className="rounded-card border border-line bg-card p-5 shadow-card space-y-3"
+			className="border-2 border-pencil bg-card p-5 rounded-wobbly-md shadow-paper mb-0 space-y-3"
 		>
-			<h2 className="font-serif text-lg text-ink">{title}</h2>
+			<h2 className="font-heading text-2xl text-pencil">{title}</h2>
 			<div className="space-y-2">{children}</div>
 		</section>
 	)

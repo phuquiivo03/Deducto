@@ -1,5 +1,5 @@
-import "./globals.css";
-import { momoTrustDisplay, permanentMarker, playwriteVN } from "./fonts";
+import './globals.css'
+import { kalam, patrickHand } from './fonts'
 
 export const metadata = {
 	title: 'Deducto',
@@ -8,16 +8,16 @@ export const metadata = {
 }
 
 export default function RootLayout({
-  children,
+	children,
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode
 }) {
-  return (
-    <html
-      lang="en"
-      className={`${permanentMarker.variable} ${momoTrustDisplay.variable}`}
-    >
-      <body className="font-sans antialiased">{children}</body>
-    </html>
-  );
+	return (
+		<html
+			lang="en"
+			className={`${kalam.variable} ${patrickHand.variable}`}
+		>
+			<body className="font-body antialiased">{children}</body>
+		</html>
+	)
 }

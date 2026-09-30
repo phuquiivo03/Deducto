@@ -190,7 +190,10 @@ const findPublic = async (): Promise<IShortGame[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("games")
-    .select(SHORT_GAME_COLUMNS);
+    .select<
+      string,
+      ShortGameDbRow
+    >(`${SHORT_GAME_COLUMNS},creator_id(name,avatar)`);
   if (error) {
     console.error("findPublic:", error.message);
     return [];
@@ -202,27 +205,32 @@ const findByUserId = async (userId: string): Promise<IShortGame[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("games")
-    .select(SHORT_GAME_COLUMNS)
+    .select<
+      string,
+      ShortGameDbRow
+    >(`${SHORT_GAME_COLUMNS},creator_id(name,avatar)`)
     .eq("creator_id", userId);
   if (error) {
     console.error("findByUserId:", error.message);
     return [];
   }
-  return (data as ShortGameDbRow[]).map(mapShortGameFromDb);
+  return (data ?? []).map(mapShortGameFromDb);
 };
 
 const findResolved = async (id: string): Promise<IShortGame[]> => {
+  console.log("find solved");
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("user_submissions")
-    .select(`game_id(${SHORT_GAME_COLUMNS})`)
+    .select(`game:game_id(${SHORT_GAME_COLUMNS},creator_id(name, avatar))`)
     .eq("user_id", id);
   if (error) {
     console.error("findResolved:", error.message);
     return [];
   }
+  console.log(data);
   return data
-    .map((submission) => submission.game_id)
+    .map((submission) => submission.game)
     .flat()
     .filter((row): row is ShortGameDbRow => row !== null)
     .map(mapShortGameFromDb);

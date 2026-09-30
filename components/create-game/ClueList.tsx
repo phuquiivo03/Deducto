@@ -9,6 +9,8 @@ import {
 	newClueId,
 	useCreateGameStore,
 } from '@/store/create-game.store'
+import Card from '@/components/ui/Card'
+import { buttonClassName } from '@/components/ui/button'
 
 import ClueEditor from './ClueEditor'
 
@@ -35,31 +37,34 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
 	}
 
 	return (
-		<section
-			id="section-clues"
-			className="rounded-card border border-line bg-card p-5 shadow-card space-y-3"
-		>
+		<Card id="section-clues" className="space-y-4 mb-0">
 			<div className="flex items-center justify-between gap-2">
-				<h2 className="font-serif text-lg text-ink">Clues</h2>
+				<h2 className="font-heading text-2xl text-pencil">Clues</h2>
 				<button
 					type="button"
 					onClick={handleAdd}
-					className="text-xs font-semibold rounded-full border border-line px-3 py-1 hover:border-gold"
+					className={buttonClassName({
+						variant: 'secondary',
+						size: 'sm',
+					})}
 				>
 					+ Add clue
 				</button>
 			</div>
-			<ul className="space-y-2">
+			<ul className="space-y-3">
 				{clues.map((clue, index) => {
 					const open = expandedId === clue.id
 					const preview = clueToText(clue, metadata)
 					return (
 						<li
 							key={clue.id}
-							className="rounded-xl border border-line bg-white overflow-hidden"
+							className="
+rounded-wobbly-sm border-2 border-pencil bg-card overflow-hidden
+shadow-paper -rotate-1
+"
 						>
-							<div className="flex items-start gap-2 px-3 py-2">
-								<span className="text-xs font-bold text-gold mt-1">
+							<div className="flex items-start gap-2 px-4 py-3">
+								<span className="font-heading text-pen mt-0.5">
 									#{index + 1}
 								</span>
 								<button
@@ -67,7 +72,7 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
 									onClick={() =>
 										setExpandedId(open ? null : clue.id)
 									}
-									className="flex-1 text-left text-sm text-ink"
+									className="flex-1 text-left text-base text-pencil"
 								>
 									{preview}
 								</button>
@@ -76,7 +81,7 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
 										type="button"
 										disabled={index === 0}
 										onClick={() => moveClue(index, index - 1)}
-										className="text-xs text-soft disabled:opacity-30"
+										className="text-sm text-pencil/60 disabled:opacity-30"
 										aria-label="Move up"
 									>
 										↑
@@ -85,7 +90,7 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
 										type="button"
 										disabled={index === clues.length - 1}
 										onClick={() => moveClue(index, index + 1)}
-										className="text-xs text-soft disabled:opacity-30"
+										className="text-sm text-pencil/60 disabled:opacity-30"
 										aria-label="Move down"
 									>
 										↓
@@ -94,14 +99,14 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
 								<button
 									type="button"
 									onClick={() => removeClue(clue.id)}
-									className="text-xs text-red"
+									className="text-sm text-marker font-heading"
 									aria-label="Remove clue"
 								>
 									×
 								</button>
 							</div>
 							{open ? (
-								<div className="px-3 pb-3 border-t border-line">
+								<div className="px-4 pb-4 border-t-2 border-dashed border-pencil">
 									<ClueEditor
 										clue={clue}
 										index={index}
@@ -113,6 +118,6 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
 					)
 				})}
 			</ul>
-		</section>
+		</Card>
 	)
 }

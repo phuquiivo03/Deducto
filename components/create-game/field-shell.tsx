@@ -2,6 +2,7 @@
 
 import type { ZodIssue } from 'zod'
 
+import { cn } from '@/lib/cn'
 import { firstIssueMessage } from '@/lib/zod-issue-path'
 
 export function FieldShell({
@@ -21,19 +22,16 @@ export function FieldShell({
 	const invalid = Boolean(message)
 
 	return (
-		<div
-			className="space-y-1"
-			data-field-path={path.join('.')}
-		>
+		<div className="space-y-2" data-field-path={path.join('.')}>
 			<label
 				htmlFor={htmlFor}
-				className="text-xs font-semibold uppercase tracking-wide text-soft"
+				className="font-heading text-base text-pencil block"
 			>
 				{label}
 			</label>
 			{children}
 			{invalid ? (
-				<p className="text-xs text-red" role="alert">
+				<p className="text-sm text-marker" role="alert">
 					{message}
 				</p>
 			) : null}
@@ -42,9 +40,11 @@ export function FieldShell({
 }
 
 export function inputClass(invalid: boolean): string {
-	return [
-		'w-full rounded-xl border bg-white px-3 py-2 text-sm text-ink',
-		'focus:outline-none focus:ring-2 focus:ring-gold/40',
-		invalid ? 'border-red' : 'border-line',
-	].join(' ')
+	return cn(
+		'w-full border-2 border-pencil bg-card px-4 py-3',
+		'rounded-wobbly-sm font-body text-lg text-pencil',
+		'placeholder:text-pencil/40',
+		'outline-none focus:border-pen focus:ring-2 focus:ring-pen/20',
+		invalid && 'border-marker',
+	)
 }

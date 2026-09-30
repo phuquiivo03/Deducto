@@ -259,6 +259,13 @@ Owns:
 
 - Entity position updates
 - Note position updates
+- Board zoom (25%–200%)
+
+Zoom:
+
+- Floating controls: zoom out, current percent (resets to 100%), zoom in
+- Ctrl + scroll zooms toward the cursor
+- Entity and note drags divide pointer movement by the current scale so cards stay under the cursor
 
 Coordinate system:
 
@@ -726,6 +733,51 @@ Schemas: `features/game/game.schemas.ts` (`generateRequestSchema`, `generatedCas
 
 ---
 
+# 18. Design system (hand-drawn UI)
+
+## Overview
+
+- Source of truth: [`design.md`](design.md) (hand-drawn / sketchbook aesthetic).
+- Tokens live in [`app/globals.css`](app/globals.css) via Tailwind v4 `@theme` (no `tailwind.config.ts`).
+- Typography: **Kalam** (headings, `--font-kalam`) and **Patrick Hand** (body, `--font-patrick-hand`) from [`app/fonts.ts`](app/fonts.ts).
+
+## Color tokens
+
+| Token | Role |
+| --- | --- |
+| `paper` | Warm page background + dot grid |
+| `pencil` | Primary text and borders |
+| `erased` | Muted fills, dashed dividers |
+| `marker` | Correction-marker accent (errors, emphasis) |
+| `pen` | Ballpoint accent (links, confirmed state) |
+| `postit` | Sticky-note surfaces |
+| `card` | White surfaces |
+
+## Shape and motion
+
+- Wobbly radii: `rounded-wobbly`, `rounded-wobbly-md`, `rounded-wobbly-sm`.
+- Hard shadows: `shadow-hard`, `shadow-hard-sm`, `shadow-hard-lg`, `shadow-paper` (no blur).
+- Utility: `.wavy-underline` for nav/footer links.
+- `prefers-reduced-motion` disables playful rotation/bounce globally.
+
+## Shared UI primitives (`components/ui/`)
+
+- `button.tsx` — primary / secondary / ghost + `buttonClassName()` for links.
+- `Card.tsx` — optional `tape` / `tack` decoration, `postit` tone, tilt.
+- `input.tsx` — `Input`, `Textarea`, `Select`.
+- `sticky-tag.tsx`, `icon-circle.tsx`, `doodles.tsx`, `modal-shell.tsx`.
+
+## Board status colors
+
+Relationship strokes and grid cells map gameplay state to design tokens (see [`relationship-line-style.ts`](components/detective-board/relationship-line-style.ts)):
+
+- **confirmed** → pen (`#2d5da1`)
+- **impossible** → marker (`#ff4d4d`)
+- **unknown** → pencil dashed
+- **empty** → erased dotted
+
+---
+
 # 16. Landing page
 
 ## Overview
@@ -733,20 +785,22 @@ Schemas: `features/game/game.schemas.ts` (`generateRequestSchema`, `generatedCas
 - Route: `app/page.tsx` (marketing home, scrollable).
 - Play flow: **Open a case** links to the seeded sample game (`lib/landing-constants.ts` → `/case/{sampleIds.game}`). Sign-in and **Start investigation** remain on `IntroCard` at `/case/[id]`.
 - **Create a case** links to `/create`.
+- Shared chrome: [`Header`](components/layout/Header.tsx), [`SiteFooter`](components/layout/site-footer.tsx), `max-w-5xl` sections, hand-drawn hero doodles.
 
 ## Components
 
-- `components/landing/`: `LandingNav`, `LandingHero`, `CaseGuide`, `LandingClose`, `OpenCaseLink`.
-- Assets: `public/images/landing/hero-desk.png`, `guide-evidence.png`.
+- `components/landing/`: `landing-hero`, `case-guide`, `landing-close`, `open-case-link`.
+- Assets: `public/images/landing/hero-desk.png`.
 
 ## Guide section
 
-- Four steps (read clues → connect dots → deduce → solve) with scroll-driven crossfade via `IntersectionObserver` (no extra motion dependency).
-- `prefers-reduced-motion`: all four steps shown in a static grid (`GuideReducedMotion`).
+- Four steps (read clues → connect dots → deduce → solve) as a static row of post-it cards.
+- Each card shows the step number, a Lucide icon (search, waypoints, lightbulb, gavel), title, and body. No evidence image and no scroll-driven crossfade.
+- Desktop (`lg`): one row of four. Below that: two columns, then a single column. Alternate tape/tack and a slight tilt.
 
 ## Global scroll
 
-- `body` in `app/globals.css` is scrollable for the landing page.
+- `body` in `app/globals.css` is scrollable for the landing page (paper + dot grid).
 - Case play routes keep `h-screen overflow-hidden` on `main` / `DetectiveBoard` so the board does not scroll the document.
 
 ---
@@ -762,8 +816,8 @@ Schemas: `features/game/game.schemas.ts` (`generateRequestSchema`, `generatedCas
 ## UI
 
 - `components/store/`: `StoreTabs`, `StoreShelf`, `CaseCard`, `StoreSignInEmpty`.
-- `app/store/loading.tsx`: skeleton grid while the page loads.
+- `app/store/loading.tsx`: wobbly skeleton grid while the page loads.
 - Search (`q` in the URL) filters the current tab’s list client-side by title, description, and creator.
 - Price controls (free-only checkbox, min/max inputs) are present in the UI; filtering by price is not wired until cases expose a catalog price (see `listedSchema` in `game.schemas.ts`).
-- Cards link to `/case/[id]`. Theme tokens match landing (`paper`, `ink`, `gold`, `line`, `rounded-card`).
-- Landing nav includes a **Store** link (`components/landing/landing-nav.tsx`).
+- Case cards alternate tape/tack decoration with slight rotation on hover; tokens match the global hand-drawn system (`paper`, `pencil`, `pen`, `marker`, `postit`).
+- Header nav includes **Store** and **Create** ([`components/layout/Header.tsx`](components/layout/Header.tsx)).

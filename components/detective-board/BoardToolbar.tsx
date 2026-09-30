@@ -1,141 +1,97 @@
-"use client";
+'use client'
 
-import { useState } from "react";
+import { useState } from 'react'
+import { LayoutGrid, Network } from 'lucide-react'
 
-import { Entity } from "@/types/detective";
+import { Entity } from '@/types/detective'
+import { useGameStore } from '@/store/game.store'
+import { Button, buttonClassName } from '@/components/ui/button'
+import { cn } from '@/lib/cn'
 
-import AccusationForm from "./AccusationForm";
-import { useGameStore } from "@/store/game.store";
+import AccusationForm from './AccusationForm'
 
 interface Props {
-  view: "board" | "grid";
-
-  setView: (v: "board" | "grid") => void;
-
-  entities: Record<string, Entity>;
+	view: 'board' | 'grid'
+	setView: (v: 'board' | 'grid') => void
+	entities: Record<string, Entity>
 }
 
 export default function BoardToolbar({ view, setView, entities }: Props) {
-  const [accusationOpen, setAccusationOpen] = useState(false);
-  const { isSolved } = useGameStore();
-  return (
-    <>
-      <div
-        className="
-flex
-justify-between
-items-center
-px-4
-py-2
-border-b
-border-[#E7DFCC]
-bg-[#F5F0E4]/90
+	const [accusationOpen, setAccusationOpen] = useState(false)
+	const { isSolved } = useGameStore()
+	return (
+		<>
+			<div
+				className="
+flex justify-between items-center px-4 py-2
+border-b-2 border-dashed border-erased bg-paper
 "
-      >
-        <div
-          className="
-flex
-bg-[#EDE7D6]
-rounded-lg
-p-1
-gap-1
+			>
+				<div
+					className="
+flex bg-erased/50 rounded-wobbly-sm p-1 gap-1 border-2 border-pencil
 "
-        >
-          {(["board", "grid"] as const).map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setView(item)}
-              className={`
-px-4
-py-1.5
-rounded-md
-text-xs
-font-semibold
-${view === item ? "bg-white shadow-sm" : "text-[#6F6858]"}
-`}
-            >
-              {item === "board" ? "Board" : "Grid"}
-            </button>
-          ))}
-        </div>
+				>
+					{(['board', 'grid'] as const).map((item) => (
+						<button
+							key={item}
+							type="button"
+							onClick={() => setView(item)}
+							className={cn(
+								'flex items-center gap-1.5 px-4 py-2 rounded-wobbly-sm text-sm font-body',
+								'border-2 border-transparent transition-transform duration-100',
+								view === item
+									? 'bg-card border-pencil shadow-hard-sm -rotate-1'
+									: 'text-pencil/70 hover:bg-postit/50',
+							)}
+						>
+							{item === 'board' ? (
+								<Network className="h-4 w-4" strokeWidth={2.5} />
+							) : (
+								<LayoutGrid className="h-4 w-4" strokeWidth={2.5} />
+							)}
+							{item === 'board' ? 'Board' : 'Grid'}
+						</button>
+					))}
+				</div>
 
-        <div
-          className="
-flex
-gap-2
-items-center
-"
-        >
-          <button
-            type="button"
-            onClick={() => setAccusationOpen(true)}
-            disabled={isSolved}
-            className="
-px-4
-py-2
-rounded-lg
-text-xs
-font-bold
-uppercase
-tracking-wide
-text-[#FDFCF9]
-bg-gradient-to-br
-from-[#3B3730]
-to-[#23211C]
-shadow-md
-ring-2
-ring-[#B08328]/50
-hover:brightness-120
-ring-offset-2
-ring-offset-[#F5F0E4]
-active:scale-[0.98]
-transition
-cursor-pointer
-"
-          >
-            {isSolved ? "Case Solved ✅" : "Make accusation 🛎️"}
-          </button>
+				<div className="flex gap-2 items-center flex-wrap justify-end">
+					<Button
+						type="button"
+						size="sm"
+						onClick={() => setAccusationOpen(true)}
+						disabled={isSolved}
+					>
+						{isSolved ? 'Case solved' : 'Make accusation'}
+					</Button>
 
-          <button
-            type="button"
-            className="
-px-3
-py-1.5
-rounded-lg
-border
-border-[#E7DFCC]
-bg-white
-text-xs
-font-semibold
-"
-          >
-            ＋ Add Note
-          </button>
+					<button
+						type="button"
+						className={buttonClassName({
+							variant: 'secondary',
+							size: 'sm',
+						})}
+					>
+						+ Add note
+					</button>
 
-          <button
-            type="button"
-            className="
-px-3
-py-1.5
-rounded-lg
-border
-border-[#E7DFCC]
-bg-white
-text-xs
-font-semibold
-"
-          >
-            ↻ Reset
-          </button>
-        </div>
-      </div>
+					<button
+						type="button"
+						className={buttonClassName({
+							variant: 'ghost',
+							size: 'sm',
+						})}
+					>
+						Reset
+					</button>
+				</div>
+			</div>
 
-      <AccusationForm
-        entities={entities}
-        open={accusationOpen}
-        onClose={() => setAccusationOpen(false)}
-      />
-    </>
-  );
+			<AccusationForm
+				entities={entities}
+				open={accusationOpen}
+				onClose={() => setAccusationOpen(false)}
+			/>
+		</>
+	)
 }

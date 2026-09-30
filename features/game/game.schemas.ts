@@ -330,11 +330,15 @@ export const createGameInputSchema = z
 export type ICreateGameInput = z.infer<typeof createGameInputSchema>;
 export const shortGameShema = gameSchema.pick({
   id: true,
-  creator: true,
   title: true,
   description: true,
   banner: true,
   level: true,
   created_at: true,
 });
-export type IShortGame = z.infer<typeof shortGameShema>;
+export type IShortGame = z.infer<typeof shortGameShema> & {
+  creator: {
+    name: string;
+    avatar: string;
+  } | null;
+};

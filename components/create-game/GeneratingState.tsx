@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react'
 
+import Card from '@/components/ui/Card'
+import { DoodleScribbleCircle } from '@/components/ui/doodles'
+
 const MESSAGES = [
 	'Reading the crime scene…',
 	'Interviewing suspects…',
@@ -25,24 +28,32 @@ export default function GeneratingState({
 	}, [])
 
 	return (
-		<div className="rounded-card border border-line bg-card p-8 shadow-card text-center space-y-6">
-			<div className="mx-auto h-12 w-12 rounded-full border-2 border-gold border-t-transparent animate-spin" />
+		<Card decoration="tape" className="p-8 text-center space-y-6 mb-0">
+			<DoodleScribbleCircle className="mx-auto block md:block" />
+			<div
+				className="
+mx-auto h-12 w-12 rounded-wobbly-sm border-[3px] border-pencil
+border-t-transparent animate-spin
+"
+			/>
 			<div>
-				<h2 className="font-serif text-xl text-ink">Generating your case</h2>
-				<p className="text-sm text-soft mt-2 min-h-[1.25rem]">
+				<h2 className="font-heading text-2xl text-pencil">
+					Generating your case
+				</h2>
+				<p className="text-base text-pencil/80 mt-2 min-h-[1.25rem]">
 					{MESSAGES[index]}
 				</p>
-				<p className="text-xs text-soft mt-3">
+				<p className="text-sm text-pencil/60 mt-3">
 					This can take up to a minute.
 				</p>
 			</div>
 			<button
 				type="button"
 				onClick={onCancel}
-				className="text-sm text-soft underline"
+				className="text-base text-pencil/70 wavy-underline"
 			>
 				Cancel
 			</button>
-		</div>
+		</Card>
 	)
 }

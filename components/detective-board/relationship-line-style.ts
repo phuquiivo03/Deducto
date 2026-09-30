@@ -13,10 +13,10 @@ export const STATUS_STYLE: Record<
   RelationshipStatus,
   { stroke: string; dash?: string; label: string }
 > = {
-  confirmed: { stroke: "#5E8A62", label: "Confirmed" },
-  impossible: { stroke: "#BD5F51", label: "Impossible" },
-  unknown: { stroke: "#CBC2AC", dash: "4 4", label: "Unknown" },
-  empty: { stroke: "#E7DFCC", dash: "2 6", label: "Empty (hidden)" },
+  confirmed: { stroke: "#2d5da1", label: "Confirmed" },
+  impossible: { stroke: "#ff4d4d", label: "Impossible" },
+  unknown: { stroke: "#2d2d2d", dash: "4 4", label: "Unknown" },
+  empty: { stroke: "#e5e0d8", dash: "2 6", label: "Empty (hidden)" },
 };
 
 export const STATUS_OPTIONS: RelationshipStatus[] = [
