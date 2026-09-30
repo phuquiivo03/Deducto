@@ -5,6 +5,7 @@ import { Entity } from '@/types/detective'
 interface Props {
 	entity: Entity
 	selected: boolean
+	scale: number
 	onSelect: () => void
 	onMove: (x: number, y: number) => void
 	onStartConnect: (e: React.PointerEvent) => void
@@ -22,6 +23,7 @@ const PAPER_LINES =
 export default function EntityCard({
 	entity,
 	selected,
+	scale,
 	onSelect,
 	onMove,
 	onStartConnect,
@@ -41,10 +43,11 @@ export default function EntityCard({
 				const startY = e.clientY
 				const ox = entity.x
 				const oy = entity.y
+				const dragScale = scale || 1
 
 				function move(ev: PointerEvent) {
-					const dx = ev.clientX - startX
-					const dy = ev.clientY - startY
+					const dx = (ev.clientX - startX) / dragScale
+					const dy = (ev.clientY - startY) / dragScale
 					onMove(ox + dx, oy + dy)
 				}
 

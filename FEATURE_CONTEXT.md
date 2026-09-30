@@ -259,6 +259,13 @@ Owns:
 
 - Entity position updates
 - Note position updates
+- Board zoom (25%–200%)
+
+Zoom:
+
+- Floating controls: zoom out, current percent (resets to 100%), zoom in
+- Ctrl + scroll zooms toward the cursor
+- Entity and note drags divide pointer movement by the current scale so cards stay under the cursor
 
 Coordinate system:
 

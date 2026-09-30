@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react'
 
 interface Props {
 	note: Note
+	scale: number
 	onMove: (x: number, y: number) => void
 	onDelete: () => void
 	onChange: (text: string) => void
@@ -12,6 +13,7 @@ interface Props {
 
 export default function StickyNote({
 	note,
+	scale,
 	onMove,
 	onDelete,
 	onChange,
@@ -30,12 +32,13 @@ export default function StickyNote({
 		const startY = e.clientY
 		const originX = note.x
 		const originY = note.y
+		const dragScale = scale || 1
 		const target = e.currentTarget
 		target.setPointerCapture(e.pointerId)
 
 		function move(ev: PointerEvent) {
-			const dx = ev.clientX - startX
-			const dy = ev.clientY - startY
+			const dx = (ev.clientX - startX) / dragScale
+			const dy = (ev.clientY - startY) / dragScale
 			onMove(originX + dx, originY + dy)
 		}
 

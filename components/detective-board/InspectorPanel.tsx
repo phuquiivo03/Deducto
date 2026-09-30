@@ -178,7 +178,11 @@ justify-between
 text-sm
 "
                 >
-                  {rel.label}
+                  {rel.status === "confirmed"
+                    ? "✓"
+                    : rel.status === "impossible"
+                      ? "X"
+                      : "?"}
                 </strong>
 
                 <span
