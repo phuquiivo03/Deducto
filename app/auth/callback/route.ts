@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 
 import { profileFromAuthUser } from "@/features/user/user.oauth";
 import { createClient } from "@/infrastructure/supabase/server";
+import { safeNextPath } from "@/lib/safe-next-path";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/";
+  const nextPath = safeNextPath(searchParams.get("next"), origin);
 
   if (!code) {
     return NextResponse.redirect(`${origin}/?auth=missing-code`);
@@ -26,16 +27,19 @@ export async function GET(request: Request) {
   if (user) {
     const profile = profileFromAuthUser(user);
     const now = new Date().toISOString();
-    const { error: upsertError } = await supabase.from("users").upsert(
-      {
-        id: profile.id,
-        name: profile.name,
-        email: profile.email,
-        avatar: profile.avatar,
-        updated_at: now,
-      },
-      { onConflict: "id" },
-    );
+    const { error: upsertError } = await supabase
+      .from("users")
+      .upsert(
+        {
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+          avatar: profile.avatar,
+          updated_at: now,
+        },
+        { onConflict: "id" },
+      )
+      .select("id, name, avatar");
 
     if (upsertError) {
       console.error(upsertError);
@@ -43,5 +47,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(`${origin}${next}`);
+  return NextResponse.redirect(new URL(nextPath, origin));
 }

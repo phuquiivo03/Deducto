@@ -6,12 +6,19 @@ import {
 import { getSessionUserId } from "@/features/user/user.auth";
 import gameServices from "@/features/game/game.services";
 import { AppResponse } from "@/features/type";
+import { publicApiFailure } from "@/lib/public-api-error";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const parseResult = answerSchema.safeParse(body);
     if (!parseResult.success) {
-      throw new Error(parseResult.error.message);
+      const response = publicApiFailure(
+        "POST /api/game/[id]/result",
+        parseResult.error,
+        "Invalid request",
+        false,
+      );
+      return Response.json(response, { status: 400 });
     }
     const sessionUserId = await getSessionUserId();
     const result = await gameServices.validateResult(
@@ -25,11 +32,12 @@ export async function POST(request: Request) {
     };
     return Response.json(response, { status: 200 });
   } catch (e) {
-    const response: AppResponse<boolean> = {
-      data: false,
-      success: false,
-      message: e instanceof Error ? e.message : "An unknown error occurred",
-    };
+    const response: AppResponse<boolean> = publicApiFailure(
+      "POST /api/game/[id]/result",
+      e,
+      "Could not check this accusation",
+      false,
+    );
     return Response.json(response, { status: 400 });
   }
 }

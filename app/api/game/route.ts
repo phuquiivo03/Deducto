@@ -7,6 +7,7 @@ import { getSessionUserId } from "@/features/user/user.auth";
 import { AppResponse } from "@/features/type";
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { publicApiFailure } from "@/lib/public-api-error";
 
 export async function POST(request: Request) {
   const sessionUserId = await getSessionUserId();
@@ -23,11 +24,12 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parseResult = createGameInputSchema.safeParse(body);
     if (!parseResult.success) {
-      const response: AppResponse<null> = {
-        data: null,
-        success: false,
-        message: parseResult.error.message,
-      };
+      const response: AppResponse<null> = publicApiFailure(
+        "POST /api/game",
+        parseResult.error,
+        "Invalid request",
+        null,
+      );
       return Response.json(response, { status: 400 });
     }
 
@@ -43,11 +45,12 @@ export async function POST(request: Request) {
     };
     return Response.json(response, { status: 201 });
   } catch (e) {
-    const response: AppResponse<null> = {
-      data: null,
-      success: false,
-      message: e instanceof Error ? e.message : "An unknown error occurred",
-    };
+    const response: AppResponse<null> = publicApiFailure(
+      "POST /api/game",
+      e,
+      "Could not create this case",
+      null,
+    );
     return Response.json(response, { status: 500 });
   }
 }

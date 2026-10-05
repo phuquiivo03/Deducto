@@ -97,7 +97,8 @@ const generate = async (
 
   const result = generatedCaseSchema.safeParse(parsed);
   if (!result.success) {
-    throw new Error(result.error.message);
+    console.error("generate: model JSON failed schema", result.error);
+    throw new Error("Generated case did not match the schema");
   }
 
   return result.data;

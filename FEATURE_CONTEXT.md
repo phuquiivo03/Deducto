@@ -821,3 +821,21 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 - Price controls (free-only checkbox, min/max inputs) are present in the UI; filtering by price is not wired until cases expose a catalog price (see `listedSchema` in `game.schemas.ts`).
 - Case cards alternate tape/tack decoration with slight rotation on hover; tokens match the global hand-drawn system (`paper`, `pencil`, `pen`, `marker`, `postit`).
 - Header nav includes **Store** and **Create** ([`components/layout/Header.tsx`](components/layout/Header.tsx)).
+
+---
+
+# 18. Account data and API errors
+
+## Public creator fields
+
+- `public.users` exposes `id`, `name`, and `avatar` to the Data API. A row is visible when it is the signed-in user or when that user has created a game.
+- `email`, `created_at`, and `updated_at` are not granted to `anon` or `authenticated`. The auth callback still writes the signed-in user's email and returns `id, name, avatar`.
+- Migration: `prisma/migrations/20261005120000_restrict_users_public_profile`.
+
+## Auth callback
+
+- `app/auth/callback/route.ts` accepts `next` only when `safeNextPath` resolves a single on-site path. Other values redirect to `/`.
+
+## API errors
+
+- Create, generate, result, case load, and solve-status handlers log the exception and return a fixed message via `publicApiFailure`. Client JSON does not include the thrown message.
