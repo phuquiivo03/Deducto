@@ -5,6 +5,17 @@ export class GameNotFoundError extends Error {
   }
 }
 
+export class CaseNotSolvableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CaseNotSolvableError";
+  }
+}
+
+export function publishErrorStatus(error: unknown): number {
+  return error instanceof CaseNotSolvableError ? 400 : 500;
+}
+
 export function isGameNotFound(error: unknown): boolean {
   if (error instanceof GameNotFoundError) return true;
   return error instanceof Error && error.message === "Game not found";

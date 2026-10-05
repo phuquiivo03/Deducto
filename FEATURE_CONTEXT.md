@@ -746,6 +746,24 @@ Prisma-created tables need explicit `GRANT` for Supabase API roles (`anon`, `aut
 
 Schemas: `features/game/game.schemas.ts` (`generateRequestSchema`, `generatedCaseSchema`, `createGameInputSchema`).
 
+## Unique solution gate
+
+`features/game/case-solver.ts` checks a draft against the model in `infrastructure/ai/system_prompt.md` before it can be stored.
+
+- Place, weapon, and motive are bijections from suspects. A weapon is found in the location of the suspect who holds it.
+- Pair clues use the entity ids (the same ids the sentence renderer uses). Motive clues and crime-level anchors use `value`.
+- Anchors are `ATTRIBUTE` + `REQUIRED` with no suspect, weapon, or location id. They constrain the murderer (`location`, `motive`, `handedness`, `hairColor`) or the murder weapon (`weight`, `material`).
+- An entity fact (`ATTRIBUTE` + `EQUAL` on one card) does not narrow the grid. A fact that disagrees with that card is rejected.
+- The solution is the tuple (murderer, their weapon, their location, their motive). Other guests may stay partly ambiguous.
+
+`gameServices.generate` and `gameServices.create` call `assertUniquelySolvable`. A draft with no solution, more than one tuple, a clue the solver cannot read, or a saved answer that is not that tuple throws `CaseNotSolvableError`. `POST /api/generate` and `POST /api/game` return **400** with that message. The create wizard shows it and returns to editing.
+
+Groups larger than 6 are rejected instead of searching. Difficulty cases are size 3, 4, or 5.
+
+## Homepage case
+
+`data/sample-be.ts` (The Missing Sapphire) is the seeded case behind **Open a case**. The clues place Arthur, Eleanor, and Charles, tie the candlestick to the Library and the pocket knife to the Garden, rule the letter opener out for Charles, and rule three motives out for Violet. The last clue is the anchor “The location is Dining Room.” The only tuple is Lady Violet, the Silver Letter Opener, the Dining Room, and Greed. `data/sample-be.test.ts` locks that. Migration `20261005153000_fix_sample_case_clues` rewrites the row when it is already in the database.
+
 ## Clue templates
 
 - `lib/clue-templates.ts` mirrors system prompt section 6.6 (E1–E4, L1–L4, R1–R4, A1, A2).

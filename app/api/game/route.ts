@@ -6,6 +6,7 @@ import gameServices from "@/features/game/game.services";
 import { getSessionUserId } from "@/features/user/user.auth";
 import { AppResponse } from "@/features/type";
 import { NextRequest } from "next/server";
+import { publishErrorStatus } from "@/features/game/game-errors";
 import { requireAuth } from "@/lib/auth";
 import { publicApiFailure } from "@/lib/public-api-error";
 
