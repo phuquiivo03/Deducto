@@ -9,11 +9,12 @@ import {
 import { extractJson } from "@/lib/extract-json";
 import gameRepositories from "./game.repositories";
 import submissionRepositories from "../submission/submission.repositories";
+import { GameNotFoundError } from "./game-errors";
 
 const getById = async (id: string): Promise<IGame> => {
   const game = await gameRepositories.getGame(id);
   if (!game) {
-    throw new Error("Game not found");
+    throw new GameNotFoundError();
   }
   return game;
 };

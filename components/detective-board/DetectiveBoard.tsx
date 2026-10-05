@@ -10,12 +10,11 @@ import InspectorPanel from "./InspectorPanel";
 import GridView from "./GridView";
 import MobileNav from "./MobileNav";
 
-import { initialNotes } from "@/data/detective-board";
-
 import {
   findRelationshipByPair,
   pairRelationshipId,
   canonicalPair,
+  relationshipCapacityForGame,
 } from "@/lib/relationship-pairs";
 
 import {
@@ -37,7 +36,7 @@ export default function DetectiveBoard() {
 
   const [clues, setClues] = useState<Clue[]>([]);
 
-  const [notes, setNotes] = useState<Note[]>(initialNotes);
+  const [notes, setNotes] = useState<Note[]>([]);
 
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -103,7 +102,7 @@ export default function DetectiveBoard() {
     setEntities(gameToEntities(game));
     setClues(gameToClues(game));
     setRelationships([]);
-    setNotes(initialNotes);
+    setNotes([]);
     setSelected(null);
     setView("board");
   }, [game]);
@@ -119,7 +118,11 @@ flex-col
 overflow-hidden
 "
     >
-      <TopBar relationships={relationships} />
+      <TopBar
+        title={game.title}
+        relationships={relationships}
+        relationshipTotal={relationshipCapacityForGame(game)}
+      />
 
       <div
         className="

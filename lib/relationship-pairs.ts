@@ -1,9 +1,10 @@
-import {
+import type {
   Relationship,
   RelationshipStatus,
   Entity,
   EntityType,
 } from "@/types/detective";
+import type { IGame } from "@/features/game/game.schemas";
 
 const TYPE_ORDER: Record<EntityType, number> = {
   suspect: 0,
@@ -80,6 +81,9 @@ const MATRIX_BLOCK_TITLES: Record<string, string> = {
   "suspect-weapon": "Suspects × Weapons",
   "suspect-location": "Suspects × Locations",
   "weapon-location": "Weapons × Locations",
+  "weapon-motive": "Weapons × Motives",
+  "location-motive": "Locations × Motives",
+  "suspect-motive": "Suspects × Motives",
 };
 
 export function matrixBlockTitle(
@@ -87,6 +91,34 @@ export function matrixBlockTitle(
   colType: EntityType,
 ): string {
   return MATRIX_BLOCK_TITLES[`${rowType}-${colType}`] ?? "";
+}
+
+/**
+ * How many confirmed links a solved board has: one true match per
+ * row in each cross-type grid, when both sides exist.
+ */
+export function relationshipCapacity(
+  counts: Partial<Record<EntityType, number>>,
+): number {
+  return MATRIX_TYPE_PAIRS.reduce((sum, [rowType, colType]) => {
+    const rows = counts[rowType] ?? 0;
+    const cols = counts[colType] ?? 0;
+    if (rows <= 0 || cols <= 0) return sum;
+    return sum + Math.min(rows, cols);
+  }, 0);
+}
+
+export function relationshipCapacityForGame(
+  game: Pick<IGame, "gameMetadata">,
+): number {
+  const metadata = game.gameMetadata;
+  if (!metadata || typeof metadata === "string") return 0;
+  return relationshipCapacity({
+    suspect: metadata.suspects.length,
+    weapon: metadata.weapons.length,
+    location: metadata.locations.length,
+    motive: metadata.motives.length,
+  });
 }
 
 export function entitiesOfType(

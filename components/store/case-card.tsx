@@ -2,15 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { IShortGame } from "@/features/game/game.schemas";
+import { formatDifficulty } from "@/lib/case-file";
 import { cn } from "@/lib/cn";
 import { StickyTag } from "@/components/ui/sticky-tag";
-
-function formatLevel(level: string): string {
-  if (level === "easy") return "Easy";
-  if (level === "medium") return "Medium";
-  if (level === "hard") return "Hard";
-  return level;
-}
+import { CaseBanner } from "@/components/store/case-banner";
 
 interface CaseCardProps {
   game: IShortGame;
@@ -57,15 +52,7 @@ rounded-full border-2 border-pencil bg-marker
         />
       )}
       <div className="relative aspect-[16/10] w-full bg-paper border-b-2 border-dashed border-pencil">
-        {banner ? (
-          <Image
-            src={banner}
-            alt=""
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-            className="object-cover"
-          />
-        ) : null}
+        {banner ? <CaseBanner src={banner} /> : null}
       </div>
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-2">
@@ -78,7 +65,7 @@ group-hover:text-pen transition-colors
             {game.title}
           </h2>
           <StickyTag className="shrink-0 text-sm rotate-0">
-            {formatLevel(String(game.level))}
+            {formatDifficulty(String(game.level))}
           </StickyTag>
         </div>
         <p className="text-base text-pencil/75 leading-relaxed line-clamp-2">

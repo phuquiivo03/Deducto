@@ -35,7 +35,7 @@ An entity is an investigation object.
 Types:
 
 ```ts
-type EntityType = "suspect" | "weapon" | "location";
+type EntityType = "suspect" | "weapon" | "location" | "motive";
 ```
 
 Examples:
@@ -197,7 +197,11 @@ Input:
 
 ```ts
 relationships;
+title;
+relationshipTotal;
 ```
+
+`title` is the loaded case title. `relationshipTotal` is the number of true cross-type matches for that case (`relationshipCapacityForGame` in `lib/relationship-pairs.ts`), so the progress line is not a fixed "of 9".
 
 Calculates:
 
@@ -848,4 +852,25 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 - Search (`q` in the URL) filters the current tab’s list client-side by title, description, and creator.
 - Price controls (free-only checkbox, min/max inputs) are present in the UI; filtering by price is not wired until cases expose a catalog price (see `listedSchema` in `game.schemas.ts`).
 - Case cards alternate tape/tack decoration with slight rotation on hover; tokens match the global hand-drawn system (`paper`, `pencil`, `pen`, `marker`, `postit`).
+- Banner paths are passed through `withDisplayBanners` (`lib/case-banner-server.ts`). A local path that is not a file in `public/` is omitted, so the card keeps the blank paper panel. Other http(s) URLs render with a plain `img` that hides itself on error, because `next/image` only allows `lh3.googleusercontent.com`.
 - Header nav includes **Store** and **Create** ([`components/layout/Header.tsx`](components/layout/Header.tsx)).
+
+---
+
+# 19. The case you open is the case you play
+
+## Case file
+
+- `/case/[id]` loads the game on the server with `gameServices.getById`.
+- `IntroCard` shows that game’s title, description, difficulty (`level`), and victim.
+- There is no victim column. `victimFromDescription` in `lib/case-file.ts` reads a leading “was found / discovered / killed / murdered” phrase. If the description does not name one, the row says “Not named”.
+- A missing game calls `notFound()` and renders `app/case/[id]/not-found.tsx` (“Case not found”). Other load failures render `error.tsx` (“Could not open this case”). The intro is not filled with sample copy.
+- `GET /api/game/[id]` returns **404** when the game row is missing (`GameNotFoundError`) and **500** when the read itself fails.
+
+## Board
+
+- `TopBar` title is `game.title`. The denominator is `relationshipCapacityForGame` (one confirmed link per row in each of the six cross-type grids).
+- A fresh board starts with no sticky notes. The old “Probably Violet…” seed is not copied onto every case.
+- Entity cards use `entityTypeLabel`. Motive cards say “Motive”.
+- Grid headings cover suspect×motive, weapon×motive, and location×motive as well as the original three blocks.
+- Opening a case resets `isSolved` before `/api/game/[id]/resolved` answers, so a previous solve does not stick to the next case.

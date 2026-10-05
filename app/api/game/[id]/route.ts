@@ -1,3 +1,4 @@
+import { gameGetStatus } from "@/features/game/game-errors";
 import { IGame } from "@/features/game/game.schemas";
 import gameServices from "@/features/game/game.services";
 import { AppResponse } from "@/features/type";
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       success: false,
       message: e instanceof Error ? e.message : "An unknown error occurred",
     };
-    return Response.json(response, { status: 500 });
+    return Response.json(response, { status: gameGetStatus(e) });
   }
 }
 
