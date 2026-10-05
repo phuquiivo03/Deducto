@@ -610,19 +610,34 @@ Any new interaction should follow React data flow.
 
 ## Accusation form
 
-`AccusationForm` lets the player pick one suspect, weapon, location, and motive, then POSTs to `/api/game/[id]/result` with `IAnswer` (`game_id` + `answer` ids).
+`AccusationForm` lets the player pick one suspect, weapon, location, and motive, then POSTs to `/api/game/[id]/result` with `IAnswer` (`game_id` + `answer` ids). The route id is the case being graded. The body `user_id` is ignored.
+
+The route only implements POST. There is no GET.
 
 On success, the API returns `AppResponse<IAnswerResponse>`; the client stores `data.data` in Zustand (`resultResponse`).
 
+`IAnswerResponse` is the whole accusation, not four field grades:
+
+- `solved` — the four ids match the stored result
+- `alreadySolved` — this player already closed the case, so this guess was not graded
+- `attemptsUsed`, `attemptsRemaining`, `attemptLimit`
+
+Unauthenticated calls are `401`. A malformed body or a `game_id` that does not match the route is `400`. An unknown case is `404`. The sixth accusation for that player and case is `429`. Responses use `cache-control: no-store` and do not include `murder`, `weapon`, `motive`, or `location` booleans.
+
 ## Result popup (`AccusationResultModal`)
 
-After a successful submit, the form is replaced by a modal with four flip cards (2×2 grid):
+After a successful submit, the form is replaced by a verdict dialog:
 
-- Categories: Suspect (murder), Weapon, Motive, Location.
-- Each card starts face-down; one tap reveals the chosen entity name and Correct/Wrong from `IAnswerResponse` (`murder`, `weapon`, `motive`, `location` booleans).
-- When all four cards are flipped, a summary appears: full congratulations if all are correct, otherwise “X of 4 correct” with **Try again** (returns to the form with prior selection).
+- It lists the four names the player chose, without marking any of them correct or wrong.
+- A fresh solve says the accusation is correct.
+- A miss says it is not correct, how many accusations remain, and that the verdict does not identify which part failed. **Try again** returns to the form while attempts remain.
+- If the case was already solved, the dialog says this accusation was not checked.
 
-Validation logic lives in `features/game/game.services.ts` (`validateResult`), comparing submitted ids to the stored game result.
+Grading lives in `features/game/accusation-decision.ts` (`decideAccusation`). `features/game/accusation.handler.ts` is the HTTP boundary. `features/submission/accusation.repositories.ts` stores the attempt.
+
+## Why the verdict is all or nothing
+
+Easy cases have 3 choices in each category. Two responses that say which fields are correct identify the solution by elimination. The public response is therefore only solved or not solved. Each signed-in player gets 5 recorded accusations per case (`ACCUSATION_ATTEMPT_LIMIT`). That is enough to correct a bad final answer and far below the 81, 256, or 625 possible tuples.
 
 ---
 
@@ -651,7 +666,20 @@ Columns match `IUserSubmission` in `features/submission/submission.schemas.ts`:
 
 `game_id` stays indexed for joins. Row level security is enabled. Authenticated users may select and insert only rows where `user_id = auth.uid()`.
 
-Successful accusation inserts use the session user id from `getSessionUserId()` in the result API, not the client payload alone.
+A correct accusation inserts `user_submissions` in the same database transaction as the attempt, using the session user id. A later guess from that player is not compared to the solution.
+
+## Accusation attempts
+
+`accusation_attempts` stores every graded guess. It is not seeded.
+
+- `id` (uuid)
+- `user_id` (uuid, foreign key to `users.id`, cascade delete)
+- `game_id` (uuid, foreign key to `games.id`, cascade delete)
+- `murder_id`, `weapon_id`, `motive_id`, `location_id` (the guessed ids)
+- `solved` (boolean; the whole tuple, not four field scores)
+- `created_at`
+
+Indexes: `(user_id, game_id)` and `game_id`. Row level security is enabled. Authenticated users may select only their own rows. They cannot insert, update, or delete through the API. The result route writes with Prisma inside a transaction locked by `pg_advisory_xact_lock`. A before-insert trigger rejects a sixth row for the same player and case. The lock key is the lowercase user id, a colon, and the lowercase game id.
 
 ---
 

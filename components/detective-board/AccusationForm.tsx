@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import AccusationResultModal from "@/components/detective-board/AccusationResultModal";
+import { ACCUSATION_ATTEMPT_LIMIT } from "@/features/game/accusation-decision";
 import type { IAnswerResponse } from "@/features/game/game.schemas";
 import type { AppResponse } from "@/features/type";
 import { useDetectiveBoardStore } from "@/store";
@@ -98,7 +99,6 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
     }
 
     let cancelled = false;
-    setIsSubmitting(true);
 
     fetch(`/api/game/${game.id}/result`, {
       method: "POST",
@@ -107,26 +107,40 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
         ...answer,
       }),
     })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to submit result");
+      .then(async (response) => {
+        let data: AppResponse<IAnswerResponse> | null = null;
+        try {
+          data = (await response.json()) as AppResponse<IAnswerResponse>;
+        } catch {
+          throw new Error("Could not submit the accusation. Try again.");
         }
-        return response.json() as Promise<AppResponse<IAnswerResponse>>;
+        if (
+          !response.ok ||
+          !data?.success ||
+          data.data == null ||
+          typeof data.data.solved !== "boolean"
+        ) {
+          throw new Error(
+            data?.message ?? "Could not submit the accusation. Try again.",
+          );
+        }
+        return data;
       })
       .then((data) => {
         if (cancelled) {
           return;
         }
-        if (!data.success || data.data === undefined || data.data === null) {
-          throw new Error(data.message ?? "Failed to submit result");
-        }
         setResultResponse(data.data);
         setIsResultOpen(true);
         setIsSubmitting(false);
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (!cancelled) {
-          setSubmitError("Could not submit the accusation. Try again.");
+          const message =
+            error instanceof Error && error.message
+              ? error.message
+              : "Could not submit the accusation. Try again.";
+          setSubmitError(message);
           setSubmitSuccess(false);
           setIsSubmitting(false);
         }
@@ -170,6 +184,7 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
     setSubmitError(null);
     setSubmitSuccess(true);
     if (game) {
+      setIsSubmitting(true);
       setAnswer({
         game_id: game.id,
         user_id: user.id,
@@ -299,6 +314,10 @@ text-pencil
             </h2>
             <p className="mt-1 text-xs text-pencil/70">
               Choose one suspect, weapon, location, and motive.
+            </p>
+            <p className="mt-1 text-xs text-pencil/70">
+              {ACCUSATION_ATTEMPT_LIMIT} accusations per case. The verdict
+              only says whether the whole accusation is correct.
             </p>
           </div>
 
