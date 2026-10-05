@@ -9,6 +9,7 @@ import {
 import { extractJson } from "@/lib/extract-json";
 import gameRepositories from "./game.repositories";
 import submissionRepositories from "../submission/submission.repositories";
+import { assertUniquelySolvable } from "./case-solver";
 import { GameNotFoundError } from "./game-errors";
 
 const getById = async (id: string): Promise<IGame> => {
@@ -56,6 +57,11 @@ const generate = async (
     throw new Error(result.error.message);
   }
 
+  assertUniquelySolvable(
+    result.data.game.gameMetadata,
+    result.data.result,
+  );
+
   return result.data;
 };
 
@@ -63,6 +69,7 @@ const create = async (
   input: ICreateGameInput,
   creatorId: string,
 ): Promise<string> => {
+  assertUniquelySolvable(input.gameMetadata, input.result);
   return gameRepositories.createGame(input, creatorId);
 };
 

@@ -6,6 +6,7 @@ import gameServices from "@/features/game/game.services";
 import { getSessionUserId } from "@/features/user/user.auth";
 import { AppResponse } from "@/features/type";
 import { NextRequest } from "next/server";
+import { publishErrorStatus } from "@/features/game/game-errors";
 import { requireAuth } from "@/lib/auth";
 
 export async function POST(request: Request) {
@@ -48,7 +49,9 @@ export async function POST(request: Request) {
       success: false,
       message: e instanceof Error ? e.message : "An unknown error occurred",
     };
-    return Response.json(response, { status: 500 });
+    return Response.json(response, {
+      status: publishErrorStatus(e),
+    });
   }
 }
 
