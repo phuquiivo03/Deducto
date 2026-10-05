@@ -1,35 +1,17 @@
-import {
-  answerSchema,
-  type IAnswer,
-  type IAnswerResponse,
-} from "@/features/game/game.schemas";
+import { handleAccusationPost } from "@/features/game/accusation.handler";
+import accusationRepositories from "@/features/submission/accusation.repositories";
 import { getSessionUserId } from "@/features/user/user.auth";
-import gameServices from "@/features/game/game.services";
-import { AppResponse } from "@/features/type";
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const parseResult = answerSchema.safeParse(body);
-    if (!parseResult.success) {
-      throw new Error(parseResult.error.message);
-    }
-    const sessionUserId = await getSessionUserId();
-    const result = await gameServices.validateResult(
-      parseResult.data,
-      sessionUserId,
-    );
-    const response: AppResponse<IAnswerResponse> = {
-      data: result,
-      success: true,
-      message: null,
-    };
-    return Response.json(response, { status: 200 });
-  } catch (e) {
-    const response: AppResponse<boolean> = {
-      data: false,
-      success: false,
-      message: e instanceof Error ? e.message : "An unknown error occurred",
-    };
-    return Response.json(response, { status: 400 });
-  }
+
+interface RouteContext {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export async function POST(request: Request, context: RouteContext) {
+  const { id } = await context.params;
+  return handleAccusationPost(request, id, {
+    getSessionUserId,
+    submitAccusation: accusationRepositories.submit,
+  });
 }

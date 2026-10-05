@@ -59,6 +59,7 @@ model User {
 	updatedAt   DateTime         @updatedAt @map("updated_at")
 	createdGames Game[]          @relation("GameCreator")
 	submissions UserSubmission[]
+	accusationAttempts AccusationAttempt[]
 
 	@@map("users")
 }
@@ -76,6 +77,7 @@ model Game {
 	gameMetadata   GameMetadata     @relation(fields: [gameMetadataId], references: [id], onDelete: Cascade)
 	result         Result?
 	userSubmissions UserSubmission[]
+	accusationAttempts AccusationAttempt[]
 
 	@@index([creatorId])
 	@@map("games")
@@ -182,4 +184,22 @@ model UserSubmission {
 	@@id([userId, gameId])
 	@@index([gameId])
 	@@map("user_submissions")
+}
+
+model AccusationAttempt {
+	id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	userId     String   @map("user_id") @db.Uuid
+	gameId     String   @map("game_id") @db.Uuid
+	murderId   String   @map("murder_id") @db.Uuid
+	weaponId   String   @map("weapon_id") @db.Uuid
+	motiveId   String   @map("motive_id") @db.Uuid
+	locationId String   @map("location_id") @db.Uuid
+	solved     Boolean
+	createdAt  DateTime @default(now()) @map("created_at")
+	user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+	game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+	@@index([userId, gameId])
+	@@index([gameId])
+	@@map("accusation_attempts")
 }
