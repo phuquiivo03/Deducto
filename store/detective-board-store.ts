@@ -1,6 +1,5 @@
 import { create } from "zustand";
 
-import { initialNotes } from "@/data/detective-board";
 import { sampleGame } from "@/data/sample-be";
 import { gameToClues } from "@/lib/clues.helper";
 import { gameToEntities } from "@/lib/game-to-entities";
@@ -24,7 +23,7 @@ export const useDetectiveBoardStore = create<DetectiveBoardState>((set) => ({
   entities: gameToEntities(sampleGame),
   relationships: [],
   clues: gameToClues(sampleGame),
-  notes: initialNotes,
+  notes: [],
   selected: null,
   view: "board",
   answer: null,

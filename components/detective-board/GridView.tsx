@@ -100,17 +100,19 @@ function RelationshipBlock({
 
   return (
     <section className="mb-8 last:mb-0">
-      <h3
-        className="
+      {title ? (
+        <h3
+          className="
 text-sm
 font-semibold
 font-heading
 text-pencil/70
 mb-3
 "
-      >
-        {title}
-      </h3>
+        >
+          {title}
+        </h3>
+      ) : null}
       <div className="overflow-auto">
         <table className="border-collapse text-xs bg-card">
           <thead>

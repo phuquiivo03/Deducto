@@ -41,7 +41,7 @@ const getGame = async (id: string): Promise<IGame | null> => {
     .maybeSingle();
   if (error) {
     console.error("getGame:", error.message);
-    return null;
+    throw new Error("Could not load game");
   }
   if (!data) {
     return null;

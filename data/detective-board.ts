@@ -233,20 +233,4 @@ export const clues: Clue[] = [
   },
 ];
 
-export const initialNotes: Note[] = [
-  {
-    id: "n1",
-    x: 340,
-    y: 60,
-    rot: -1.4,
-    text: "Probably Violet…",
-  },
-
-  {
-    id: "n2",
-    x: 820,
-    y: 820,
-    rot: 1.1,
-    text: "Check the garden clue again",
-  },
-];
+export const initialNotes: Note[] = [];

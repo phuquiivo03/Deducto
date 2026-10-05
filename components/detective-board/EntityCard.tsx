@@ -1,5 +1,6 @@
 'use client'
 
+import { entityTypeLabel } from '@/lib/entity-type-label'
 import { Entity } from '@/types/detective'
 
 interface Props {
@@ -28,12 +29,7 @@ export default function EntityCard({
 	onMove,
 	onStartConnect,
 }: Props) {
-	const typeLabel =
-		entity.type === 'suspect'
-			? 'Suspect'
-			: entity.type === 'weapon'
-				? 'Weapon'
-				: 'Location'
+	const typeLabel = entityTypeLabel(entity.type)
 
 	return (
 		<div

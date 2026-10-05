@@ -6,6 +6,7 @@ import { StoreTabs } from '@/components/store/store-tabs'
 import type { IShortGame } from '@/features/game/game.schemas'
 import gameServices from '@/features/game/game.services'
 import { getSessionUserId } from '@/features/user/user.auth'
+import { withDisplayBanners } from '@/lib/case-banner-server'
 import { parseStoreTab, type StoreTab } from '@/lib/store-constants'
 
 interface StorePageProps {
@@ -63,7 +64,7 @@ export default async function StorePage({ searchParams }: StorePageProps) {
 					<StoreSignInEmpty tab={tab as Exclude<StoreTab, 'public'>} />
 				) : (
 					<StoreShelf
-						games={gamesResult}
+						games={withDisplayBanners(gamesResult)}
 						initialQuery={initialQuery}
 						tab={tab}
 					/>
