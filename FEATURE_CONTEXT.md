@@ -875,6 +875,21 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 
 ---
 
+# 18. Account data and API errors
+
+## Public creator fields
+
+- `public.users` exposes `id`, `name`, and `avatar` to the Data API. A row is visible when it is the signed-in user or when that user has created a game.
+- `email`, `created_at`, and `updated_at` are not granted to `anon` or `authenticated`. The auth callback still writes the signed-in user's email and returns `id, name, avatar`.
+- Migration: `prisma/migrations/20261005120000_restrict_users_public_profile`.
+
+## Auth callback
+
+- `app/auth/callback/route.ts` accepts `next` only when `safeNextPath` resolves a single on-site path. Other values redirect to `/`.
+
+## API errors
+
+- Create, generate, result, case load, and solve-status handlers log the exception and return a fixed message via `publicApiFailure`. Client JSON does not include the thrown message.
 # 19. The case you open is the case you play
 
 ## Case file
