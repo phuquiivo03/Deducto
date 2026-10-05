@@ -184,10 +184,11 @@ export const relationshipSchema = z.object({
 export type IRelationship = z.infer<typeof relationshipSchema>;
 
 export const resultResponseSchema = z.object({
-  murder: z.boolean(),
-  weapon: z.boolean(),
-  motive: z.boolean(),
-  location: z.boolean(),
+  solved: z.boolean(),
+  alreadySolved: z.boolean(),
+  attemptsUsed: z.number().int().nonnegative(),
+  attemptsRemaining: z.number().int().nonnegative(),
+  attemptLimit: z.number().int().positive(),
 });
 export type IAnswerResponse = z.infer<typeof resultResponseSchema>;
 

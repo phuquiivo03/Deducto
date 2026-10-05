@@ -1,6 +1,4 @@
 import {
-  IAnswer,
-  IAnswerResponse,
   ICreateGameInput,
   IGame,
   IGeneratedCase,
@@ -11,54 +9,12 @@ import {
 import { extractJson } from "@/lib/extract-json";
 import gameRepositories from "./game.repositories";
 import submissionRepositories from "../submission/submission.repositories";
-
-const validateResult = async (
-  data: IAnswer,
-  sessionUserId: string | null,
-): Promise<IAnswerResponse> => {
-  const resultFromDatabase = await gameRepositories.getResult(data.game_id);
-  if (!resultFromDatabase) {
-    throw new Error("Result not found");
-  }
-  const response: IAnswerResponse = {
-    murder: false,
-    weapon: false,
-    motive: false,
-    location: false,
-  };
-  if (resultFromDatabase.murder_id === data.answer.murder_id) {
-    response.murder = true;
-  }
-  if (resultFromDatabase.weapon_id === data.answer.weapon_id) {
-    response.weapon = true;
-  }
-  if (resultFromDatabase.motive_id === data.answer.motive_id) {
-    response.motive = true;
-  }
-  if (resultFromDatabase.location_id === data.answer.location_id) {
-    response.location = true;
-  }
-  if (
-    response.murder &&
-    response.weapon &&
-    response.motive &&
-    response.location
-  ) {
-    if (sessionUserId) {
-      await submissionRepositories.create({
-        game_id: data.game_id,
-        user_id: sessionUserId,
-        time_taken: data.time_taken,
-      });
-    }
-  }
-  return response;
-};
+import { GameNotFoundError } from "./game-errors";
 
 const getById = async (id: string): Promise<IGame> => {
   const game = await gameRepositories.getGame(id);
   if (!game) {
-    throw new Error("Game not found");
+    throw new GameNotFoundError();
   }
   return game;
 };
@@ -127,7 +83,6 @@ const findByUserId = async (userId: string): Promise<IShortGame[]> => {
 };
 
 const gameServices = {
-  validateResult,
   getById,
   isResolved,
   generate,

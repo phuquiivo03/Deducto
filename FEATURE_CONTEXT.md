@@ -35,7 +35,7 @@ An entity is an investigation object.
 Types:
 
 ```ts
-type EntityType = "suspect" | "weapon" | "location";
+type EntityType = "suspect" | "weapon" | "location" | "motive";
 ```
 
 Examples:
@@ -197,7 +197,11 @@ Input:
 
 ```ts
 relationships;
+title;
+relationshipTotal;
 ```
+
+`title` is the loaded case title. `relationshipTotal` is the number of true cross-type matches for that case (`relationshipCapacityForGame` in `lib/relationship-pairs.ts`), so the progress line is not a fixed "of 9".
 
 Calculates:
 
@@ -610,19 +614,34 @@ Any new interaction should follow React data flow.
 
 ## Accusation form
 
-`AccusationForm` lets the player pick one suspect, weapon, location, and motive, then POSTs to `/api/game/[id]/result` with `IAnswer` (`game_id` + `answer` ids).
+`AccusationForm` lets the player pick one suspect, weapon, location, and motive, then POSTs to `/api/game/[id]/result` with `IAnswer` (`game_id` + `answer` ids). The route id is the case being graded. The body `user_id` is ignored.
+
+The route only implements POST. There is no GET.
 
 On success, the API returns `AppResponse<IAnswerResponse>`; the client stores `data.data` in Zustand (`resultResponse`).
 
+`IAnswerResponse` is the whole accusation, not four field grades:
+
+- `solved` — the four ids match the stored result
+- `alreadySolved` — this player already closed the case, so this guess was not graded
+- `attemptsUsed`, `attemptsRemaining`, `attemptLimit`
+
+Unauthenticated calls are `401`. A malformed body or a `game_id` that does not match the route is `400`. An unknown case is `404`. The sixth accusation for that player and case is `429`. Responses use `cache-control: no-store` and do not include `murder`, `weapon`, `motive`, or `location` booleans.
+
 ## Result popup (`AccusationResultModal`)
 
-After a successful submit, the form is replaced by a modal with four flip cards (2×2 grid):
+After a successful submit, the form is replaced by a verdict dialog:
 
-- Categories: Suspect (murder), Weapon, Motive, Location.
-- Each card starts face-down; one tap reveals the chosen entity name and Correct/Wrong from `IAnswerResponse` (`murder`, `weapon`, `motive`, `location` booleans).
-- When all four cards are flipped, a summary appears: full congratulations if all are correct, otherwise “X of 4 correct” with **Try again** (returns to the form with prior selection).
+- It lists the four names the player chose, without marking any of them correct or wrong.
+- A fresh solve says the accusation is correct.
+- A miss says it is not correct, how many accusations remain, and that the verdict does not identify which part failed. **Try again** returns to the form while attempts remain.
+- If the case was already solved, the dialog says this accusation was not checked.
 
-Validation logic lives in `features/game/game.services.ts` (`validateResult`), comparing submitted ids to the stored game result.
+Grading lives in `features/game/accusation-decision.ts` (`decideAccusation`). `features/game/accusation.handler.ts` is the HTTP boundary. `features/submission/accusation.repositories.ts` stores the attempt.
+
+## Why the verdict is all or nothing
+
+Easy cases have 3 choices in each category. Two responses that say which fields are correct identify the solution by elimination. The public response is therefore only solved or not solved. Each signed-in player gets 5 recorded accusations per case (`ACCUSATION_ATTEMPT_LIMIT`). That is enough to correct a bad final answer and far below the 81, 256, or 625 possible tuples.
 
 ---
 
@@ -651,7 +670,20 @@ Columns match `IUserSubmission` in `features/submission/submission.schemas.ts`:
 
 `game_id` stays indexed for joins. Row level security is enabled. Authenticated users may select and insert only rows where `user_id = auth.uid()`.
 
-Successful accusation inserts use the session user id from `getSessionUserId()` in the result API, not the client payload alone.
+A correct accusation inserts `user_submissions` in the same database transaction as the attempt, using the session user id. A later guess from that player is not compared to the solution.
+
+## Accusation attempts
+
+`accusation_attempts` stores every graded guess. It is not seeded.
+
+- `id` (uuid)
+- `user_id` (uuid, foreign key to `users.id`, cascade delete)
+- `game_id` (uuid, foreign key to `games.id`, cascade delete)
+- `murder_id`, `weapon_id`, `motive_id`, `location_id` (the guessed ids)
+- `solved` (boolean; the whole tuple, not four field scores)
+- `created_at`
+
+Indexes: `(user_id, game_id)` and `game_id`. Row level security is enabled. Authenticated users may select only their own rows. They cannot insert, update, or delete through the API. The result route writes with Prisma inside a transaction locked by `pg_advisory_xact_lock`. A before-insert trigger rejects a sixth row for the same player and case. The lock key is the lowercase user id, a colon, and the lowercase game id.
 
 ---
 
@@ -820,6 +852,7 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 - Search (`q` in the URL) filters the current tab’s list client-side by title, description, and creator.
 - Price controls (free-only checkbox, min/max inputs) are present in the UI; filtering by price is not wired until cases expose a catalog price (see `listedSchema` in `game.schemas.ts`).
 - Case cards alternate tape/tack decoration with slight rotation on hover; tokens match the global hand-drawn system (`paper`, `pencil`, `pen`, `marker`, `postit`).
+- Banner paths are passed through `withDisplayBanners` (`lib/case-banner-server.ts`). A local path that is not a file in `public/` is omitted, so the card keeps the blank paper panel. Other http(s) URLs render with a plain `img` that hides itself on error, because `next/image` only allows `lh3.googleusercontent.com`.
 - Header nav includes **Store** and **Create** ([`components/layout/Header.tsx`](components/layout/Header.tsx)).
 
 ---
@@ -839,3 +872,20 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 ## API errors
 
 - Create, generate, result, case load, and solve-status handlers log the exception and return a fixed message via `publicApiFailure`. Client JSON does not include the thrown message.
+# 19. The case you open is the case you play
+
+## Case file
+
+- `/case/[id]` loads the game on the server with `gameServices.getById`.
+- `IntroCard` shows that game’s title, description, difficulty (`level`), and victim.
+- There is no victim column. `victimFromDescription` in `lib/case-file.ts` reads a leading “was found / discovered / killed / murdered” phrase. If the description does not name one, the row says “Not named”.
+- A missing game calls `notFound()` and renders `app/case/[id]/not-found.tsx` (“Case not found”). Other load failures render `error.tsx` (“Could not open this case”). The intro is not filled with sample copy.
+- `GET /api/game/[id]` returns **404** when the game row is missing (`GameNotFoundError`) and **500** when the read itself fails.
+
+## Board
+
+- `TopBar` title is `game.title`. The denominator is `relationshipCapacityForGame` (one confirmed link per row in each of the six cross-type grids).
+- A fresh board starts with no sticky notes. The old “Probably Violet…” seed is not copied onto every case.
+- Entity cards use `entityTypeLabel`. Motive cards say “Motive”.
+- Grid headings cover suspect×motive, weapon×motive, and location×motive as well as the original three blocks.
+- Opening a case resets `isSolved` before `/api/game/[id]/resolved` answers, so a previous solve does not stick to the next case.

@@ -7,10 +7,20 @@ import BoardProfile from './board-profile'
 
 interface Props {
 	relationships: Relationship[]
+	title: string
+	relationshipTotal: number
 }
 
-export default function TopBar({ relationships }: Props) {
+export default function TopBar({
+	relationships,
+	title,
+	relationshipTotal,
+}: Props) {
 	const count = relationships.filter((r) => r.status === 'confirmed').length
+	const progress =
+		relationshipTotal > 0
+			? `of ${relationshipTotal} relationships confirmed`
+			: 'relationships confirmed'
 	const router = useRouter()
 	return (
 		<header
@@ -33,25 +43,23 @@ transition-transform duration-100
 				<ArrowLeftFromLine className="h-5 w-5 text-pencil" strokeWidth={2.5} />
 			</button>
 
-			<div className="leading-tight">
-				<div className="font-heading text-lg text-pencil">
-					The Ashcombe Case
+			<div className="leading-tight min-w-0 flex-1">
+				<div className="font-heading text-lg text-pencil truncate">
+					{title}
 				</div>
 				<div className="text-sm text-pencil/70">Detective board</div>
 			</div>
 
-			<div className="flex-1" />
-
 			<div
 				className="
-flex items-center gap-2 px-3 py-1.5
+flex shrink-0 items-center gap-2 px-3 py-1.5
 rounded-wobbly-sm bg-erased/60 border-2 border-pencil
-text-sm text-pencil/80
+text-sm text-pencil/80 whitespace-nowrap
 "
 			>
 				<span className="h-2 w-2 rounded-full bg-pen" />
 				<b className="text-pencil">{count}</b>
-				<span>of 9 relationships confirmed</span>
+				<span>{progress}</span>
 			</div>
 
 			<BoardProfile />

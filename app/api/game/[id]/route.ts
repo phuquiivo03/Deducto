@@ -1,3 +1,4 @@
+import { gameGetStatus } from "@/features/game/game-errors";
 import { IGame } from "@/features/game/game.schemas";
 import gameServices from "@/features/game/game.services";
 import { AppResponse } from "@/features/type";
@@ -30,13 +31,12 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     };
     return Response.json(response, { status: 200 });
   } catch (e) {
-    const response: AppResponse<boolean> = publicApiFailure(
-      "GET /api/game/[id]",
-      e,
-      "Could not load this case",
-      false,
-    );
-    return Response.json(response, { status: 500 });
+    const response: AppResponse<boolean> = {
+      data: false,
+      success: false,
+      message: e instanceof Error ? e.message : "An unknown error occurred",
+    };
+    return Response.json(response, { status: gameGetStatus(e) });
   }
 }
 

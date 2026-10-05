@@ -1,13 +1,7 @@
-import Page from "./page";
-
-interface PageProps {
-  params: Promise<{
-    id: string;
-  }>;
+export default function CaseLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return children;
 }
-async function RootLayout({ params }: PageProps) {
-  const { id } = await params;
-  return <Page id={id} />;
-}
-
-export default RootLayout;

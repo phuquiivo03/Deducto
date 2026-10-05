@@ -1,51 +1,31 @@
-"use client";
-import DetectiveBoard from "@/components/detective-board/DetectiveBoard";
-import Container from "@/components/layout/Container";
-import IntroCard from "@/components/ui/IntroCard";
+import CaseSession from "@/components/case/case-session";
+import { isGameNotFound } from "@/features/game/game-errors";
+import type { IGame } from "@/features/game/game.schemas";
+import gameServices from "@/features/game/game.services";
+import { notFound, unstable_rethrow } from "next/navigation";
 
-import { useEffect, useState } from "react";
-import { useGameStore } from "@/store/game.store";
-
-function CasePage({ id }: { id: string }) {
-  const [gameReady, setGameReady] = useState<boolean>(false);
-  const game = useGameStore((state) => state.game);
-  const setGame = useGameStore((state) => state.setGame);
-  const setIsSolved = useGameStore((state) => state.setIsSolved);
-  useEffect(() => {
-    setGameReady(false);
-    fetch(`/api/game/${id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.data) {
-          setGame(data.data);
-          setGameReady(true);
-        }
-      });
-
-    fetch(`/api/game/${id}/resolved`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.data) {
-          setIsSolved(data.data);
-          setGameReady(true);
-        }
-      });
-  }, [id, setGame]);
-  const [started, setStarted] = useState<boolean>(false);
-  return (
-    <main className="h-screen overflow-hidden">
-      {started && game ? (
-        <DetectiveBoard />
-      ) : (
-        <Container>
-          <IntroCard
-            start={() => setStarted(true)}
-            disabled={!gameReady || !game}
-          />
-        </Container>
-      )}
-    </main>
-  );
+interface PageProps {
+  params: Promise<{
+    id: string;
+  }>;
 }
 
-export default CasePage;
+async function loadCase(id: string): Promise<IGame | null> {
+  try {
+    return await gameServices.getById(id);
+  } catch (error) {
+    unstable_rethrow(error);
+    if (isGameNotFound(error)) return null;
+    throw error;
+  }
+}
+
+export default async function CasePage({ params }: PageProps) {
+  const { id } = await params;
+  const game = await loadCase(id);
+  if (!game) {
+    notFound();
+  }
+
+  return <CaseSession key={game.id} game={game} />;
+}
