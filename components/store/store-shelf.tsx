@@ -8,9 +8,10 @@ import type { StoreTab } from "@/lib/store-constants";
 import { Input } from "@/components/ui/input";
 
 import { CaseCard } from "./case-card";
+import { useQuery } from "@tanstack/react-query";
+import { gameApi } from "@/lib/api/game";
 
 interface StoreShelfProps {
-  games: IShortGame[];
   initialQuery: string;
   tab: StoreTab;
 }
@@ -31,13 +32,16 @@ const EMPTY_BY_TAB: Record<StoreTab, string> = {
   my: "You have not created any cases yet.",
 };
 
-export function StoreShelf({ games, initialQuery, tab }: StoreShelfProps) {
+export function StoreShelf({ initialQuery, tab }: StoreShelfProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [priceFreeOnly, setPriceFreeOnly] = useState(false);
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
-
+  const { data: games, isLoading } = useQuery({
+    queryKey: ["games", tab],
+    queryFn: () => gameApi.getGames(tab),
+  });
   const syncQueryToUrl = useCallback(
     (nextQuery: string) => {
       const params = new URLSearchParams({ tab });
@@ -51,7 +55,7 @@ export function StoreShelf({ games, initialQuery, tab }: StoreShelfProps) {
   );
 
   const filtered = useMemo(
-    () => games.filter((game) => matchesQuery(game, query)),
+    () => games?.filter((game) => matchesQuery(game, query)) ?? [],
     [games, query],
   );
 
@@ -60,7 +64,7 @@ export function StoreShelf({ games, initialQuery, tab }: StoreShelfProps) {
     syncQueryToUrl(value);
   };
 
-  if (games.length === 0) {
+  if (games?.length === 0) {
     return (
       <p className="text-center text-lg text-pencil/70 py-16 max-w-md mx-auto">
         {EMPTY_BY_TAB[tab]}

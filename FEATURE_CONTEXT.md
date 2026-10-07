@@ -739,10 +739,10 @@ Prisma-created tables need explicit `GRANT` for Supabase API roles (`anon`, `aut
 
 ## API
 
-| Route | Method | Auth | Body | Response |
-|-------|--------|------|------|----------|
-| `/api/generate` | POST | required | `{ prompt, level }` | `AppResponse<IGeneratedCase>` |
-| `/api/game` | POST | required | `ICreateGameInput` | `AppResponse<{ id }>` |
+| Route           | Method | Auth     | Body                | Response                      |
+| --------------- | ------ | -------- | ------------------- | ----------------------------- |
+| `/api/generate` | POST   | required | `{ prompt, level }` | `AppResponse<IGeneratedCase>` |
+| `/api/game`     | POST   | required | `ICreateGameInput`  | `AppResponse<{ id }>`         |
 
 Schemas: `features/game/game.schemas.ts` (`generateRequestSchema`, `generatedCaseSchema`, `createGameInputSchema`).
 
@@ -793,15 +793,15 @@ Groups larger than 6 are rejected instead of searching. Difficulty cases are siz
 
 ## Color tokens
 
-| Token | Role |
-| --- | --- |
-| `paper` | Warm page background + dot grid |
-| `pencil` | Primary text and borders |
-| `erased` | Muted fills, dashed dividers |
+| Token    | Role                                        |
+| -------- | ------------------------------------------- |
+| `paper`  | Warm page background + dot grid             |
+| `pencil` | Primary text and borders                    |
+| `erased` | Muted fills, dashed dividers                |
 | `marker` | Correction-marker accent (errors, emphasis) |
-| `pen` | Ballpoint accent (links, confirmed state) |
-| `postit` | Sticky-note surfaces |
-| `card` | White surfaces |
+| `pen`    | Ballpoint accent (links, confirmed state)   |
+| `postit` | Sticky-note surfaces                        |
+| `card`   | White surfaces                              |
 
 ## Shape and motion
 
@@ -890,6 +890,7 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 ## API errors
 
 - Create, generate, result, case load, and solve-status handlers log the exception and return a fixed message via `publicApiFailure`. Client JSON does not include the thrown message.
+
 # 19. The case you open is the case you play
 
 ## Case file
