@@ -8,6 +8,8 @@ import ClueList from "./ClueList";
 import EntityEditors from "./EntityEditors";
 import SolutionPicker from "./SolutionPicker";
 import ValidationSummary from "./ValidationSummary";
+import SolvabilityBanner from "./SolvabilityBanner";
+import { useDraftSolvability } from "@/hooks/use-draft-solvability";
 
 const NAV = [
   { id: "section-overview", label: "Tổng quan" },
@@ -30,6 +32,7 @@ export default function CaseEditor({
 }) {
   const draft = useCreateGameStore((s) => s.draft);
   const issues = useCreateGameStore((s) => s.issues);
+  const solvability = useDraftSolvability();
 
   if (!draft) {
     return null;
@@ -67,6 +70,11 @@ text-pencil/70 hover:bg-postit hover:text-pencil
       </nav>
 
       <div className="space-y-8 min-w-0">
+        <SolvabilityBanner
+          status={solvability.status}
+          messageVi={solvability.messageVi}
+          isChecking={solvability.isChecking}
+        />
         <ValidationSummary issues={issues} />
         <div className="lg:hidden flex gap-2 overflow-x-auto pb-1">
           {NAV.map((item) => (
@@ -107,7 +115,13 @@ border-t-2 border-dashed border-pencil flex flex-col sm:flex-row gap-3
           <Button
             type="button"
             onClick={onCreate}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !solvability.canCreate}
+            title={
+              !solvability.canCreate && !isSubmitting
+                ? solvability.messageVi ??
+                  "Sửa manh mối hoặc đáp án cho đến khi logic hợp lệ."
+                : undefined
+            }
             className="flex-1"
           >
             {isSubmitting ? "Đang tạo…" : "Tạo vụ án"}

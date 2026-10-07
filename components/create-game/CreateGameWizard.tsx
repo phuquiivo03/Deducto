@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createGameInputSchema } from "@/features/game/game.schemas";
 import type { AppResponse } from "@/features/type";
 import type { IGeneratedCase } from "@/features/game/game.schemas";
-import { resolveClueValueForSubmit } from "@/lib/clue-templates";
+import { prepareMetadataForSolver } from "@/features/game/prepare-metadata-for-solver";
 import { signInWithGoogle } from "@/features/user/user.sign-in";
 import { useAuthUser } from "@/hooks/use-auth-user";
 import { useCreateGameStore } from "@/store/create-game.store";
@@ -80,15 +80,13 @@ export default function CreateGameWizard() {
     }
     setError(null);
 
-    const clues = draft.gameMetadata.clues.map((c) =>
-      resolveClueValueForSubmit(c, draft.gameMetadata),
-    );
+    const gameMetadata = prepareMetadataForSolver(draft.gameMetadata);
     const payload = {
       title: draft.title,
       description: draft.description,
       banner: draft.banner,
       level: draft.level,
-      gameMetadata: { ...draft.gameMetadata, clues },
+      gameMetadata,
       result,
     };
 
