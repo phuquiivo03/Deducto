@@ -298,7 +298,7 @@ tracking-wide
 text-pen
 "
             >
-              Final accusation
+              Cáo buộc cuối cùng
             </p>
             <h2
               id="accusation-form-title"
@@ -310,7 +310,7 @@ font-semibold
 text-pencil
 "
             >
-              Name the culprit
+              Đoán hung thủ
             </h2>
             <p className="mt-1 text-xs text-pencil/70">
               Chọn một người bị tội, vũ khí, nơi xảy ra và lý do.
@@ -338,7 +338,7 @@ text-pencil/70
 hover:bg-paper
 "
           >
-            Close
+            Đóng
           </button>
         </div>
 

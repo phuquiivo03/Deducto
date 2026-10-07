@@ -212,6 +212,82 @@ export const generateRequestSchema = z.object({
 });
 export type IGenerateRequest = z.infer<typeof generateRequestSchema>;
 
+const LEVEL_ENTITY_COUNT: Record<GameLevelStrict, number> = {
+  easy: 3,
+  medium: 4,
+  hard: 5,
+};
+
+export function entityCountForLevel(level: GameLevelStrict): number {
+  return LEVEL_ENTITY_COUNT[level];
+}
+
+export const aiCaseDraftSchema = z.object({
+  title: z.string().min(3).max(60),
+  description: z.string().min(1).max(320),
+  banner: z.string().min(1),
+  suspects: z.array(suspectSchema),
+  weapons: z.array(weaponSchema),
+  locations: z.array(locationSchema),
+  motives: z.array(motiveSchema),
+});
+
+export type IAiCaseDraft = z.infer<typeof aiCaseDraftSchema>;
+
+export function parseAiCaseDraft(
+  data: unknown,
+  level: GameLevelStrict,
+):
+  | { success: true; data: IAiCaseDraft }
+  | { success: false; error: z.ZodError } {
+  const parsed = aiCaseDraftSchema.safeParse(data);
+  if (!parsed.success) {
+    return parsed;
+  }
+  const n = entityCountForLevel(level);
+  const counts = [
+    parsed.data.suspects.length,
+    parsed.data.weapons.length,
+    parsed.data.locations.length,
+    parsed.data.motives.length,
+  ];
+  if (counts.some((c) => c !== n)) {
+    return {
+      success: false,
+      error: new z.ZodError([
+        {
+          code: z.ZodIssueCode.custom,
+          message: `Each entity group must have exactly ${n} items for level ${level}`,
+          path: [],
+        },
+      ]),
+    };
+  }
+  const ids = [
+    ...parsed.data.suspects.map((s) => s.id),
+    ...parsed.data.weapons.map((w) => w.id),
+    ...parsed.data.locations.map((l) => l.id),
+    ...parsed.data.motives.map((m) => m.id),
+  ];
+  const seen = new Set<string>();
+  for (const id of ids) {
+    if (seen.has(id)) {
+      return {
+        success: false,
+        error: new z.ZodError([
+          {
+            code: z.ZodIssueCode.custom,
+            message: `Duplicate entity id: ${id}`,
+            path: [],
+          },
+        ]),
+      };
+    }
+    seen.add(id);
+  }
+  return parsed;
+}
+
 export const createGameInputSchema = z
   .object({
     title: z.string().min(1),
