@@ -133,6 +133,8 @@ DetectiveBoard
 |
 |-- TopBar
 |
+|-- CaseBrief
+|
 |-- CluePanel
 |
 |-- BoardToolbar
@@ -210,6 +212,12 @@ confirmed relationships count
 ```
 
 Signed-in profile opens a menu: **My cases** (`/store?tab=my`) and **Exit** (sign out). Signed-out **Log in** opens a modal with Google OAuth via `BoardProfile` in `board-profile.tsx`.
+
+### CaseBrief.tsx
+
+Pinned under `TopBar` for both board and grid.
+
+Shows `caseFileFromGame(game).description` for the game in the store. The player can re-read that case’s premise without leaving the board. A blank description uses the same fallback as the intro card. The brief is not a sticky note and not a numbered clue.
 
 ### CluePanel.tsx
 
@@ -904,6 +912,7 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 ## Board
 
 - `TopBar` title is `game.title`. The denominator is `relationshipCapacityForGame` (one confirmed link per row in each of the six cross-type grids).
+- `CaseBrief`, directly under `TopBar`, shows that case’s description on the board and in the grid. It stays on screen while cards, clues, and the inspector change.
 - A fresh board starts with no sticky notes. The old “Probably Violet…” seed is not copied onto every case.
 - Entity cards use `entityTypeLabel`. Motive cards say “Motive”.
 - Grid headings cover suspect×motive, weapon×motive, and location×motive as well as the original three blocks.

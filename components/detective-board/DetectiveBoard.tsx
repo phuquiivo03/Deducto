@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import TopBar from "./TopBar";
+import CaseBrief from "./case-brief";
 import CluePanel from "./CluePanel";
 import BoardToolbar from "./BoardToolbar";
 import BoardCanvas from "./BoardCanvas";
@@ -123,6 +124,8 @@ overflow-hidden
         relationships={relationships}
         relationshipTotal={relationshipCapacityForGame(game)}
       />
+
+      <CaseBrief game={game} />
 
       <div
         className="
