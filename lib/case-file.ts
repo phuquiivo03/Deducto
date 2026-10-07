@@ -4,13 +4,11 @@ const DIFFICULTY_LABELS: Record<string, string> = {
   hard: "Hard",
 };
 
-const VICTIM_PATTERN =
-  /^(.+?)\s+was\s+(?:found|discovered|killed|murdered)\b/i;
+const VICTIM_PATTERN = /^(.+?)\s+was\s+(?:found|discovered|killed|murdered)\b/i;
 
-const HONORIFIC_SOURCE =
-  "\\b(?:Dr|Mr|Mrs|Ms|Prof|St|Sr|Jr|Lt|Col|Gen)\\.\\s+";
+const HONORIFIC_SOURCE = "\\b(?:Dr|Mr|Mrs|Ms|Prof|St|Sr|Jr|Lt|Col|Gen)\\.\\s+";
 
-export const UNNAMED_VICTIM = "Not named";
+export const UNNAMED_VICTIM = "Chưa xác định tên";
 
 export interface CaseFileView {
   title: string;
@@ -34,10 +32,7 @@ export function victimFromDescription(description: string): string | null {
   if (!match) return null;
   const lead = match[1].trim();
   if (lead.length < 2 || lead.length > 80) return null;
-  const withoutHonorifics = lead.replace(
-    new RegExp(HONORIFIC_SOURCE, "g"),
-    "",
-  );
+  const withoutHonorifics = lead.replace(new RegExp(HONORIFIC_SOURCE, "g"), "");
   if (/[.!?]/.test(withoutHonorifics)) return null;
   return lead;
 }

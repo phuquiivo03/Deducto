@@ -25,7 +25,7 @@ export default function IntroCard({
 
   return (
     <Card decoration="tack" tone="postit" tilt="left" className="mb-0">
-      <StickyTag className="mb-4 rotate-0">Case file</StickyTag>
+      <StickyTag className="mb-4 rotate-0">Tệp case</StickyTag>
 
       <h1 className="font-heading text-4xl mb-3 text-pencil">{title}</h1>
 
@@ -35,11 +35,11 @@ export default function IntroCard({
 
       <div className="border-t-2 border-dashed border-pencil pt-4 space-y-2 text-base">
         <div className="flex justify-between gap-4">
-          <span>Difficulty</span>
+          <span>Độ khó</span>
           <b className="font-heading">{difficulty}</b>
         </div>
         <div className="flex justify-between gap-4">
-          <span>Victim</span>
+          <span>Nạn nhân</span>
           <b className="font-heading text-right">{victim}</b>
         </div>
       </div>
@@ -51,12 +51,12 @@ export default function IntroCard({
           disabled={disabled || !user}
           className="w-full"
         >
-          Start investigation
+          Bắt đầu điều tra
         </Button>
 
         {!user && !isLoading ? (
           <p className="text-sm text-pencil/60 text-center">
-            Sign in with Google to play and save your solve.
+            Đăng nhập với Google để chơi và lưu lại các case đã giải quyết.
           </p>
         ) : null}
       </div>

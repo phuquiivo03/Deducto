@@ -14,7 +14,7 @@ The Hand-Drawn design style celebrates authentic imperfection and human touch in
 
 - **Hard Offset Shadows**: Reject soft blur shadows entirely. Use solid, offset box-shadows (4px 4px 0px) to create a cut-paper, layered collage aesthetic
 
-- **Handwritten Typography**: Use exclusively handwritten or marker-style fonts (Kalam, Patrick Hand) that feel human and approachable, never corporate or sterile
+- **Handwritten Typography**: Use exclusively handwritten or marker-style fonts (Mali, Patrick Hand) that feel human and approachable, never corporate or sterile. Both must include the Vietnamese subset so diacritics stay in the same face.
 
 - **Scribbled Decoration**: Add visual flourishes like dashed lines, hand-drawn arrows, tape effects, thumbtacks, and irregular shapes to reinforce the sketched aesthetic
 
@@ -44,7 +44,7 @@ This style should feel approachable, creative, human-centered, and fun. It lower
 
 ## Typography
 
-- **Headings**: `Kalam` (wght 700) - Looks like a thick felt-tip marker.
+- **Headings**: `Mali` (wght 700) - Rounded felt-tip handwriting with Vietnamese diacritics. Kalam is not used because it has no Vietnamese subset.
 
 - **Body**: `Patrick Hand` (wght 400) - Legible but distinctly handwritten.
 

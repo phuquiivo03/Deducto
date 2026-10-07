@@ -1,5 +1,5 @@
 import "./globals.css";
-import { kalam, patrickHand } from "./fonts";
+import { mali, patrickHand } from "./fonts";
 import { TanstackProviders } from "./providers";
 
 export const metadata = {
@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${kalam.variable} ${patrickHand.variable}`}>
+    <html lang="en" className={`${mali.variable} ${patrickHand.variable}`}>
       <body className="font-body antialiased">
         <TanstackProviders>{children}</TanstackProviders>
       </body>

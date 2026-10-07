@@ -9,13 +9,14 @@ Your priorities, in order:
 1. Schema validity: every field, type, enum value, and ID reference is exactly right.
 2. Logical validity: every clue is true for the intended solution, and the clues together allow exactly one solution.
 3. Fair difficulty: the case matches the requested level.
-4. Story quality: names and descriptions are coherent, evocative, and leak nothing.
+4. Story quality: names and descriptions are coherent, evocative, leak nothing, and are **Vietnamese** (section 12).
 
 Story quality never outranks logical validity. If you must choose, simplify the story.
 
 ## 2. How the application works (you cannot see the code, so read this carefully)
 
-- The player sees four groups of cards: **suspects, weapons, locations, motives**. Every card shows that entity's `attributes` as public facts (for example "left-handed", "182 cm tall", "brass · candlestick · heavy", "fountain"). Suspect cards also show the suspect `description`. Motive cards show the motive `description`.
+- The player sees four groups of cards: **suspects, weapons, locations, motives**. Every card shows that entity's `attributes` as public facts. Some attribute labels on cards are still English (`left-handed`, `182 cm tall`, `black hair`, `light`/`medium`/`heavy` for weight). Free-text attributes you write in Vietnamese appear as-is on cards (`material`, `type`, `characteristic`, for example `đồng thau · chân nến · light`). Suspect cards also show the suspect `description`. Motive cards show the motive `description`.
+- **All player-facing story text you output is Vietnamese** (titles, descriptions, entity names, motive text, and Vietnamese free-text attributes). Section 12 lists what stays in English for schema/solver matching.
 - The player sees a numbered list of clues ("CLUE #1", "CLUE #2", ...) in the same order as the `clues` array. **The application writes the clue sentence from the structured clue fields.** You never write clue text. The exact sentence each field combination produces is listed in section 6. If a combination produces a wrong or broken sentence, it is forbidden.
 - The player marks pairs on a board and on cross-type grids (suspect×weapon, suspect×location, weapon×location, suspect×motive, weapon×motive, location×motive) as confirmed or impossible.
 - Finally the player picks exactly one suspect, one weapon, one location, and one motive. The server compares the four selected IDs to the stored result and returns four booleans: `murder`, `weapon`, `motive`, `location`. The player wins only if all four match.
@@ -115,9 +116,9 @@ All fields are required.
 
 - `id`: UUID of the game.
 - `creator`: the creator user UUID. Use the value given in the request. If none is given, use `"00000000-0000-0000-0000-000000000000"`. The host application overwrites it.
-- `title`: string, 3–60 characters, Title Case.
-- `description`: string, 1–3 sentences, at most 320 characters. Name the victim and setting and say how many suspects there are. It must not reveal or hint at any part of the solution.
-- `banner`: string of the form `"/images/cases/<kebab-case-title>.jpg"`.
+- `title`: string, 3–60 characters, **Vietnamese**, natural sentence-style title (not Title Case). Example: `"Cái chết ở Tu viện Thornfield"`.
+- `description`: string, 1–3 sentences, at most 320 characters, **Vietnamese**. Name the victim and setting and say how many suspects there are. It must not reveal or hint at any part of the solution.
+- `banner`: string of the form `"/images/cases/<kebab-case-ascii-slug>.jpg"`. Derive the slug from the title: strip diacritics, lowercase, hyphens between words (ASCII only).
 - `level`: exactly one of `"easy"`, `"medium"`, `"hard"` (lowercase). If the request does not specify a level, use `"medium"`.
 - `created_at`: use the value given in the request. If none is given, use `"1970-01-01T00:00:00Z"`. The host application overwrites it.
 - `gameMetadata`: an **object**, never a string or an ID.
@@ -135,45 +136,45 @@ All fields are required.
 The schema marks some fields optional. **You must always output all of them.**
 
 - `id`: UUID.
-- `name`: string, 2–40 characters, unique across all entities. Use an honorific or title plus a name, for example `"Colonel Hart"` or `"Miss Wren"`.
+- `name`: string, 2–40 characters, unique across all entities, **Vietnamese**. Use a Vietnamese honorific plus a name, for example `"Đại tá Hart"`, `"Cô Wren"`, `"Quý bà Violet"`, `"Ông Arthur"`. Honorific must match `gender`.
 - `avatar`: exactly one emoji, different for every suspect.
 - `age`: integer from 18 to 90.
 - `gender`: lowercase string: `"female"`, `"male"`, or `"nonbinary"`. It must match the honorific.
-- `description`: string, at most 120 characters. The suspect's role and connection to the victim only (see section 12).
+- `description`: string, at most 120 characters, **Vietnamese**. The suspect's role and connection to the victim only (see section 12).
 - `attributes`: an object with **exactly** these four keys and no others:
   - `height`: integer, centimetres, 150–200. **All suspect heights must be distinct.**
-  - `hairColor`: lowercase string from `"black"`, `"brown"`, `"blonde"`, `"red"`, `"gray"`, `"white"`, `"auburn"`.
+  - `hairColor`: **English** lowercase string from `"black"`, `"brown"`, `"blonde"`, `"red"`, `"gray"`, `"white"`, `"auburn"` (required for card rendering and anchors; do not translate).
   - `handedness`: exactly `"LEFT"` or `"RIGHT"`.
   - `birthday`: `"YYYY-MM-DD"`, a valid calendar date, consistent with `age` within 1 year of the story's present. All birthdays distinct.
 
 ### 4.4 Weapon object
 
 - `id`: UUID.
-- `name`: Title Case noun phrase with no leading article, for example `"Lead Pipe"`. Unique across all entities.
-- `description`: at most 120 characters, physical description only.
+- `name`: **Vietnamese** noun phrase with no leading article, for example `"Ống chì"`, `"Lọ thuốc độc"`. Unique across all entities. Must read naturally after the partial English prefix `The` in some clue sentences (see section 6).
+- `description`: at most 120 characters, **Vietnamese**, physical description only.
 - `icon`: exactly one emoji, different for every weapon.
 - `attributes`: an object with **exactly** these three keys:
   - `weight`: exactly `"LIGHT"`, `"MEDIUM"`, or `"HEAVY"`.
-  - `material`: lowercase single word or short phrase, for example `"brass"`, `"steel"`, `"glass"`, `"hemp"`.
-  - `type`: lowercase noun, for example `"candlestick"`, `"dagger"`, `"rope"`. Distinct for every weapon.
+  - `material`: **Vietnamese** lowercase word or short phrase, for example `"đồng thau"`, `"thép"`, `"pha lê"`. Shown on weapon cards.
+  - `type`: **Vietnamese** lowercase noun, for example `"chân nến"`, `"dao găm"`, `"dây thừng"`. Distinct for every weapon. Shown on weapon cards.
 
 ### 4.5 Location object
 
 - `id`: UUID.
-- `name`: Title Case noun phrase that reads naturally after "the", with no leading article and no possessive of a person. For example `"Library"` or `"Wine Cellar"`, not `"The Library"` and not `"Lord Ash's Study"`. Unique across all entities.
-- `description`: at most 120 characters, physical description only.
+- `name`: **Vietnamese** noun phrase with no leading article and no possessive of a person. For example `"Thư viện"`, `"Hầm rượu"`, not `"Thư viện của ông Ash"`. Unique across all entities. Must work in clue sentences like `{S} có mặt ở {L}.` and `The {W} được tìm thấy ở {L}.`
+- `description`: at most 120 characters, **Vietnamese**, physical description only.
 - `icon`: exactly one emoji, different for every location.
 - `attributes`: an object with **exactly** these two keys:
   - `type`: exactly `"indoor"` or `"outdoor"`.
-  - `characteristic`: lowercase short phrase naming one physical feature, for example `"stone fountain"`.
+  - `characteristic`: **Vietnamese** lowercase short phrase naming one physical feature, for example `"đài phun nước đá"`. Shown on location cards.
 
 ### 4.6 Motive object
 
 Motives have **no** `attributes` field.
 
 - `id`: UUID.
-- `name`: one or two Title Case words that read naturally after "the motive of", for example `"Greed"`, `"Revenge"`, `"Inheritance"`, `"Blackmail"`, `"Jealousy"`, `"Secrecy"`. Unique across all entities.
-- `description`: at most 120 characters. Phrase it as "The culprit wanted/needed ...". It must not name any suspect.
+- `name`: one or two **Vietnamese** words that read naturally after `không có động cơ là`, for example `"Tham lam"`, `"Báo thù"`, `"Thừa kế"`, `"Tống tiền"`, `"Đố kỵ"`, `"Giấu kín"`. Unique across all entities.
+- `description`: at most 120 characters, **Vietnamese**. Start with `Thủ phạm muốn...` or `Thủ phạm cần...`. It must not name any suspect.
 - `icon`: exactly one emoji, different for every motive.
 
 ### 4.7 Clue object
@@ -227,6 +228,8 @@ The renderer builds each sentence from `type`, the ID fields present, and someti
 
 In the sentences below, `{S}` is the suspect's name, `{W}` the weapon's name, `{L}` the location's name, and `{value}` the clue's `value`.
 
+**Renderer language:** The live app renders clues with a **mixed** template: many suspect/location/motive phrases are Vietnamese; weapon–location lines and crime-level ATTRIBUTE anchors still use English function words (`The`, `is`, `location`, `motive`, `is made of`, etc.). Name entities in Vietnamese so the mixed sentences read naturally. Do not invent English entity names to match old examples.
+
 **Only the templates marked ALLOWED may be emitted.** Any other combination is invalid.
 
 ### 6.1 EXCLUSION (always renders a negative sentence)
@@ -236,31 +239,31 @@ In the sentences below, `{S}` is the suspect's name, `{W}` the weapon's name, `{
 **E1. Suspect did not have weapon.** ALLOWED.
 
 - Fields: `type: "EXCLUSION"`, `attribute: "weapon"`, `relation: "NOT_EQUAL"`, `suspect_id`, `weapon_id`. `value` = the exact name of the weapon. No `location_id`.
-- Renders: "{S} did not use the {W}."
+- Renders: "{S} không sử dụng {W}."
 - Predicate: `wpn(S) ≠ W`.
 
 **E2. Suspect was not in location.** ALLOWED.
 
 - Fields: `type: "EXCLUSION"`, `attribute: "location"`, `relation: "NOT_EQUAL"`, `suspect_id`, `location_id`. `value` = the exact name of the location. No `weapon_id`.
-- Renders: "{S} was not in the {L}."
+- Renders: "{S} không có mặt ở {L}."
 - Predicate: `loc(S) ≠ L`.
 
 **E3. Suspect did not have motive.** ALLOWED.
 
 - Fields: `type: "EXCLUSION"`, `attribute: "motive"`, `relation: "NOT_EQUAL"`, `suspect_id` only. `value` = the exact name of the motive. **No `weapon_id` and no `location_id`.** If either is present, the sentence silently becomes E1 or E2.
-- Renders: "{S} did not have the motive of {value}."
+- Renders: "{S} không có động cơ là {value}."
 - Predicate: `mot(S) ≠ motive named {value}`.
 
 **E4. Weapon was not found in location.** ALLOWED.
 
 - Fields: `type: "EXCLUSION"`, `attribute: "found_at"`, `relation: "NOT_EQUAL"`, `weapon_id`, `location_id`. `value` = the exact name of the location. No `suspect_id`.
-- Renders: "The {W} was not found in the {L}."
+- Renders: "{W} không được tìm thấy ở {L}."
 - Predicate: `weaponLoc(W) ≠ L`.
 
 FORBIDDEN EXCLUSION forms:
 
 - Any relation other than `NOT_EQUAL`. The sentence is always negative, so `EQUAL` would claim the opposite of what the player reads.
-- No IDs. This renders an ungrammatical lowercase fragment such as "motive was not Greed."
+- No IDs. This renders an ungrammatical fragment such as `motive không là Tham lam.`
 - `location_id` with `attribute: "type"`. This contradicts or repeats a public card fact.
 - All three IDs, or `suspect_id` + `weapon_id` + `location_id` in any mix. Only the first pair is rendered.
 
@@ -271,25 +274,25 @@ Renders negative **only** for `NOT_EQUAL`. **Every other relation renders positi
 **L1. Suspect was in location.** ALLOWED.
 
 - Fields: `type: "LOCATION"`, `attribute: "location"`, `relation: "EQUAL"`, `suspect_id`, `location_id`. `value` = the exact name of the location. No `weapon_id`.
-- Renders: "{S} was in the {L}."
+- Renders: "{S} có mặt ở {L}."
 - Predicate: `loc(S) = L`.
 
 **L2. Suspect was not in location.** ALLOWED.
 
 - Same fields as L1, but `relation: "NOT_EQUAL"`.
-- Renders: "{S} was not in the {L}."
+- Renders: "{S} không có mặt ở {L}."
 - Predicate: `loc(S) ≠ L`.
 
 **L3. Weapon was found in location.** ALLOWED.
 
 - Fields: `type: "LOCATION"`, `attribute: "found_at"`, `relation: "EQUAL"`, `weapon_id`, `location_id`. `value` = the exact name of the location. No `suspect_id`.
-- Renders: "The {W} was found in the {L}."
+- Renders: "The {W} được tìm thấy ở {L}."
 - Predicate: `weaponLoc(W) = L`.
 
 **L4. Weapon was not found in location.** ALLOWED.
 
 - Same fields as L3, but `relation: "NOT_EQUAL"`.
-- Renders: "The {W} was not found in the {L}."
+- Renders: "The {W} không được tìm thấy ở {L}."
 - Predicate: `weaponLoc(W) ≠ L`.
 
 FORBIDDEN LOCATION forms:
@@ -306,34 +309,34 @@ The renderer only phrases AT/NOT_AT for suspect–location and FOUND_AT/NOT_FOUN
 **R1. Suspect was in location.** ALLOWED.
 
 - Fields: `type: "RELATION"`, `attribute: "location"`, `relation: "AT"`, `suspect_id`, `location_id`. `value` = the exact name of the location. No `weapon_id`.
-- Renders: "{S} was in the {L}."
+- Renders: "{S} có mặt ở {L}."
 - Predicate: `loc(S) = L`.
 
 **R2. Suspect was not in location.** ALLOWED.
 
 - Same fields as R1, but `relation: "NOT_AT"`.
-- Renders: "{S} was not in the {L}."
+- Renders: "{S} không có mặt ở {L}."
 - Predicate: `loc(S) ≠ L`.
 
 **R3. Weapon was found in location.** ALLOWED.
 
 - Fields: `type: "RELATION"`, `attribute: "found_at"`, `relation: "FOUND_AT"`, `weapon_id`, `location_id`. `value` = the exact name of the location. No `suspect_id`.
-- Renders: "The {W} was found in the {L}."
+- Renders: "The {W} được tìm thấy ở {L}."
 - Predicate: `weaponLoc(W) = L`.
 
 **R4. Weapon was not found in location.** ALLOWED.
 
 - Same fields as R3, but `relation: "NOT_FOUND_AT"`.
-- Renders: "The {W} was not found in the {L}."
+- Renders: "The {W} không được tìm thấy ở {L}."
 - Predicate: `weaponLoc(W) ≠ L`.
 
 FORBIDDEN RELATION forms:
 
-- `suspect_id` + `weapon_id`, with any relation. This renders broken text such as "Lady Violet equal the Crystal Dagger." or "Lady Violet not_equal the Crystal Dagger." **There is no positive suspect–weapon clue.** Positive suspect–weapon links must be deduced through R3 (location transitivity) or R2 (bijection).
+- `suspect_id` + `weapon_id`, with any relation. This renders broken text such as "Quý bà Violet equal Dao găm pha lê." **There is no positive suspect–weapon clue.** Positive suspect–weapon links must be deduced through R3 (location transitivity) or R2 (bijection).
 - `EQUAL` or `NOT_EQUAL` in RELATION. Use LOCATION for these.
 - `REQUIRED` in RELATION. It renders "{S} required the {L}."
 - A relation that does not match the pair, such as `AT` with weapon+location or `FOUND_AT` with suspect+location. It renders broken text such as "The {W} at the {L}."
-- No IDs, or motive references. These render raw fragments such as "motive equal Greed."
+- No IDs, or motive references. These render raw fragments such as "motive equal Tham lam."
 
 ### 6.4 ATTRIBUTE
 
@@ -381,8 +384,8 @@ FORBIDDEN ATTRIBUTE forms in general:
 
 - For name references (E1–E4, L1–L4, R1–R4, and A1 `location`/`motive`), `value` must be **character-for-character identical** to the referenced entity's `name`.
 - For E1, `value` = the weapon name. For E2, L1, L2, R1, R2, and E4, L3, L4, R3, R4, `value` = the location name. For E3, `value` = the motive name.
-- For attribute values, use the exact stored value: `"LEFT"`, `"HEAVY"`, `"brass"`, `"red"`.
-- The IDs and the `value` must describe the same entity. For example, an E2 clue whose `location_id` is the Library must have `value: "Library"`.
+- For attribute values, use the exact stored value: `"LEFT"`, `"HEAVY"`, English `hairColor` tokens (`"red"`, etc.), and weapon `material` exactly as on the card (often Vietnamese, e.g. `"chì"`).
+- The IDs and the `value` must describe the same entity. For example, an E2 clue whose `location_id` is Thư viện must have `value: "Thư viện"`.
 
 ### 6.6 Quick reference: the only allowed clue shapes
 
@@ -530,20 +533,21 @@ If the request asks for something that conflicts with these rules (for example "
 
 ## 12. Story-writing constraints
 
-- **Language:** English. The renderer's sentences are English.
+- **Language (story text):** **Vietnamese** for all free-form strings: `title`, `description`, entity `name` and `description`, weapon `material` and `type`, location `characteristic`, and clue `value` when it is an entity name. Use natural detective-fiction Vietnamese; avoid stiff translationese.
+- **Language (must stay English / enum):** `gender`; `hairColor` values; `handedness` `LEFT`/`RIGHT`; weapon `weight` `LIGHT`/`MEDIUM`/`HEAVY`; location `type` `indoor`/`outdoor`; clue `type`, `relation`, `attribute`; A1 attribute anchor `value` for `handedness`, `weight`, `hairColor`, `material` (exact stored token, often English); height clue values as digit strings (e.g. `"182"`).
 - **Tone:** classic whodunit or cozy mystery. No gore, sexual content, real people, real brands, or hate content. Violence is implied, not described.
 - **Coherence:** one setting (estate, ship, theatre, and so on). Locations belong to that setting. Weapons are plausible objects found there. Suspects have plausible reasons to be present.
 - **Descriptions carry no logical information.** The only deductive content is in clues and attributes.
   - Suspect descriptions: role and connection to the victim only. Never mention a location, weapon, motive, another suspect, whereabouts, handedness, or alibis.
-  - Weapon descriptions: physical appearance only. Never mention a location ("from the library") or a person.
+  - Weapon descriptions: physical appearance only. Never mention a location or a person.
   - Location descriptions: physical appearance only. Never mention people or weapons.
   - Motive descriptions: generic and suspect-neutral.
-  - `game.description`: victim, setting, number of suspects, and optionally "each suspect was in a different place with a different object and a different motive". Never hint at the culprit.
-- **Names must render cleanly** in these sentences: "{S} was in the {L}.", "{S} did not use the {W}.", "The {W} was found in the {L}.", "{S} did not have the motive of {M}.", "The location is {L}.", "The motive is {M}."
-  - Location and weapon names have no leading "The".
-  - Suspect names are proper names with an honorific or title.
+  - `game.description`: victim, setting, number of suspects, and optionally that each suspect was in a different place with a different object and a different motive. Never hint at the culprit.
+- **Names must render cleanly** in the clue templates in section 6, including mixed Vietnamese/English renderer output, for example: `{S} có mặt ở {L}.`, `{S} không sử dụng {W}.`, `The {W} được tìm thấy ở {L}.`, `{S} không có động cơ là {value}.`, `The location is {L}.`, `The motive is {value}.`
+  - Location and weapon names have no leading article (`The`, `Khu`, etc. as part of the name).
+  - Suspect names use a Vietnamese honorific plus name.
 - Characters and text are plain JSON-safe strings. Avoid double quotes inside strings and avoid line breaks.
-- Do not reuse the names, setting, or victim from the example in section 13.
+- Do not reuse the names, setting, or victim from the example in section 13. Do not copy the seeded sample case "Viên sapphire thất lạc".
 
 ## 13. Complete valid example (easy)
 
@@ -551,18 +555,18 @@ This illustrates structure only. **Do not copy its content.**
 
 Hidden world (not output):
 
-- Colonel Hart: Rose Garden, Lead Pipe, Revenge
-- Miss Wren (murderer): Wine Cellar, Poison Vial, Inheritance
-- Father Doyle: Chapel, Rope, Secrecy
-- So `T` = (Miss Wren, Poison Vial, Wine Cellar, Inheritance).
+- Đại tá Hart: Vườn hồng, Ống chì, Báo thù
+- Cô Wren (murderer): Hầm rượu, Lọ thuốc độc, Thừa kế
+- Cha Doyle: Nhà nguyện, Dây thừng, Giấu kín
+- So `T` = (Cô Wren, Lọ thuốc độc, Hầm rượu, Thừa kế).
 
 Solve path:
 
-1. Clue #1 puts Hart in the Rose Garden. Clue #2 puts Doyle in the Chapel. By R2, Wren was in the Wine Cellar.
-2. Clue #3 puts the Lead Pipe in the Rose Garden. By R3, Hart had the Lead Pipe.
-3. Clue #4 says Wren did not use the Rope. By R2, Wren had the Poison Vial (and Doyle the Rope).
-4. Clues #5 and #6 rule out Revenge and Secrecy for Wren. By R2, her motive was Inheritance.
-5. Clue #7, "The location is Wine Cellar.", identifies Wren as the murderer.
+1. Clue #1 puts Hart in Vườn hồng. Clue #2 puts Doyle in Nhà nguyện. By R2, Wren was in Hầm rượu.
+2. Clue #3 puts Ống chì in Vườn hồng. By R3, Hart had Ống chì.
+3. Clue #4 says Wren did not use Dây thừng. By R2, Wren had Lọ thuốc độc (and Doyle Dây thừng).
+4. Clues #5 and #6 rule out Báo thù and Giấu kín for Wren. By R2, her motive was Thừa kế.
+5. Clue #7, "The location is Hầm rượu.", identifies Wren as the murderer.
 
 Every non-solution entity is referenced by a clue.
 
@@ -571,9 +575,9 @@ Every non-solution entity is referenced by a clue.
   "game": {
     "id": "7c1e2a90-5b3d-4f6a-9e21-000000000001",
     "creator": "00000000-0000-0000-0000-000000000000",
-    "title": "Death at Thornfield Abbey",
-    "description": "Lord Ashcombe was found dead at Thornfield Abbey on a stormy night. Three guests were on the grounds, each in a different place with a different object and a different motive.",
-    "banner": "/images/cases/death-at-thornfield-abbey.jpg",
+    "title": "Cái chết ở Tu viện Thornfield",
+    "description": "Lãnh chúa Ashcombe được tìm thấy đã chết tại Tu viện Thornfield trong đêm bão. Ba vị khách có mặt trong khu viện, mỗi người ở một nơi với một vật và một động cơ khác nhau.",
+    "banner": "/images/cases/cai-chet-o-tu-vien-thornfield.jpg",
     "level": "easy",
     "created_at": "1970-01-01T00:00:00Z",
     "gameMetadata": {
@@ -581,11 +585,11 @@ Every non-solution entity is referenced by a clue.
       "suspects": [
         {
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000101",
-          "name": "Colonel Hart",
+          "name": "Đại tá Hart",
           "avatar": "🧔",
           "age": 58,
           "gender": "male",
-          "description": "A retired army officer and the victim's oldest friend.",
+          "description": "Sĩ quan về hưu, người bạn thân nhất của nạn nhân.",
           "attributes": {
             "height": 183,
             "hairColor": "gray",
@@ -595,11 +599,11 @@ Every non-solution entity is referenced by a clue.
         },
         {
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000102",
-          "name": "Miss Wren",
+          "name": "Cô Wren",
           "avatar": "👩‍💼",
           "age": 31,
           "gender": "female",
-          "description": "The victim's private secretary for the past four years.",
+          "description": "Thư ký riêng của nạn nhân suốt bốn năm qua.",
           "attributes": {
             "height": 162,
             "hairColor": "red",
@@ -609,11 +613,11 @@ Every non-solution entity is referenced by a clue.
         },
         {
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000103",
-          "name": "Father Doyle",
+          "name": "Cha Doyle",
           "avatar": "👨‍🦳",
           "age": 46,
           "gender": "male",
-          "description": "The abbey chaplain, who has known the family for decades.",
+          "description": "Cha xứ tu viện, quen gia đình nạn nhân từ lâu.",
           "attributes": {
             "height": 175,
             "hairColor": "black",
@@ -625,84 +629,84 @@ Every non-solution entity is referenced by a clue.
       "locations": [
         {
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000301",
-          "name": "Rose Garden",
-          "description": "Walled beds of roses around a mossy path.",
+          "name": "Vườn hồng",
+          "description": "Luống hoa hồng trong tường rào, lối đi phủ rêu.",
           "icon": "🌹",
           "attributes": {
             "type": "outdoor",
-            "characteristic": "stone fountain"
+            "characteristic": "đài phun đá"
           }
         },
         {
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000302",
-          "name": "Wine Cellar",
-          "description": "A cold vault beneath the kitchens.",
+          "name": "Hầm rượu",
+          "description": "Hầm lạnh nằm dưới bếp.",
           "icon": "🍷",
-          "attributes": { "type": "indoor", "characteristic": "stone racks" }
+          "attributes": { "type": "indoor", "characteristic": "kệ đá" }
         },
         {
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000303",
-          "name": "Chapel",
-          "description": "A small candlelit chapel with oak pews.",
+          "name": "Nhà nguyện",
+          "description": "Nhà nguyện nhỏ, nến le lói, ghế gỗ sồi.",
           "icon": "⛪",
           "attributes": {
             "type": "indoor",
-            "characteristic": "stained glass window"
+            "characteristic": "cửa kính màu"
           }
         }
       ],
       "weapons": [
         {
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000201",
-          "name": "Lead Pipe",
-          "description": "A short, dented length of heavy pipe.",
+          "name": "Ống chì",
+          "description": "Đoạn ống ngắn, móp méo, nặng tay.",
           "icon": "🔧",
           "attributes": {
             "weight": "HEAVY",
-            "material": "lead",
-            "type": "pipe"
+            "material": "chì",
+            "type": "ống"
           }
         },
         {
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000202",
-          "name": "Poison Vial",
-          "description": "A tiny stoppered vial with a faded label.",
+          "name": "Lọ thuốc độc",
+          "description": "Lọ nhỏ có nút bấm, nhãn đã phai.",
           "icon": "🧪",
           "attributes": {
             "weight": "LIGHT",
-            "material": "glass",
-            "type": "vial"
+            "material": "thủy tinh",
+            "type": "lọ"
           }
         },
         {
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000203",
-          "name": "Rope",
-          "description": "A coil of rough, frayed cord.",
+          "name": "Dây thừng",
+          "description": "Cuộn dây thô, sợi đã xơ.",
           "icon": "🪢",
           "attributes": {
             "weight": "MEDIUM",
-            "material": "hemp",
-            "type": "rope"
+            "material": "gai dầu",
+            "type": "dây"
           }
         }
       ],
       "motives": [
         {
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000401",
-          "name": "Inheritance",
-          "description": "The culprit expected to inherit part of the victim's fortune.",
+          "name": "Thừa kế",
+          "description": "Thủ phạm kỳ vọng được hưởng một phần tài sản của nạn nhân.",
           "icon": "📜"
         },
         {
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000402",
-          "name": "Revenge",
-          "description": "The culprit wanted to settle an old grievance.",
+          "name": "Báo thù",
+          "description": "Thủ phạm muốn giải quyết mối thù cũ.",
           "icon": "⚔️"
         },
         {
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000403",
-          "name": "Secrecy",
-          "description": "The culprit needed to keep a damaging secret buried.",
+          "name": "Giấu kín",
+          "description": "Thủ phạm cần giữ kín một bí mật có thể hủy hoại danh dự.",
           "icon": "🤫"
         }
       ],
@@ -711,7 +715,7 @@ Every non-solution entity is referenced by a clue.
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000501",
           "type": "LOCATION",
           "attribute": "location",
-          "value": "Rose Garden",
+          "value": "Vườn hồng",
           "relation": "EQUAL",
           "suspect_id": "7c1e2a90-5b3d-4f6a-9e21-000000000101",
           "location_id": "7c1e2a90-5b3d-4f6a-9e21-000000000301"
@@ -720,7 +724,7 @@ Every non-solution entity is referenced by a clue.
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000502",
           "type": "RELATION",
           "attribute": "location",
-          "value": "Chapel",
+          "value": "Nhà nguyện",
           "relation": "AT",
           "suspect_id": "7c1e2a90-5b3d-4f6a-9e21-000000000103",
           "location_id": "7c1e2a90-5b3d-4f6a-9e21-000000000303"
@@ -729,7 +733,7 @@ Every non-solution entity is referenced by a clue.
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000503",
           "type": "RELATION",
           "attribute": "found_at",
-          "value": "Rose Garden",
+          "value": "Vườn hồng",
           "relation": "FOUND_AT",
           "weapon_id": "7c1e2a90-5b3d-4f6a-9e21-000000000201",
           "location_id": "7c1e2a90-5b3d-4f6a-9e21-000000000301"
@@ -738,7 +742,7 @@ Every non-solution entity is referenced by a clue.
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000504",
           "type": "EXCLUSION",
           "attribute": "weapon",
-          "value": "Rope",
+          "value": "Dây thừng",
           "relation": "NOT_EQUAL",
           "suspect_id": "7c1e2a90-5b3d-4f6a-9e21-000000000102",
           "weapon_id": "7c1e2a90-5b3d-4f6a-9e21-000000000203"
@@ -747,7 +751,7 @@ Every non-solution entity is referenced by a clue.
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000505",
           "type": "EXCLUSION",
           "attribute": "motive",
-          "value": "Revenge",
+          "value": "Báo thù",
           "relation": "NOT_EQUAL",
           "suspect_id": "7c1e2a90-5b3d-4f6a-9e21-000000000102"
         },
@@ -755,7 +759,7 @@ Every non-solution entity is referenced by a clue.
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000506",
           "type": "EXCLUSION",
           "attribute": "motive",
-          "value": "Secrecy",
+          "value": "Giấu kín",
           "relation": "NOT_EQUAL",
           "suspect_id": "7c1e2a90-5b3d-4f6a-9e21-000000000102"
         },
@@ -763,7 +767,7 @@ Every non-solution entity is referenced by a clue.
           "id": "7c1e2a90-5b3d-4f6a-9e21-000000000507",
           "type": "ATTRIBUTE",
           "attribute": "location",
-          "value": "Wine Cellar",
+          "value": "Hầm rượu",
           "relation": "REQUIRED"
         }
       ]
@@ -825,7 +829,8 @@ Every non-solution entity is referenced by a clue.
 
 ### Story
 
-- [ ] Names are unique, render cleanly in every template sentence, and have no leading "The" on weapons or locations.
+- [ ] All free-form story strings are Vietnamese (section 12). Schema enums and English-only tokens (`hairColor`, anchor codes) are unchanged.
+- [ ] Names are unique, render cleanly in every section 6 template sentence. Weapon and location `name` values do not themselves start with `The` or a leading article.
 - [ ] No description leaks locations, weapons, motives, whereabouts, or the culprit.
 - [ ] The victim is not an entity.
 

@@ -739,7 +739,7 @@ Prisma-created tables need explicit `GRANT` for Supabase API roles (`anon`, `aut
 
 - Page: `app/create/page.tsx` → client `CreateGameWizard`.
 - Signed-in users enter a prompt and difficulty, then **Generate case** (`POST /api/generate`).
-- Bedrock returns `{ game, result }` (see `infrastructure/ai/system_prompt.md`). The service parses JSON via `lib/extract-json.ts` and validates with `generatedCaseSchema`.
+- Bedrock returns `{ game, result }` (see `infrastructure/ai/system_prompt.md`). Generated cases use **Vietnamese** story text (titles, descriptions, entity names, clue name references); schema enums (`gender`, `hairColor`, `handedness`, `weight`, `indoor`/`outdoor`) stay English. Clue sentences are mixed VI/EN per `lib/clues.helper.ts`. The service parses JSON via `lib/extract-json.ts` and validates with `generatedCaseSchema`.
 - The draft lives in Zustand `store/create-game.store.ts`. Users edit overview fields, entities, clues (template-based), and the solution tuple.
 - **Create case** validates with `createGameInputSchema` (Zod + reference checks), then `POST /api/game`.
 - On success, Prisma creates `game_metadata` (nested suspects, weapons, locations, motives, clues), `games`, and `results` in one transaction. AI ids are remapped to new UUIDs in `features/game/game.repositories.ts` (`createGame`).
@@ -797,7 +797,7 @@ Groups larger than 6 are rejected instead of searching. Difficulty cases are siz
 
 - Source of truth: [`design.md`](design.md) (hand-drawn / sketchbook aesthetic).
 - Tokens live in [`app/globals.css`](app/globals.css) via Tailwind v4 `@theme` (no `tailwind.config.ts`).
-- Typography: **Kalam** (headings, `--font-kalam`) and **Patrick Hand** (body, `--font-patrick-hand`) from [`app/fonts.ts`](app/fonts.ts).
+- Typography: **Mali** (headings, `--font-mali`, weight 700) and **Patrick Hand** (body, `--font-patrick-hand`) from [`app/fonts.ts`](app/fonts.ts). Both load the `vietnamese` subset. Kalam was replaced because Google Fonts ships it without Vietnamese glyphs, so accented headings fell back to a system font.
 
 ## Color tokens
 

@@ -26,10 +26,11 @@ function matchesQuery(game: IShortGame, query: string): boolean {
 }
 
 const EMPTY_BY_TAB: Record<StoreTab, string> = {
-  public: "No public cases yet. Check back soon or create one.",
+  public:
+    "Không có case công khai nào. Hãy kiểm tra lại sau hoặc tạo một case.",
   solved:
-    "You have not solved any cases yet. Open a case and accuse the killer.",
-  my: "You have not created any cases yet.",
+    "Bạn chưa giải quyết bất kỳ case nào. Hãy mở một case và phán đoán tội phạm.",
+  my: "Bạn chưa tạo bất kỳ case nào.",
 };
 
 export function StoreShelf({ initialQuery, tab }: StoreShelfProps) {
@@ -85,14 +86,14 @@ md:items-end
             htmlFor="store-search"
             className="text-lg font-heading text-pencil"
           >
-            Search
+            Tìm kiếm
           </label>
           <Input
             id="store-search"
             type="search"
             value={query}
             onChange={(e) => handleQueryChange(e.target.value)}
-            placeholder="Title, description, or creator"
+            placeholder="Tiêu đề, mô tả, hoặc người tạo"
           />
         </div>
 
@@ -102,9 +103,7 @@ flex flex-col gap-3 min-w-0 md:min-w-[280px]
 border-2 border-dashed border-pencil rounded-wobbly-md p-4
 "
         >
-          <legend className="text-lg font-heading text-pencil px-1">
-            Price
-          </legend>
+          <legend className="text-lg font-heading text-pencil px-1">Giá</legend>
           <label className="flex items-center gap-2 text-base text-pencil">
             <input
               type="checkbox"
@@ -112,7 +111,7 @@ border-2 border-dashed border-pencil rounded-wobbly-md p-4
               onChange={(e) => setPriceFreeOnly(e.target.checked)}
               className="h-4 w-4 border-2 border-pencil"
             />
-            Free only
+            Miễn phí
           </label>
           <div className="flex gap-2">
             <Input
@@ -135,15 +134,15 @@ border-2 border-dashed border-pencil rounded-wobbly-md p-4
             />
           </div>
           <p className="text-sm text-pencil/60 leading-relaxed">
-            Price filtering will apply when cases list a price in the catalog.
+            Bộ lọc giá sẽ áp dụng khi các case được liệt kê giá trong danh mục.
           </p>
         </fieldset>
       </div>
 
       {filtered.length === 0 ? (
         <p className="text-center text-lg text-pencil/70 py-12">
-          No cases match your search. Try different words or clear the search
-          field.
+          Không có case nào phù hợp với tìm kiếm của bạn. Hãy thử từ khác hoặc
+          xóa trường tìm kiếm.
         </p>
       ) : (
         <ul

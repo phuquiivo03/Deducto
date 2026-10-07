@@ -51,9 +51,9 @@ rounded-full border-2 border-pencil bg-marker
           aria-hidden
         />
       )}
-      <div className="relative aspect-[16/10] w-full bg-paper border-b-2 border-dashed border-pencil">
+      {/* <div className="relative aspect-[16/10] w-full bg-paper border-b-2 border-dashed border-pencil">
         {banner ? <CaseBanner src={banner} /> : null}
-      </div>
+      </div> */}
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-2">
           <h2

@@ -38,7 +38,7 @@ font-semibold
 font-heading
 "
         >
-          Inspector
+          Thông tin
         </h3>
 
         <p
@@ -48,7 +48,7 @@ text-pencil/70
 mt-2
 "
         >
-          Select a card to inspect details.
+          Chọn một thẻ để xem chi tiết.
         </p>
       </aside>
     );
@@ -112,7 +112,7 @@ text-sm
 mb-3
 "
       >
-        Facts
+        Thông tin
       </h3>
 
       <div

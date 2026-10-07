@@ -192,42 +192,42 @@ export const relationships: Relationship[] = [];
 export const clues: Clue[] = [
   {
     id: "1",
-    status: "analyzed",
+    status: "Đã phân tích",
     text: "The Crystal Dagger was found near the garden fountain, still damp.",
     entities: [],
   },
 
   {
     id: "2",
-    status: "analyzed",
+    status: "Đã phân tích",
     text: "Lady Violet was seen entering the mansion at 9:15 PM, wearing gloves.",
     entities: ["violet"],
   },
 
   {
     id: "3",
-    status: "new",
+    status: "Mới",
     text: "The butler confirms the garden was empty at 11:15 PM.",
     entities: ["garden"],
   },
 
   {
     id: "4",
-    status: "new",
+    status: "Mới",
     text: "Professor Grant has a documented fear of enclosed spaces.",
     entities: ["grant", "conservatory"],
   },
 
   {
     id: "5",
-    status: "used",
+    status: "Đã dùng",
     text: "A witness places Mr. Chen in the library until midnight.",
     entities: ["chen", "library"],
   },
 
   {
     id: "6",
-    status: "analyzed",
+    status: "Đã phân tích",
     text: "Lady Violet is right-handed.",
     entities: ["violet"],
   },

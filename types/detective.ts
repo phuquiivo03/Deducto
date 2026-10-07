@@ -39,7 +39,7 @@ export interface Relationship {
 export interface Clue {
   id: string;
 
-  status: "new" | "analyzed" | "used";
+  status: "Mới" | "Đã phân tích" | "Đã dùng";
 
   text: string;
 

@@ -5,8 +5,8 @@ import { cn } from "@/lib/cn";
 
 const TAB_LABELS: Record<StoreTab, string> = {
   public: "Public",
-  solved: "Solved",
-  my: "My cases",
+  solved: "Case đã giải quyết",
+  my: "Các case của tôi",
 };
 
 interface StoreTabsProps {

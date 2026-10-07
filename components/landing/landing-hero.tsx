@@ -28,13 +28,13 @@ font-heading text-4xl md:text-5xl lg:text-6xl
 text-pencil leading-[1.05] max-w-[14ch]
 "
         >
-          Every clue connects to the truth
+          Mỗi chứng cứ đều liên kết với sự thật
           <span className="inline-block text-marker rotate-12 ml-1">!</span>
         </h1>
 
         <p className="mt-6 text-lg md:text-xl text-pencil/80 leading-relaxed max-w-[65ch]">
-          Build a detective board, test your theories, and accuse the killer
-          when the evidence lines up.
+          Xây dựng bảng điều tra, kiểm tra giả thuyết, và phán đoán tội phạm khi
+          các chứng cứ hợp lý.
         </p>
 
         <div className="relative mt-10 flex flex-wrap items-center gap-6">
@@ -47,7 +47,7 @@ text-pencil leading-[1.05] max-w-[14ch]
               size: "default",
             })}
           >
-            Create a case
+            Tạo case
           </Link>
         </div>
       </div>
