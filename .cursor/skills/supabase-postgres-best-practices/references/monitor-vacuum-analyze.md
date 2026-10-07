@@ -28,7 +28,7 @@ analyze orders;
 -- Analyze specific columns used in WHERE clauses
 analyze orders (status, created_at);
 
--- Check when tables were last analyzed
+-- Check when tables were last Đã phân tích
 select
   relname,
   last_vacuum,

@@ -739,8 +739,9 @@ Prisma-created tables need explicit `GRANT` for Supabase API roles (`anon`, `aut
 
 - Page: `app/create/page.tsx` → client `CreateGameWizard`.
 - Signed-in users enter a prompt and difficulty, then **Generate case** (`POST /api/generate`).
-- Bedrock returns `{ game, result }` (see `infrastructure/ai/system_prompt.md`). The service parses JSON via `lib/extract-json.ts` and validates with `generatedCaseSchema`.
+- **Hybrid generation:** Bedrock (Nova 2 Lite) returns **story + entities only** — see `infrastructure/ai/system_prompt.md` (`aiCaseDraftSchema` in `features/game/game.schemas.ts`). `normalizeDraft` in `features/game/case-draft.ts` remaps short ids to UUIDs and fixes attribute distributions. `generateCaseLogic` in `features/game/case-generator.ts` builds a hidden world, A1 anchors, and clues, looping on `solveCase` until the tuple is unique. The API still responds with `{ game, result }` (`IGeneratedCase`). Story text is **Vietnamese**; schema enums stay English. Clue sentences are mixed VI/EN per `lib/clues.helper.ts`. Draft JSON is parsed via `lib/extract-json.ts`; invalid entity drafts retry once against Bedrock.
 - The draft lives in Zustand `store/create-game.store.ts`. Users edit overview fields, entities, clues (template-based), and the solution tuple.
+- While editing, `hooks/use-draft-solvability.ts` debounces (300ms) and runs `checkUniquelySolvable` on clues normalized via `prepareMetadataForSolver` (same as publish). `SolvabilityBanner` shows valid vs error copy in Vietnamese; **Tạo vụ án** stays disabled until status is `valid`.
 - **Create case** validates with `createGameInputSchema` (Zod + reference checks), then `POST /api/game`.
 - On success, Prisma creates `game_metadata` (nested suspects, weapons, locations, motives, clues), `games`, and `results` in one transaction. AI ids are remapped to new UUIDs in `features/game/game.repositories.ts` (`createGame`).
 - Client redirects to `/case/{id}`.
@@ -752,7 +753,7 @@ Prisma-created tables need explicit `GRANT` for Supabase API roles (`anon`, `aut
 | `/api/generate` | POST   | required | `{ prompt, level }` | `AppResponse<IGeneratedCase>` |
 | `/api/game`     | POST   | required | `ICreateGameInput`  | `AppResponse<{ id }>`         |
 
-Schemas: `features/game/game.schemas.ts` (`generateRequestSchema`, `generatedCaseSchema`, `createGameInputSchema`).
+Schemas: `features/game/game.schemas.ts` (`generateRequestSchema`, `aiCaseDraftSchema`, `parseAiCaseDraft`, `generatedCaseSchema`, `createGameInputSchema`).
 
 ## Unique solution gate
 
@@ -785,7 +786,7 @@ Groups larger than 6 are rejected instead of searching. Difficulty cases are siz
 
 ## Notes
 
-- Generation requires AWS Bedrock env vars (`AWS_REGION`, `BEDROCK_MODEL_ID`, credentials). `maxTokens` is 8192 in `infrastructure/ai/bedrock.ts`.
+- Generation requires AWS Bedrock env vars (`AWS_REGION`, `BEDROCK_MODEL_ID`, credentials). `infrastructure/ai/bedrock.ts` sends the system prompt via Converse `system` (not inlined in the user message), `maxTokens` 4096, temperature 0.7.
 - Changing the solution after generation shows a warning; clues were generated for the original `result`.
 - Entity counts are fixed after generation (no add/remove suspects/weapons/locations/motives).
 
@@ -797,7 +798,7 @@ Groups larger than 6 are rejected instead of searching. Difficulty cases are siz
 
 - Source of truth: [`design.md`](design.md) (hand-drawn / sketchbook aesthetic).
 - Tokens live in [`app/globals.css`](app/globals.css) via Tailwind v4 `@theme` (no `tailwind.config.ts`).
-- Typography: **Kalam** (headings, `--font-kalam`) and **Patrick Hand** (body, `--font-patrick-hand`) from [`app/fonts.ts`](app/fonts.ts).
+- Typography: **Mali** (headings, `--font-mali`, weight 700) and **Patrick Hand** (body, `--font-patrick-hand`) from [`app/fonts.ts`](app/fonts.ts). Both load the `vietnamese` subset. Kalam was replaced because Google Fonts ships it without Vietnamese glyphs, so accented headings fell back to a system font.
 
 ## Color tokens
 

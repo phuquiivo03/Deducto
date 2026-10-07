@@ -139,11 +139,11 @@ min-h-0
           onSelect={(id) => {
             const clue = clues.find((c) => c.id === id);
             const nextStatus =
-              clue?.status === "analyzed"
-                ? "used"
-                : clue?.status === "used"
-                  ? "new"
-                  : "analyzed";
+              clue?.status === "Đã phân tích"
+                ? "Đã dùng"
+                : clue?.status === "Đã dùng"
+                  ? "Mới"
+                  : "Đã phân tích";
             setClues((prev) =>
               prev.map((c) => (c.id === id ? { ...c, status: nextStatus } : c)),
             );

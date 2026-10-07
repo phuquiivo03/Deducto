@@ -10,7 +10,11 @@ import type {
 	IWeapon,
 } from '@/features/game/game.schemas'
 
-import { assertUniquelySolvable, solveCase } from './case-solver'
+import {
+	assertUniquelySolvable,
+	checkUniquelySolvable,
+	solveCase,
+} from './case-solver'
 import { CaseNotSolvableError } from './game-errors'
 
 function suspect (
@@ -323,6 +327,29 @@ test('unequal groups cannot be solved', () => {
 	const outcome = solveCase(metadata)
 	assert.equal(outcome.status, 'invalid')
 	assert.match(outcome.issues.join(' '), /same size/)
+})
+
+test('checkUniquelySolvable reports valid and mismatch', () => {
+	const metadata = grid(solved)
+	const good = {
+		murder_id: 'a',
+		weapon_id: 'knife',
+		motive_id: 'greed',
+		location_id: 'hall',
+	}
+	assert.deepEqual(checkUniquelySolvable(metadata, good), {
+		status: 'valid',
+		message: null,
+		issues: [],
+	})
+	const bad = checkUniquelySolvable(metadata, {
+		murder_id: 'b',
+		weapon_id: 'rope',
+		motive_id: 'revenge',
+		location_id: 'library',
+	})
+	assert.equal(bad.status, 'mismatch')
+	assert.ok(bad.message?.includes('saved answer'))
 })
 
 test('publish fails unless the saved answer is the only tuple', () => {

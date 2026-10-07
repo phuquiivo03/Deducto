@@ -41,7 +41,9 @@ test('sample anchors are crime-level and motives are clued', () => {
 		assert.equal(anchor.location_id, undefined)
 	}
 
-	assert.ok(sentences.some((sentence) => sentence.includes('motive of')))
+	assert.ok(
+		sentences.some((sentence) => sentence.includes('không có động cơ')),
+	)
 	assert.equal(
 		sentences.some((sentence) => sentence.includes('is right-handed')),
 		false,
@@ -50,5 +52,5 @@ test('sample anchors are crime-level and motives are clued', () => {
 		sentences.some((sentence) => sentence.includes('is heavy')),
 		false,
 	)
-	assert.ok(sentences.includes('The location is Dining Room.'))
+	assert.ok(sentences.includes('The location is Phòng ăn.'))
 })

@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     const response: AppResponse<null> = publicApiFailure(
       "POST /api/game",
       e,
-      "Could not create this case",
+      "Không thể tạo trò chơi",
       null,
     );
     return Response.json(response, { status: 500 });

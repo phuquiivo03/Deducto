@@ -127,26 +127,26 @@ export const clueToText = (clue: IClue, metadata: IGameMetadata): string => {
      */
     case "EXCLUSION": {
       if (suspect && weapon) {
-        return `${suspect.name} did not use the ${weapon.name}.`;
+        return `${suspect.name} không sử dụng ${weapon.name}.`;
       }
 
       if (suspect && location) {
-        return `${suspect.name} was not in the ${location.name}.`;
+        return `${suspect.name} không có mặt ở ${location.name}.`;
       }
 
       if (suspect && clue.attribute === "motive") {
-        return `${suspect.name} did not have the motive of ${clue.value}.`;
+        return `${suspect.name} không có động cơ là ${clue.value}.`;
       }
 
       if (weapon && location) {
-        return `The ${weapon.name} was not found in the ${location.name}.`;
+        return `${weapon.name} không được tìm thấy ở ${location.name}.`;
       }
 
       if (location && clue.attribute === "type") {
-        return `The ${location.name} was not ${clue.value}.`;
+        return `${location.name} không là ${clue.value}.`;
       }
 
-      return `${formatAttributeName(clue.attribute)} was not ${clue.value}.`;
+      return `${formatAttributeName(clue.attribute)} không là ${clue.value}.`;
     }
 
     /**
@@ -160,21 +160,21 @@ export const clueToText = (clue: IClue, metadata: IGameMetadata): string => {
     case "LOCATION": {
       if (weapon && location) {
         if (clue.relation === "NOT_EQUAL") {
-          return `The ${weapon.name} was not found in the ${location.name}.`;
+          return `The ${weapon.name} không được tìm thấy ở ${location.name}.`;
         }
 
-        return `The ${weapon.name} was found in the ${location.name}.`;
+        return `The ${weapon.name} được tìm thấy ở ${location.name}.`;
       }
 
       if (suspect && location) {
         if (clue.relation === "NOT_EQUAL") {
-          return `${suspect.name} was not in the ${location.name}.`;
+          return `${suspect.name} không có mặt ở ${location.name}.`;
         }
 
-        return `${suspect.name} was in the ${location.name}.`;
+        return `${suspect.name} có mặt ở ${location.name}.`;
       }
 
-      return `Something was found in the ${clue.value}.`;
+      return `Có thứ gì đó được tìm thấy ở ${clue.value}.`;
     }
 
     /**
@@ -195,7 +195,7 @@ export const clueToText = (clue: IClue, metadata: IGameMetadata): string => {
           case "NOT_EQUAL":
 
           default:
-            return `${suspect.name} ${clue.relation.toLowerCase()} the ${weapon.name}.`;
+            return `${suspect.name} ${clue.relation.toLowerCase()} ${weapon.name}.`;
         }
       }
 
@@ -203,11 +203,11 @@ export const clueToText = (clue: IClue, metadata: IGameMetadata): string => {
         switch (clue.relation) {
           case "EQUAL":
           case "AT":
-            return `${suspect.name} was in the ${location.name}.`;
+            return `${suspect.name} có mặt ở ${location.name}.`;
 
           case "NOT_EQUAL":
           case "NOT_AT":
-            return `${suspect.name} was not in the ${location.name}.`;
+            return `${suspect.name} không có mặt ở ${location.name}.`;
 
           default:
             return `${suspect.name} ${clue.relation.toLowerCase()} the ${location.name}.`;
@@ -218,14 +218,14 @@ export const clueToText = (clue: IClue, metadata: IGameMetadata): string => {
         switch (clue.relation) {
           case "EQUAL":
           case "FOUND_AT":
-            return `The ${weapon.name} was found in the ${location.name}.`;
+            return `The ${weapon.name} được tìm thấy ở ${location.name}.`;
 
           case "NOT_EQUAL":
           case "NOT_FOUND_AT":
-            return `The ${weapon.name} was not found in the ${location.name}.`;
+            return `The ${weapon.name} không được tìm thấy ở ${location.name}.`;
 
           default:
-            return `The ${weapon.name} ${clue.relation.toLowerCase()} the ${location.name}.`;
+            return `The ${weapon.name} ${clue.relation.toLowerCase()} ở ${location.name}.`;
         }
       }
 
@@ -242,14 +242,14 @@ export const clueToText = (clue: IClue, metadata: IGameMetadata): string => {
     default:
       return clue.value
         ? `${formatAttributeName(clue.attribute)}: ${clue.value}.`
-        : "Unknown clue.";
+        : "Không xác định manh mối.";
   }
 };
 export const gameToClues = (game: IGame): Clue[] => {
   return (game.gameMetadata as IGameMetadata).clues.map((clue) => {
     return {
       id: clue.id,
-      status: "new",
+      status: "Mới",
       entities: [],
       text: clueToText(clue, game.gameMetadata as IGameMetadata),
     };

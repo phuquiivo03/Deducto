@@ -13,20 +13,20 @@ import { useGameStore } from "@/store/game.store";
 
 const TYPE_LABELS: Record<EntityType, { title: string; hint: string }> = {
   suspect: {
-    title: "Suspect",
-    hint: "Who committed the crime?",
+    title: "Hung thủ",
+    hint: "Ai là hung thủ?",
   },
   weapon: {
-    title: "Weapon",
-    hint: "What was used?",
+    title: "Hung khí",
+    hint: "Hung khí gì đã được sử dụng?",
   },
   location: {
-    title: "Location",
-    hint: "Where did it happen?",
+    title: "Hiện trường",
+    hint: "Nơi nào đã xảy ra vụ án?",
   },
   motive: {
-    title: "Motive",
-    hint: "Why did it happen?",
+    title: "Động cơ",
+    hint: "Động cơ tại sao vụ án đã xảy ra?",
   },
 };
 
@@ -112,7 +112,7 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
         try {
           data = (await response.json()) as AppResponse<IAnswerResponse>;
         } catch {
-          throw new Error("Could not submit the accusation. Try again.");
+          throw new Error("Không thể ghi nhận cáo buộc. Vui lòng thử lại.");
         }
         if (
           !response.ok ||
@@ -121,7 +121,7 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
           typeof data.data.solved !== "boolean"
         ) {
           throw new Error(
-            data?.message ?? "Could not submit the accusation. Try again.",
+            data?.message ?? "Không thể ghi nhận cáo buộc. Vui lòng thử lại.",
           );
         }
         return data;
@@ -139,7 +139,7 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
           const message =
             error instanceof Error && error.message
               ? error.message
-              : "Could not submit the accusation. Try again.";
+              : "Không thể ghi nhận cáo buộc. Vui lòng thử lại.";
           setSubmitError(message);
           setSubmitSuccess(false);
           setIsSubmitting(false);
@@ -161,13 +161,13 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
     event.preventDefault();
 
     if (isAuthLoading) {
-      setSubmitError("Checking your sign-in. Try again in a moment.");
+      setSubmitError("Đang kiểm tra đăng nhập. Vui lòng thử lại sau.");
       setSubmitSuccess(false);
       return;
     }
 
     if (!user) {
-      setSubmitError("Sign in with Google before submitting your accusation.");
+      setSubmitError("Đăng nhập với Google trước khi gửi cáo buộc.");
       setSubmitSuccess(false);
       return;
     }
@@ -175,7 +175,7 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
     const missing = TYPE_ORDER.filter((type) => !selection[type]);
     if (missing.length > 0) {
       setSubmitError(
-        "Select a suspect, weapon, location, and motive before submitting.",
+        "Chọn một người bị tội, vũ khí, nơi xảy ra và lý do trước khi gửi cáo buộc.",
       );
       setSubmitSuccess(false);
       return;
@@ -298,7 +298,7 @@ tracking-wide
 text-pen
 "
             >
-              Final accusation
+              Cáo buộc cuối cùng
             </p>
             <h2
               id="accusation-form-title"
@@ -310,14 +310,14 @@ font-semibold
 text-pencil
 "
             >
-              Name the culprit
+              Đoán hung thủ
             </h2>
             <p className="mt-1 text-xs text-pencil/70">
-              Choose one suspect, weapon, location, and motive.
+              Chọn một người bị tội, vũ khí, nơi xảy ra và lý do.
             </p>
             <p className="mt-1 text-xs text-pencil/70">
-              {ACCUSATION_ATTEMPT_LIMIT} accusations per case. The verdict
-              only says whether the whole accusation is correct.
+              Còn {ACCUSATION_ATTEMPT_LIMIT} cáo buộc cho mỗi trường hợp. Quyết
+              định chỉ nói xem cáo buộc của bạn có đúng hay không.
             </p>
           </div>
 
@@ -338,7 +338,7 @@ text-pencil/70
 hover:bg-paper
 "
           >
-            Close
+            Đóng
           </button>
         </div>
 
@@ -443,7 +443,7 @@ font-semibold
 text-pencil/70
 "
             >
-              Submitting your accusation…
+              Gửi cáo buộc...
             </p>
           )}
 
@@ -468,7 +468,7 @@ disabled:cursor-not-allowed
 disabled:opacity-60
 "
           >
-            {isSubmitting ? "Submitting…" : "Submit accusation"}
+            {isSubmitting ? "Gửi cáo buộc..." : "Gửi cáo buộc"}
           </button>
         </form>
       </div>

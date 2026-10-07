@@ -20,6 +20,19 @@ export interface SolutionTuple {
 
 export type SolveStatus = 'invalid' | 'none' | 'unique' | 'ambiguous'
 
+export type DraftSolvabilityStatus =
+	| 'valid'
+	| 'invalid'
+	| 'none'
+	| 'ambiguous'
+	| 'mismatch'
+
+export interface DraftSolvabilityResult {
+	status: DraftSolvabilityStatus
+	message: string | null
+	issues: string[]
+}
+
 export interface SolveOutcome {
 	status: SolveStatus
 	tuple: SolutionTuple | null
@@ -88,35 +101,41 @@ export function solveCase (metadata: IGameMetadata): SolveOutcome {
 }
 
 /**
- * Reject a draft that is unreadable, unsolvable, ambiguous, or whose
- * saved answer is not the single tuple the clues force.
+ * Check whether clues force exactly one tuple and it matches the saved
+ * answer. Does not throw.
  */
-export function assertUniquelySolvable (
+export function checkUniquelySolvable (
 	metadata: IGameMetadata,
 	result: IAnswerAnswer,
-): void {
+): DraftSolvabilityResult {
 	const outcome = solveCase(metadata)
 	if (outcome.status === 'invalid') {
-		throw new CaseNotSolvableError(
-			`This case was rejected. ${formatIssues(outcome.issues)}`,
-		)
+		return {
+			status: 'invalid',
+			message: `This case was rejected. ${formatIssues(outcome.issues)}`,
+			issues: outcome.issues,
+		}
 	}
 	if (outcome.status === 'none') {
 		const detail = outcome.issues[0]
-		throw new CaseNotSolvableError(
-			detail
+		return {
+			status: 'none',
+			message: detail
 				? `This case was rejected. ${detail}`
 				: 'This case was rejected because the clues have no solution.',
-		)
+			issues: outcome.issues,
+		}
 	}
 	if (outcome.status === 'ambiguous') {
-		throw new CaseNotSolvableError(
-			[
+		return {
+			status: 'ambiguous',
+			message: [
 				'This case was rejected because the clues allow',
 				'more than one solution. Change the clues until',
 				'only one suspect, weapon, location, and motive fit.',
 			].join(' '),
-		)
+			issues: [],
+		}
 	}
 	const tuple = outcome.tuple
 	if (
@@ -126,12 +145,29 @@ export function assertUniquelySolvable (
 		tuple.locationId !== result.location_id ||
 		tuple.motiveId !== result.motive_id
 	) {
-		throw new CaseNotSolvableError(
-			[
+		return {
+			status: 'mismatch',
+			message: [
 				'This case was rejected because the saved answer',
 				'is not the solution the clues force.',
 			].join(' '),
-		)
+			issues: [],
+		}
+	}
+	return { status: 'valid', message: null, issues: [] }
+}
+
+/**
+ * Reject a draft that is unreadable, unsolvable, ambiguous, or whose
+ * saved answer is not the single tuple the clues force.
+ */
+export function assertUniquelySolvable (
+	metadata: IGameMetadata,
+	result: IAnswerAnswer,
+): void {
+	const check = checkUniquelySolvable(metadata, result)
+	if (check.status !== 'valid' && check.message) {
+		throw new CaseNotSolvableError(check.message)
 	}
 }
 
