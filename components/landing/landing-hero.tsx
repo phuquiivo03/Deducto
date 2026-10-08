@@ -60,7 +60,6 @@ border-2 border-pencil overflow-hidden
 rounded-wobbly-md shadow-hard
 "
       >
-        <DoodleCornerMarks />
         <div
           className="
 pointer-events-none absolute left-1/2 top-0 z-10
@@ -70,13 +69,22 @@ rotate-2 border border-pencil/20 bg-erased/90
           aria-hidden
         />
         <DoodleScribbleCircle className="absolute -right-2 -top-4 z-10" />
-        <Image
+        {/* <Image
           src="/images/landing/hero-desk.png"
           alt="Lamp-lit study desk with notes and a magnifying glass"
           fill
           priority
           sizes="(max-width: 768px) 100vw, 50vw"
           className="object-cover"
+        /> */}
+        <video
+          src={
+            "https://ayykrasuylzwljioovgz.supabase.co/storage/v1/object/public/storage/Screen%20Recording%202026-10-02%20at%2019.27.24.mp4"
+          }
+          autoPlay
+          muted
+          loop
+          className="object-cover w-full h-full"
         />
       </div>
     </section>
