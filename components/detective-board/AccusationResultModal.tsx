@@ -98,7 +98,7 @@ export default function AccusationResultModal({
   onClose,
   onRetry,
 }: Props) {
-  const { setIsSolved } = useGameStore();
+  const { setIsSolved, freezeClock } = useGameStore();
   const verdict = verdictCopy(result);
   const canRetry = !result.solved && result.attemptsRemaining > 0;
   const orderedCards = TYPE_ORDER.map((type) =>
@@ -118,8 +118,11 @@ export default function AccusationResultModal({
   useEffect(() => {
     if (result.solved) {
       setIsSolved(true);
+      if (!result.alreadySolved) {
+        freezeClock();
+      }
     }
-  }, [result.solved, setIsSolved]);
+  }, [result.solved, result.alreadySolved, setIsSolved, freezeClock]);
 
   useEffect(() => {
     if (result.solved && !result.alreadySolved) {

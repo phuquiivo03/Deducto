@@ -12,6 +12,7 @@ import { useGameStore } from "@/store/game.store";
 export default function CaseSession({ game }: { game: IGame }) {
   const setGame = useGameStore((state) => state.setGame);
   const setIsSolved = useGameStore((state) => state.setIsSolved);
+  const startClock = useGameStore((state) => state.startClock);
   const [started, setStarted] = useState(false);
   const file = caseFileFromGame(game);
 
@@ -39,6 +40,7 @@ export default function CaseSession({ game }: { game: IGame }) {
 
   const handleStart = () => {
     setGame(game);
+    startClock();
     setStarted(true);
   };
 

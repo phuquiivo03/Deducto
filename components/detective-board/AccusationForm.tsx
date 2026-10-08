@@ -9,6 +9,7 @@ import type { AppResponse } from "@/features/type";
 import { useDetectiveBoardStore } from "@/store";
 import { Entity, EntityType } from "@/types/detective";
 import { useAuthUser } from "@/hooks/use-auth-user";
+import { elapsedInvestigationSeconds } from "@/lib/game-clock";
 import { useGameStore } from "@/store/game.store";
 
 const TYPE_LABELS: Record<EntityType, { title: string; hint: string }> = {
@@ -184,11 +185,12 @@ export default function AccusationForm({ entities, open, onClose }: Props) {
     setSubmitError(null);
     setSubmitSuccess(true);
     if (game) {
+      const { startedAt, endedAt } = useGameStore.getState();
       setIsSubmitting(true);
       setAnswer({
         game_id: game.id,
         user_id: user.id,
-        time_taken: 1000,
+        time_taken: elapsedInvestigationSeconds(startedAt, endedAt),
         answer: {
           murder_id: selection.suspect,
           weapon_id: selection.weapon,

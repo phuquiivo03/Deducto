@@ -239,7 +239,7 @@ Clicking clue selects related entity.
 
 Purpose:
 
-Control board mode.
+Control board mode and show the investigation clock.
 
 Modes:
 
@@ -248,6 +248,13 @@ board;
 
 grid;
 ```
+
+Clock:
+
+- Starts when the player presses Start on the case intro (`startClock` in `useGameStore`)
+- Ticks every second on the toolbar as `MM:SS`, or `HH:MM:SS` after one hour
+- Stops when this session solves the case (`freezeClock`)
+- The stopped elapsed seconds are sent as `time_taken` with the accusation
 
 Future extensions:
 

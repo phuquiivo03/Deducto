@@ -7,6 +7,10 @@ export interface GameStore {
   setGame: (game: IGame) => void;
   isSolved: boolean;
   setIsSolved: (isSolved: boolean) => void;
+  startedAt: number | null;
+  endedAt: number | null;
+  startClock: () => void;
+  freezeClock: () => void;
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -17,5 +21,15 @@ export const useGameStore = create<GameStore>((set) => ({
   isSolved: false,
   setIsSolved: (isSolved: boolean) => {
     set({ isSolved });
+  },
+  startedAt: null,
+  endedAt: null,
+  startClock: () => {
+    set({ startedAt: Date.now(), endedAt: null });
+  },
+  freezeClock: () => {
+    set((state) => ({
+      endedAt: state.endedAt ?? Date.now(),
+    }));
   },
 }));

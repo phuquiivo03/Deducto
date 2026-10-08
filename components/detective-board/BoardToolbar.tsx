@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { LayoutGrid, Network } from "lucide-react";
+import { LayoutGrid, Network, Timer } from "lucide-react";
 
+import { useGameClock } from "@/hooks/use-game-clock";
 import { Entity } from "@/types/detective";
 import { useGameStore } from "@/store/game.store";
 import { Button, buttonClassName } from "@/components/ui/button";
@@ -14,6 +15,27 @@ interface Props {
   view: "board" | "grid";
   setView: (v: "board" | "grid") => void;
   entities: Record<string, Entity>;
+}
+
+function GameClock() {
+  const { label, isRunning } = useGameClock();
+  const status = isRunning ? "đang chạy" : "đã dừng";
+
+  return (
+    <div
+      className="
+flex shrink-0 items-center gap-2 px-3 py-1.5
+rounded-wobbly-sm border-2 border-pencil bg-postit
+font-heading text-pencil tabular-nums
+"
+      role="timer"
+      aria-live="off"
+      aria-label={`Thời gian điều tra ${label}, ${status}`}
+    >
+      <Timer className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+      <span>{label}</span>
+    </div>
+  );
 }
 
 export default function BoardToolbar({ view, setView, entities }: Props) {
@@ -56,6 +78,8 @@ flex bg-erased/50 rounded-wobbly-sm p-1 gap-1 border-2 border-pencil
         </div>
 
         <div className="flex gap-2 items-center flex-wrap justify-end">
+          <GameClock />
+
           <Button
             type="button"
             size="sm"
