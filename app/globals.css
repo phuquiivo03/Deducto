@@ -72,7 +72,43 @@ button {
 	.-rotate-2,
 	.hover\:rotate-1:hover,
 	.hover\:-rotate-1:hover,
-	.hover\:-rotate-2:hover {
+	.hover\:-rotate-2:hover,
+	.puzzle-dialog,
+	.puzzle-grid,
+	.puzzle-stamp {
 		transform: none !important;
 	}
+}
+
+@keyframes puzzle-in {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes puzzle-stamp {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+.puzzle-dialog,
+.puzzle-grid {
+	animation: puzzle-in 220ms ease-out;
+}
+
+.puzzle-stamp {
+	animation: puzzle-stamp 220ms ease-out;
 }

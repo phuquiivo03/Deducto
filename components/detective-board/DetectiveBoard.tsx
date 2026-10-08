@@ -27,6 +27,7 @@ import {
 } from "@/types/detective";
 import { gameToEntities } from "@/lib/game-to-entities";
 import { gameToClues } from "@/lib/clues.helper";
+import { PuzzleSolveModal } from "@/features/puzzles/registry-ui";
 import { useGameStore } from "@/store/game.store";
 export default function DetectiveBoard() {
   const game = useGameStore((state) => state.game);
@@ -42,6 +43,10 @@ export default function DetectiveBoard() {
   const [selected, setSelected] = useState<string | null>(null);
 
   const [view, setView] = useState<"board" | "grid">("board");
+
+  const [solvedPuzzleIds, setSolvedPuzzleIds] = useState<string[]>([]);
+
+  const [openPuzzleId, setOpenPuzzleId] = useState<string | null>(null);
   const updateRelationship = (
     id: string,
     status: RelationshipStatus,
@@ -106,9 +111,13 @@ export default function DetectiveBoard() {
     setNotes([]);
     setSelected(null);
     setView("board");
+    setSolvedPuzzleIds([]);
+    setOpenPuzzleId(null);
   }, [game]);
 
   if (!game) return null;
+
+  const openClue = clues.find((clue) => clue.id === openPuzzleId) ?? null;
 
   return (
     <div
@@ -136,6 +145,8 @@ min-h-0
       >
         <CluePanel
           clues={clues}
+          solvedPuzzleIds={solvedPuzzleIds}
+          onOpenPuzzle={setOpenPuzzleId}
           onSelect={(id) => {
             const clue = clues.find((c) => c.id === id);
             const nextStatus =
@@ -209,6 +220,20 @@ p-6
       </div>
 
       <MobileNav active="Board" setActive={() => {}} />
+
+      {openClue?.puzzle ? (
+        <PuzzleSolveModal
+          puzzle={openClue.puzzle}
+          sentence={openClue.text}
+          onClose={() => setOpenPuzzleId(null)}
+          onSolved={() => {
+            setSolvedPuzzleIds((prev) =>
+              prev.includes(openClue.id) ? prev : [...prev, openClue.id],
+            );
+            setOpenPuzzleId(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
