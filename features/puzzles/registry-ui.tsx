@@ -1,11 +1,11 @@
 'use client'
 
-import type { CluePuzzle } from '@/features/puzzles/types'
+import type { PlayerPuzzle } from '@/features/puzzles/types'
 
 import { ScytaleSolveModal } from './scytale/scytale-solve-modal'
 
 export interface PuzzleSolveModalProps {
-	puzzle: CluePuzzle
+	puzzle: PlayerPuzzle
 	sentence: string
 	onClose: () => void
 	onSolved: () => void

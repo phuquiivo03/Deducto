@@ -28,3 +28,15 @@ export const scytalePuzzleSchema = z
 	})
 
 export type ScytalePuzzle = z.infer<typeof scytalePuzzleSchema>
+
+/**
+ * What a player receives. The diameter and role stay on the server.
+ */
+export const scytalePlayerPuzzleSchema = z.object({
+	kind: z.literal('scytale'),
+	strip: z.string().min(1),
+})
+
+export type ScytalePlayerPuzzle = z.infer<
+	typeof scytalePlayerPuzzleSchema
+>

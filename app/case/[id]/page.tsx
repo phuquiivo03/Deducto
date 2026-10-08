@@ -3,6 +3,7 @@ import { isGameNotFound } from "@/features/game/game-errors";
 import type { IGame } from "@/features/game/game.schemas";
 import gameServices from "@/features/game/game.services";
 import { applySamplePuzzles } from "@/features/puzzles/apply-sample-puzzles";
+import { presentGameForPlayer } from "@/features/puzzles/present-game";
 import { notFound, unstable_rethrow } from "next/navigation";
 
 interface PageProps {
@@ -28,5 +29,10 @@ export default async function CasePage({ params }: PageProps) {
     notFound();
   }
 
-  return <CaseSession key={game.id} game={applySamplePuzzles(game)} />;
+  return (
+    <CaseSession
+      key={game.id}
+      game={presentGameForPlayer(applySamplePuzzles(game))}
+    />
+  );
 }

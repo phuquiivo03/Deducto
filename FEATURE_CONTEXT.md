@@ -750,7 +750,8 @@ Prisma-created tables need explicit `GRANT` for Supabase API roles (`anon`, `aut
 - The draft lives in Zustand `store/create-game.store.ts`. Users edit overview fields, entities, clues (template-based), and the solution tuple.
 - While editing, `hooks/use-draft-solvability.ts` debounces (300ms) and runs `checkUniquelySolvable` on clues normalized via `prepareMetadataForSolver` (same as publish). `SolvabilityBanner` shows valid vs error copy in Vietnamese; **Tạo vụ án** stays disabled until status is `valid`.
 - **Create case** validates with `createGameInputSchema` (Zod + reference checks), then `POST /api/game`.
-- On success, Prisma creates `game_metadata` (nested suspects, weapons, locations, motives, clues), `games`, and `results` in one transaction. AI ids are remapped to new UUIDs in `features/game/game.repositories.ts` (`createGame`).
+- On the clue step the creator can lock any clue and pick a kind from `listPuzzleKinds()` (Scytale today). **Gợi ý khóa** selects one sensible clue (a clue the case cannot lose, otherwise the longest sentence a registered kind can wrap). The client sends `locks: [{ clueId, kind }]`. It does not send a cipher, a diameter, or a role.
+- On success, Prisma creates `game_metadata` (nested suspects, weapons, locations, motives, clues), `games`, and `results` in one transaction. AI ids are remapped to new UUIDs in `features/game/game.repositories.ts` (`createGame`). Locked clues store the server-built `puzzle` jsonb.
 - Client redirects to `/case/{id}`.
 
 ## API
@@ -772,7 +773,7 @@ Schemas: `features/game/game.schemas.ts` (`generateRequestSchema`, `aiCaseDraftS
 - An entity fact (`ATTRIBUTE` + `EQUAL` on one card) does not narrow the grid. A fact that disagrees with that card is rejected.
 - The solution is the tuple (murderer, their weapon, their location, their motive). Other guests may stay partly ambiguous.
 
-`gameServices.generate` and `gameServices.create` call `assertUniquelySolvable`. A draft with no solution, more than one tuple, a clue the solver cannot read, or a saved answer that is not that tuple throws `CaseNotSolvableError`. `POST /api/generate` and `POST /api/game` return **400** with that message. The create wizard shows it and returns to editing.
+`gameServices.generate` and `publishCase` (used by `gameServices.create`) call `assertUniquelySolvable`. A draft with no solution, more than one tuple, a clue the solver cannot read, or a saved answer that is not that tuple throws `CaseNotSolvableError`. The create wizard blocks **Tạo vụ án** until the live check is valid. `POST /api/game` still rejects that draft and stores nothing.
 
 Groups larger than 6 are rejected instead of searching. Difficulty cases are size 3, 4, or 5.
 
@@ -933,7 +934,8 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 ## Two layers
 
 - The solver still reads structured clues only. A puzzle is an optional `puzzle` object on the clue (`features/game/game.schemas.ts`). It does not change deduction.
-- Ciphers are built in shared code from `clueToText`, never by the model. `gameServices.generate` and `gameServices.create` call `assertPuzzlesValid` after `assertUniquelySolvable`. A case with no puzzles passes that gate unchanged.
+- Ciphers are built in shared code from `clueToText`, never by the model. `gameServices.generate` calls `assertPuzzlesValid` after `assertUniquelySolvable` (generated drafts have no locks). `publishCase` does the same after it builds locks. A case with no locks passes that gate unchanged and stores clues with `puzzle` unset.
+- Create flow: the wizard records `{ clueId, kind }` only. `buildCasePuzzles` ignores any client cipher or role, computes `role` with `clueLockRole` (required when removing the clue breaks the unique solution, optional otherwise), then `generatePuzzle`. If a kind cannot wrap that sentence, `POST /api/game` returns **400** with the clue number, a short preview, and the reason. Nothing is stored. The wizard shows that message in the editor. Bedrock never emits puzzle fields.
 
 ## Registry
 
@@ -944,10 +946,10 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 
 ### Adding a kind
 
-1. Add `features/puzzles/<kind>/` with a zod schema, generator, validator, and solve component.
-2. Add that schema to the union in `features/puzzles/schema.ts`.
-3. Register generate/validate in `registry.ts` and the component in `registry-ui.tsx`.
-4. Give the lock a `role` of `required` or `optional`. `validateCasePuzzles` checks the role with the existing solver.
+1. Add `features/puzzles/<kind>/` with a zod schema, a player schema (no key), generator, validator, failure reason, and solve component.
+2. Add both schemas to the unions in `features/puzzles/schema.ts`.
+3. Register generate, validate, canGenerate, toPlayer, label, and failureReason in `registry.ts`, and the component in `registry-ui.tsx`.
+4. `buildCasePuzzles` sets `role` (`required` or `optional`) from `clueLockRole`. `validateCasePuzzles` checks that role with the existing solver. The create wizard picks the new kind up from `listPuzzleKinds()` with no wizard edit.
 
 ## Scytale
 
@@ -959,7 +961,8 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 - `required`: removing that clue leaves the case not uniquely solved.
 - `optional`: removing that clue still leaves the one saved solution.
 - The seeded sample locks the first clue (Arthur in the library) as required. `applySamplePuzzles` copies that lock onto the loaded sample case when the rendered sentences still match and the row has no puzzle of its own.
-- The `clues.puzzle` jsonb column stores the wrapper. Player progress is not saved.
+- The `clues.puzzle` jsonb column stores the full wrapper, including role and the scytale diameter. Player progress is not saved.
+- Before the case reaches the browser, `presentGameForPlayer` keeps `kind` and `strip` and drops `role` and `columns`. `GET /api/game/[id]` and `/case/[id]` both do this. The board still derives the sentence from the structured clue, because that is how `clueToText` and the solve modal know the reading matches. The diameter is not in that payload. A direct Data API read of `clues.puzzle` can still see the stored diameter, because the column is on the public-read `clues` table. Splitting it out would make `clues(*)` fail for the anon role, so case load would have to name every column. That migration is not in this change.
 
 ## Dev lab
 

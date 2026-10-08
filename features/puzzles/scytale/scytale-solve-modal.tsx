@@ -13,10 +13,10 @@ import {
 	openingScytaleColumns,
 	placeScytale,
 } from './scytale'
-import type { ScytalePuzzle } from './types'
+import type { ScytalePlayerPuzzle } from './types'
 
 export interface ScytaleSolveModalProps {
-	puzzle: ScytalePuzzle
+	puzzle: ScytalePlayerPuzzle
 	sentence: string
 	onClose: () => void
 	onSolved: () => void

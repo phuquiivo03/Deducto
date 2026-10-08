@@ -7,6 +7,9 @@ import type {
 	IGameMetadata,
 	IGeneratedCase,
 } from '@/features/game/game.schemas'
+import { prepareMetadataForSolver } from '@/features/game/prepare-metadata-for-solver'
+import type { PuzzleLockRequest } from '@/features/puzzles/lock-request'
+import { suggestPuzzleLock } from '@/features/puzzles/suggest-lock'
 export type CreatePhase = 'prompt' | 'generating' | 'editing' | 'submitting'
 
 export interface CreateGameDraft {
@@ -25,6 +28,7 @@ export interface CreateGameStore {
 	result: IAnswerAnswer | null
 	originalResult: IAnswerAnswer | null
 	issues: ZodIssue[]
+	locks: PuzzleLockRequest[]
 	setPrompt: (prompt: string) => void
 	setLevel: (level: GameLevelStrict) => void
 	setPhase: (phase: CreatePhase) => void
@@ -44,6 +48,8 @@ export interface CreateGameStore {
 	updateClue: (id: string, clue: IGameMetadata['clues'][number]) => void
 	removeClue: (id: string) => void
 	moveClue: (fromIndex: number, toIndex: number) => void
+	setLock: (clueId: string, kind: PuzzleLockRequest['kind'] | null) => void
+	suggestLock: () => string | null
 	setResult: (key: keyof IAnswerAnswer, id: string) => void
 	restoreOriginalResult: () => void
 	setIssues: (issues: ZodIssue[]) => void
@@ -58,6 +64,7 @@ const initialState = {
 	result: null,
 	originalResult: null,
 	issues: [] as ZodIssue[],
+	locks: [] as PuzzleLockRequest[],
 }
 
 export const useCreateGameStore = create<CreateGameStore>((set, get) => ({
@@ -85,6 +92,7 @@ export const useCreateGameStore = create<CreateGameStore>((set, get) => ({
 			result: { ...result },
 			originalResult: { ...result },
 			issues: [],
+			locks: [],
 		})
 	},
 	updateInfo: (patch) => {
@@ -177,6 +185,7 @@ export const useCreateGameStore = create<CreateGameStore>((set, get) => ({
 					clues: draft.gameMetadata.clues.filter((c) => c.id !== id),
 				},
 			},
+			locks: get().locks.filter((lock) => lock.clueId !== id),
 			issues: [],
 		})
 	},
@@ -203,6 +212,24 @@ export const useCreateGameStore = create<CreateGameStore>((set, get) => ({
 			},
 			issues: [],
 		})
+	},
+	setLock: (clueId, kind) => {
+		const locks = get().locks.filter((lock) => lock.clueId !== clueId)
+		if (kind) locks.push({ clueId, kind })
+		set({ locks, issues: [] })
+	},
+	suggestLock: () => {
+		const { draft, result, locks } = get()
+		if (!draft || !result) return null
+		const metadata = prepareMetadataForSolver(draft.gameMetadata)
+		const suggestion = suggestPuzzleLock(
+			metadata,
+			result,
+			locks.map((lock) => lock.clueId),
+		)
+		if (!suggestion) return null
+		set({ locks: [...locks, suggestion], issues: [] })
+		return suggestion.clueId
 	},
 	setResult: (key, id) => {
 		const result = get().result

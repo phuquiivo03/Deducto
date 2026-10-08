@@ -1,6 +1,7 @@
 import { gameGetStatus } from "@/features/game/game-errors";
 import { IGame } from "@/features/game/game.schemas";
 import gameServices from "@/features/game/game.services";
+import { presentGameForPlayer } from "@/features/puzzles/present-game";
 import { AppResponse } from "@/features/type";
 import { publicApiFailure } from "@/lib/public-api-error";
 
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   }
   console.log(id);
   try {
-    const game = await gameServices.getById(id);
+    const game = presentGameForPlayer(await gameServices.getById(id));
     const response: AppResponse<IGame> = {
       data: game,
       success: true,

@@ -1,4 +1,4 @@
-import type { CluePuzzle } from "@/features/puzzles/types";
+import type { PlayerPuzzle } from "@/features/puzzles/types";
 
 export type EntityType = "suspect" | "weapon" | "location" | "motive";
 
@@ -47,7 +47,7 @@ export interface Clue {
 
   entities: string[];
 
-  puzzle?: CluePuzzle;
+  puzzle?: PlayerPuzzle;
 }
 
 export interface Note {

@@ -5,9 +5,10 @@ import { askBedrock } from "@/infrastructure/ai/bedrock";
 import { createServiceClient } from "@/infrastructure/supabase/service";
 import { createClient } from "@/infrastructure/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { clueWriteData } from "./clue-write";
+import type { IPersistGameInput } from "./publish-case";
 import type {
   IAnswerAnswer,
-  ICreateGameInput,
   IGame,
   IShortGame,
 } from "./game.schemas";
@@ -68,7 +69,7 @@ const askAi = async (prompt: string): Promise<string> => {
 };
 
 const createGame = async (
-  input: ICreateGameInput,
+  input: IPersistGameInput,
   creatorId: string,
 ): Promise<string> => {
   const meta = input.gameMetadata;
@@ -146,19 +147,15 @@ const createGame = async (
           })),
         },
         clues: {
-          create: meta.clues.map((clue) => ({
-            id: remap(clue.id),
-            type: clue.type,
-            attribute: clue.attribute,
-            value: clue.value,
-            relation: clue.relation,
-            suspectId: clue.suspect_id ? remap(clue.suspect_id) : undefined,
-            locationId: clue.location_id ? remap(clue.location_id) : undefined,
-            weaponId: clue.weapon_id ? remap(clue.weapon_id) : undefined,
-            puzzle: clue.puzzle
-              ? (clue.puzzle as Prisma.InputJsonValue)
-              : undefined,
-          })),
+          create: meta.clues.map((clue) => {
+            const row = clueWriteData(clue, remap);
+            return {
+              ...row,
+              puzzle: row.puzzle
+                ? (row.puzzle as Prisma.InputJsonValue)
+                : undefined,
+            };
+          }),
         },
       },
     });

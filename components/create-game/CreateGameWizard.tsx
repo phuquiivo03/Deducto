@@ -12,7 +12,6 @@ import { signInWithGoogle } from "@/features/user/user.sign-in";
 import { useAuthUser } from "@/hooks/use-auth-user";
 import { useCreateGameStore } from "@/store/create-game.store";
 import Card from "@/components/ui/Card";
-import { StickyTag } from "@/components/ui/sticky-tag";
 
 import CaseEditor from "./CaseEditor";
 import GeneratingState from "./GeneratingState";
@@ -33,6 +32,7 @@ export default function CreateGameWizard() {
   const result = useCreateGameStore((s) => s.result);
   const setPhase = useCreateGameStore((s) => s.setPhase);
   const setCase = useCreateGameStore((s) => s.setCase);
+  const locks = useCreateGameStore((s) => s.locks);
   const setIssues = useCreateGameStore((s) => s.setIssues);
   const reset = useCreateGameStore((s) => s.reset);
 
@@ -80,7 +80,15 @@ export default function CreateGameWizard() {
     }
     setError(null);
 
-    const gameMetadata = prepareMetadataForSolver(draft.gameMetadata);
+    const prepared = prepareMetadataForSolver(draft.gameMetadata);
+    const gameMetadata = {
+      ...prepared,
+      clues: prepared.clues.map((clue) => {
+        const next = { ...clue };
+        delete next.puzzle;
+        return next;
+      }),
+    };
     const payload = {
       title: draft.title,
       description: draft.description,
@@ -88,6 +96,7 @@ export default function CreateGameWizard() {
       level: draft.level,
       gameMetadata,
       result,
+      locks,
     };
 
     const parsed = createGameInputSchema.safeParse(payload);
@@ -174,9 +183,16 @@ export default function CreateGameWizard() {
       </div>
 
       {error ? (
-        <StickyTag tone="marker" className="block text-center rotate-0">
-          {error}
-        </StickyTag>
+        <div
+          role="alert"
+          className="
+border-2 border-pencil bg-postit px-4 py-3
+rounded-wobbly-md shadow-hard-sm
+"
+        >
+          <p className="font-heading text-lg text-pencil">Chưa lưu vụ án</p>
+          <p className="mt-1 text-base text-pencil">{error}</p>
+        </div>
       ) : null}
 
       {phase === "prompt" ? <PromptPanel onGenerate={runGenerate} /> : null}
