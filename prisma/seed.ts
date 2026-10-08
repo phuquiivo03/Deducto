@@ -98,6 +98,9 @@ async function main() {
             suspectId: clue.suspect_id,
             locationId: clue.location_id,
             weaponId: clue.weapon_id,
+            puzzle: clue.puzzle
+              ? (clue.puzzle as Prisma.InputJsonValue)
+              : undefined,
           })),
         },
       },

@@ -1,7 +1,9 @@
 import { IGame, IAnswer } from "@/features/game/game.schemas";
 import { sampleIds } from "@/data/sample-ids";
+import { generateScytalePuzzle } from "@/features/puzzles/scytale/scytale";
+import { clueToText } from "@/lib/clues.helper";
 
-export const sampleGame: IGame = {
+const sampleGameDraft: IGame = {
   id: sampleIds.game,
   creator: sampleIds.user,
   title: "Viên sapphire thất lạc",
@@ -192,6 +194,8 @@ export const sampleGame: IGame = {
 
     // Manh mối khóa Quý bà Violet, Dao mở thư bạc, Phòng ăn
     // và Tham lam. Động cơ của các khách khác vẫn có thể hoán đổi.
+    // Clue c1 is also wrapped in a required scytale after this object
+    // is built. Removing it leaves more than one solution.
     clues: [
       {
         id: sampleIds.clues.c1,
@@ -281,6 +285,33 @@ export const sampleGame: IGame = {
     ],
   },
 };
+
+/**
+ * Lock the first sample clue behind a scytale. The cipher is derived
+ * from the rendered sentence, so it stays aligned with the board.
+ */
+function lockSampleClue(game: IGame): IGame {
+  if (typeof game.gameMetadata === "string") return game;
+  const meta = game.gameMetadata;
+  const targetId = sampleIds.clues.c1;
+  const clue = meta.clues.find((item) => item.id === targetId);
+  if (!clue) return game;
+  const puzzle = generateScytalePuzzle(
+    clueToText(clue, meta),
+    "required",
+  );
+  return {
+    ...game,
+    gameMetadata: {
+      ...meta,
+      clues: meta.clues.map((item) =>
+        item.id === targetId ? { ...item, puzzle } : item,
+      ),
+    },
+  };
+}
+
+export const sampleGame: IGame = lockSampleClue(sampleGameDraft);
 
 export const sampleResult: IAnswer = {
   id: sampleIds.result,

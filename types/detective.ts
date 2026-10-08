@@ -1,3 +1,5 @@
+import type { CluePuzzle } from "@/features/puzzles/types";
+
 export type EntityType = "suspect" | "weapon" | "location" | "motive";
 
 export type RelationshipStatus =
@@ -44,6 +46,8 @@ export interface Clue {
   text: string;
 
   entities: string[];
+
+  puzzle?: CluePuzzle;
 }
 
 export interface Note {

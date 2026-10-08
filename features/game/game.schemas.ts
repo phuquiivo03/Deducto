@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { cluePuzzleSchema } from "@/features/puzzles/schema";
+
 export const gameLevelSchema = z
   .enum(["easy", "medium", "hard"])
   .or(z.string());
@@ -123,6 +125,7 @@ export const clueSchema = z.object({
   location_id: z.string().optional(),
   suspect_id: z.string().optional(),
   weapon_id: z.string().optional(),
+  puzzle: cluePuzzleSchema.optional(),
 });
 export type IClue = z.infer<typeof clueSchema>;
 

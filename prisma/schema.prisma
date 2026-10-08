@@ -149,6 +149,7 @@ model Clue {
 	suspectId      String?       @map("suspect_id") @db.Uuid
 	locationId     String?       @map("location_id") @db.Uuid
 	weaponId       String?       @map("weapon_id") @db.Uuid
+	puzzle         Json?
 	gameMetadata   GameMetadata  @relation(fields: [gameMetadataId], references: [id], onDelete: Cascade)
 	suspect        Suspect?      @relation("ClueSuspect", fields: [suspectId], references: [id], onDelete: SetNull)
 	location       Location?     @relation("ClueLocation", fields: [locationId], references: [id], onDelete: SetNull)

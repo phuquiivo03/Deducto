@@ -925,3 +925,43 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 - Entity cards use `entityTypeLabel`. Motive cards say “Motive”.
 - Grid headings cover suspect×motive, weapon×motive, and location×motive as well as the original three blocks.
 - Opening a case resets `isSolved` before `/api/game/[id]/resolved` answers, so a previous solve does not stick to the next case.
+
+---
+
+# 20. Clue puzzles
+
+## Two layers
+
+- The solver still reads structured clues only. A puzzle is an optional `puzzle` object on the clue (`features/game/game.schemas.ts`). It does not change deduction.
+- Ciphers are built in shared code from `clueToText`, never by the model. `gameServices.generate` and `gameServices.create` call `assertPuzzlesValid` after `assertUniquelySolvable`. A case with no puzzles passes that gate unchanged.
+
+## Registry
+
+- `features/puzzles/registry.ts` maps a kind to its generator and validator.
+- `features/puzzles/registry-ui.tsx` maps a kind to its solve modal.
+- `features/puzzles/schema.ts` is the zod union stored on the clue.
+- Scytale lives in `features/puzzles/scytale/` (types, encode/decode/generate, modal).
+
+### Adding a kind
+
+1. Add `features/puzzles/<kind>/` with a zod schema, generator, validator, and solve component.
+2. Add that schema to the union in `features/puzzles/schema.ts`.
+3. Register generate/validate in `registry.ts` and the component in `registry-ui.tsx`.
+4. Give the lock a `role` of `required` or `optional`. `validateCasePuzzles` checks the role with the existing solver.
+
+## Scytale
+
+- The sentence is written in rows of `columns` letters. The strip is the columns read downward. The player picks a diameter and reads the rows.
+- Diameters `1` and `length` are the identity wrap, so they are excluded. Uniqueness is checked by trying every diameter from 2 through length − 1. A string that spells the sentence at two diameters is rejected. The generator walks outward from a near-square rod until it finds a unique one.
+
+## Roles
+
+- `required`: removing that clue leaves the case not uniquely solved.
+- `optional`: removing that clue still leaves the one saved solution.
+- The seeded sample locks the first clue (Arthur in the library) as required. `applySamplePuzzles` copies that lock onto the loaded sample case when the rendered sentences still match and the row has no puzzle of its own.
+- The `clues.puzzle` jsonb column stores the wrapper. Player progress is not saved.
+
+## Dev lab
+
+- `/dev/puzzles` clones the create-page shell and uses only `data/sample-be.ts`. It is not in the header or footer. The page sets `noindex`.
+- Pick a clue, choose required or optional, wrap it, read the validation report, and solve the modal. The embedded panel is the board's `CluePanel`.

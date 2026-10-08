@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test lib/*.test.ts features/game/*.test.ts data/*.test.ts components/detective-board/*.test.ts",
+    "test": "node --import tsx --test lib/*.test.ts features/game/*.test.ts features/puzzles/*.test.ts features/puzzles/scytale/*.test.ts data/*.test.ts components/detective-board/*.test.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",

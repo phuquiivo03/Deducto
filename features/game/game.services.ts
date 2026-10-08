@@ -14,6 +14,7 @@ import { extractJson } from '@/lib/extract-json'
 import gameRepositories from './game.repositories'
 import submissionRepositories from '../submission/submission.repositories'
 import { assertUniquelySolvable } from './case-solver'
+import { assertPuzzlesValid } from '@/features/puzzles/validate-case-puzzles'
 import { normalizeDraft } from './case-draft'
 import { generateCaseLogic } from './case-generator'
 import { GameNotFoundError } from './game-errors'
@@ -108,6 +109,7 @@ const generate = async (
 	}
 
 	assertUniquelySolvable(generated.game.gameMetadata, generated.result)
+	assertPuzzlesValid(generated.game.gameMetadata, generated.result)
 
 	return generated
 }
@@ -117,6 +119,7 @@ const create = async (
 	creatorId: string,
 ): Promise<string> => {
 	assertUniquelySolvable(input.gameMetadata, input.result)
+	assertPuzzlesValid(input.gameMetadata, input.result)
 	return gameRepositories.createGame(input, creatorId)
 }
 

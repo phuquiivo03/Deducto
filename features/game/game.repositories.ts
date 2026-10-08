@@ -155,6 +155,9 @@ const createGame = async (
             suspectId: clue.suspect_id ? remap(clue.suspect_id) : undefined,
             locationId: clue.location_id ? remap(clue.location_id) : undefined,
             weaponId: clue.weapon_id ? remap(clue.weapon_id) : undefined,
+            puzzle: clue.puzzle
+              ? (clue.puzzle as Prisma.InputJsonValue)
+              : undefined,
           })),
         },
       },
