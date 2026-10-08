@@ -36,7 +36,7 @@ const EMPTY_BY_TAB: Record<StoreTab, string> = {
 export function StoreShelf({ initialQuery, tab }: StoreShelfProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
-  const [priceFreeOnly, setPriceFreeOnly] = useState(false);
+  const [priceFreeOnly, setPriceFreeOnly] = useState(true);
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
   const { data: games, isLoading } = useQuery({
@@ -97,7 +97,7 @@ md:items-end
           />
         </div>
 
-        <fieldset
+        {/* <fieldset
           className="
 flex flex-col gap-3 min-w-0 md:min-w-[280px]
 border-2 border-dashed border-pencil rounded-wobbly-md p-4
@@ -136,7 +136,7 @@ border-2 border-dashed border-pencil rounded-wobbly-md p-4
           <p className="text-sm text-pencil/60 leading-relaxed">
             Bộ lọc giá sẽ áp dụng khi các case được liệt kê giá trong danh mục.
           </p>
-        </fieldset>
+        </fieldset> */}
       </div>
 
       {filtered.length === 0 ? (
