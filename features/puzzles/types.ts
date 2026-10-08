@@ -1,5 +1,5 @@
 export type { PuzzleRole } from '@/features/puzzles/puzzle-role'
-export type { CluePuzzle } from '@/features/puzzles/schema'
+export type { CluePuzzle, PlayerPuzzle } from '@/features/puzzles/schema'
 export type { ScytalePuzzle } from '@/features/puzzles/scytale/types'
 
 export interface PuzzleShapeCheck {

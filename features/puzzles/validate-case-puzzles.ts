@@ -6,6 +6,7 @@ import type {
 } from '@/features/game/game.schemas'
 import { clueToText } from '@/lib/clues.helper'
 
+import { clueLockRole } from './clue-lock-role'
 import { validatePuzzle } from './registry'
 import type { PuzzleRole } from './puzzle-role'
 
@@ -73,15 +74,7 @@ export function validateCasePuzzles (
 		if (!puzzle) continue
 		const sentence = clueToText(clue, metadata)
 		const shape = validatePuzzle(puzzle, sentence)
-		const without: IGameMetadata = {
-			...metadata,
-			clues: metadata.clues.filter((item) => item.id !== clue.id),
-		}
-		const removed = checkUniquelySolvable(without, result)
-		const roleOk =
-			puzzle.role === 'optional'
-				? removed.status === 'valid'
-				: removed.status !== 'valid'
+		const roleOk = clueLockRole(metadata, result, clue.id) === puzzle.role
 		const messages = [...shape.messages]
 		if (!roleOk) messages.push(roleFailure(puzzle.role))
 		if (messages.length > 0) {

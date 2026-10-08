@@ -1,54 +1,21 @@
-import {
-  createGameInputSchema,
-  type ICreateGameInput,
-} from "@/features/game/game.schemas";
+import { handleCreateGamePost } from "@/features/game/create-game.handler";
 import gameServices from "@/features/game/game.services";
 import { getSessionUserId } from "@/features/user/user.auth";
-import { AppResponse } from "@/features/type";
 import { NextRequest } from "next/server";
-import { publishErrorStatus } from "@/features/game/game-errors";
 import { requireAuth } from "@/lib/auth";
 import { publicApiFailure } from "@/lib/public-api-error";
 
 export async function POST(request: Request) {
-  const sessionUserId = await getSessionUserId();
-  if (!sessionUserId) {
-    const response: AppResponse<null> = {
-      data: null,
-      success: false,
-      message: "Sign in required",
-    };
-    return Response.json(response, { status: 401 });
-  }
-
   try {
-    const body = await request.json();
-    const parseResult = createGameInputSchema.safeParse(body);
-    if (!parseResult.success) {
-      const response: AppResponse<null> = publicApiFailure(
-        "POST /api/game",
-        parseResult.error,
-        "Invalid request",
-        null,
-      );
-      return Response.json(response, { status: 400 });
-    }
-
-    const id = await gameServices.create(
-      parseResult.data as ICreateGameInput,
-      sessionUserId,
-    );
-
-    const response: AppResponse<{ id: string }> = {
-      data: { id },
-      success: true,
-      message: null,
-    };
-    return Response.json(response, { status: 201 });
-  } catch (e) {
-    const response: AppResponse<null> = publicApiFailure(
+    return await handleCreateGamePost(request, {
+      getSessionUserId,
+      createGame: (input, creatorId) =>
+        gameServices.create(input, creatorId),
+    });
+  } catch (error) {
+    const response = publicApiFailure(
       "POST /api/game",
-      e,
+      error,
       "Không thể tạo trò chơi",
       null,
     );

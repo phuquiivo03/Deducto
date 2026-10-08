@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { puzzleLockRequestSchema } from "@/features/puzzles/lock-request";
 import { cluePuzzleSchema } from "@/features/puzzles/schema";
 
 export const gameLevelSchema = z
@@ -291,14 +292,21 @@ export function parseAiCaseDraft(
   return parsed;
 }
 
+const createClueSchema = clueSchema.omit({ puzzle: true });
+
+const createGameMetadataSchema = gameMetadataSchema.extend({
+  clues: z.array(createClueSchema),
+});
+
 export const createGameInputSchema = z
   .object({
     title: z.string().min(1),
     description: z.string().min(1),
     banner: z.string().min(1),
     level: gameLevelStrictSchema,
-    gameMetadata: gameMetadataSchema,
+    gameMetadata: createGameMetadataSchema,
     result: resultAnswerSchema,
+    locks: z.array(puzzleLockRequestSchema).max(64).optional(),
   })
   .superRefine((data, ctx) => {
     const meta = data.gameMetadata;

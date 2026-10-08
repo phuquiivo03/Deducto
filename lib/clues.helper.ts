@@ -11,7 +11,7 @@ import {
   IMotive,
   IGame,
 } from "@/features/game/game.schemas";
-import { cluePuzzleSchema } from "@/features/puzzles/schema";
+import { playerCluePuzzleSchema } from "@/features/puzzles/schema";
 import { Clue } from "@/types/detective";
 
 type EntityType = "suspect" | "weapon" | "location" | "motive";
@@ -249,7 +249,7 @@ export const clueToText = (clue: IClue, metadata: IGameMetadata): string => {
 export const gameToClues = (game: IGame): Clue[] => {
   const metadata = game.gameMetadata as IGameMetadata;
   return metadata.clues.map((clue) => {
-    const parsed = cluePuzzleSchema.safeParse(clue.puzzle);
+    const parsed = playerCluePuzzleSchema.safeParse(clue.puzzle);
     return {
       id: clue.id,
       status: "Mới",

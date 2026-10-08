@@ -1,7 +1,7 @@
 import type { PuzzleRole } from '@/features/puzzles/puzzle-role'
 import type { PuzzleShapeCheck } from '@/features/puzzles/types'
 
-import type { ScytalePuzzle } from './types'
+import type { ScytalePlayerPuzzle, ScytalePuzzle } from './types'
 
 /**
  * Scytale transposition.
@@ -212,6 +212,37 @@ export function generateScytalePuzzle (
 	throw new PuzzleGenerateError(
 		'No scytale diameter spells this sentence alone.',
 	)
+}
+
+export function toPlayerScytalePuzzle (
+	puzzle: ScytalePuzzle,
+): ScytalePlayerPuzzle {
+	return { kind: 'scytale', strip: puzzle.strip }
+}
+
+export function canGenerateScytale (sentence: string): boolean {
+	try {
+		generateScytalePuzzle(sentence, 'required')
+		return true
+	} catch (error) {
+		if (error instanceof PuzzleGenerateError) return false
+		throw error
+	}
+}
+
+/**
+ * Creator-facing reason when this kind cannot lock a sentence.
+ * Returns null when the error belongs to another layer.
+ */
+export function scytaleFailureReason (error: unknown): string | null {
+	if (!(error instanceof PuzzleGenerateError)) return null
+	if (error.message.includes('too short')) {
+		return 'Câu này quá ngắn để quấn thành scytale.'
+	}
+	if (error.message.includes('No scytale diameter')) {
+		return 'Không có đường kính nào chỉ đúng mỗi câu này.'
+	}
+	return error.message
 }
 
 export function validateScytalePuzzle (
