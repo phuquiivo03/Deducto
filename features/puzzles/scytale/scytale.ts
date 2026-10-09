@@ -1,7 +1,10 @@
+import { PuzzleGenerateError } from '@/features/puzzles/generate-error'
 import type { PuzzleRole } from '@/features/puzzles/puzzle-role'
 import type { PuzzleShapeCheck } from '@/features/puzzles/types'
 
 import type { ScytalePlayerPuzzle, ScytalePuzzle } from './types'
+
+export { PuzzleGenerateError }
 
 /**
  * Scytale transposition.
@@ -19,13 +22,6 @@ import type { ScytalePlayerPuzzle, ScytalePuzzle } from './types'
  * when any second diameter in `2 .. length-1` also decodes to the
  * sentence. Both are deterministic and use no randomness.
  */
-export class PuzzleGenerateError extends Error {
-	constructor (message: string) {
-		super(message)
-		this.name = 'PuzzleGenerateError'
-	}
-}
-
 export function codePoints (text: string): string[] {
 	return Array.from(text)
 }
@@ -217,7 +213,12 @@ export function generateScytalePuzzle (
 export function toPlayerScytalePuzzle (
 	puzzle: ScytalePuzzle,
 ): ScytalePlayerPuzzle {
-	return { kind: 'scytale', strip: puzzle.strip }
+	const player: ScytalePlayerPuzzle = {
+		kind: 'scytale',
+		strip: puzzle.strip,
+	}
+	if (puzzle.hint) player.hint = puzzle.hint
+	return player
 }
 
 export function canGenerateScytale (sentence: string): boolean {
@@ -274,6 +275,26 @@ export function validateScytalePuzzle (
 		uniqueKey,
 		messages,
 	}
+}
+
+export function scytaleDecodes (
+	cipher: string,
+	sentence: string,
+): boolean {
+	return scytaleKeysFor(cipher, sentence).length > 0
+}
+
+export function scytaleReadingMatches (
+	reading: string,
+	sentence: string,
+): boolean {
+	return reading === sentence
+}
+
+export function scytaleCipherText (
+	puzzle: { strip: string },
+): string {
+	return puzzle.strip
 }
 
 /**

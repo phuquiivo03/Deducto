@@ -1,41 +1,30 @@
 'use client'
 
-import type { PlayerPuzzle } from '@/features/puzzles/types'
+import type { ComponentType } from 'react'
 
-import { ScytaleSolveModal } from './scytale/scytale-solve-modal'
+import { CaesarTool } from './caesar/caesar-wheel'
+import type { PuzzleKind } from './registry'
+import { ScytaleTool } from './scytale/scytale-tool'
+import {
+	PuzzleToolkit,
+	type PuzzleSolveModalProps,
+	type PuzzleToolProps,
+} from './toolkit'
 
-export interface PuzzleSolveModalProps {
-	puzzle: PlayerPuzzle
-	sentence: string
-	onClose: () => void
-	onSolved: () => void
-}
+export type { PuzzleSolveModalProps }
 
 /**
- * Opens the solve screen for whatever kind is locked on the clue.
- * Register a new component in the switch when a kind is added.
+ * Kind → solve tool. The popup itself only reads this map.
+ * Register a component here when a kind is added.
  */
-export function PuzzleSolveModal ({
-	puzzle,
-	sentence,
-	onClose,
-	onSolved,
-}: PuzzleSolveModalProps) {
-	switch (puzzle.kind) {
-		case 'scytale':
-			return (
-				<ScytaleSolveModal
-					puzzle={puzzle}
-					sentence={sentence}
-					onClose={onClose}
-					onSolved={onSolved}
-				/>
-			)
-		default:
-			return unexpectedKind(puzzle.kind)
-	}
+const puzzleTools: Record<
+	PuzzleKind,
+	ComponentType<PuzzleToolProps>
+> = {
+	scytale: ScytaleTool,
+	caesar: CaesarTool,
 }
 
-function unexpectedKind (kind: never): never {
-	throw new Error(`Unknown puzzle kind: ${String(kind)}`)
+export function PuzzleSolveModal (props: PuzzleSolveModalProps) {
+	return <PuzzleToolkit {...props} tools={puzzleTools} />
 }

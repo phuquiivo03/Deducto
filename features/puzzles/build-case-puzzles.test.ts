@@ -4,6 +4,7 @@ import test from 'node:test'
 
 import { sampleGame, sampleResult } from '@/data/sample-be'
 import { sampleIds } from '@/data/sample-ids'
+import { assertUniquelySolvable, solveCase } from '@/features/game/case-solver'
 import { CaseNotSolvableError } from '@/features/game/game-errors'
 import {
 	createGameInputSchema,
@@ -20,8 +21,19 @@ import {
 import { clueLockRole } from './clue-lock-role'
 import { puzzleLockRequestSchema } from './lock-request'
 import { listPuzzleKinds } from './registry'
+import { decodeCaesar, normalizeCaesarSentence } from './caesar/caesar'
 import { decodeScytale } from './scytale/scytale'
 import { suggestPuzzleLock } from './suggest-lock'
+
+const HINT = 'Ghi chép về ông Arthur trong đêm xảy ra vụ án.'
+
+function lock (
+	clueId: string,
+	kind: 'scytale' | 'caesar' = 'scytale',
+	hint = HINT,
+) {
+	return { clueId, kind, hint }
+}
 
 function metadata (): IGameMetadata {
 	const value = sampleGame.gameMetadata
@@ -39,7 +51,7 @@ function metadata (): IGameMetadata {
 }
 
 function sampleInput (
-	locks?: { clueId: string; kind: 'scytale' }[],
+	locks?: { clueId: string; kind: 'scytale' | 'caesar'; hint: string }[],
 ) {
 	const game = sampleGame
 	return {
@@ -57,19 +69,45 @@ test('a lock request cannot carry a cipher or a role', () => {
 	const parsed = puzzleLockRequestSchema.parse({
 		clueId: sampleIds.clues.c1,
 		kind: 'scytale',
+		hint: `  ${HINT} <b>x</b>  `,
 		role: 'optional',
 		columns: 2,
 		strip: 'hacked',
+		shift: 4,
 	})
 	assert.deepEqual(parsed, {
 		clueId: sampleIds.clues.c1,
 		kind: 'scytale',
+		hint: `${HINT} x`,
 	})
+	assert.equal(
+		puzzleLockRequestSchema.safeParse({
+			clueId: sampleIds.clues.c1,
+			kind: 'caesar',
+		}).success,
+		false,
+	)
+	assert.equal(
+		puzzleLockRequestSchema.safeParse({
+			clueId: sampleIds.clues.c1,
+			kind: 'caesar',
+			hint: '   ',
+		}).success,
+		false,
+	)
+	assert.equal(
+		puzzleLockRequestSchema.safeParse({
+			clueId: sampleIds.clues.c1,
+			kind: 'caesar',
+			hint: 'a'.repeat(201),
+		}).success,
+		false,
+	)
 })
 
 test('create schema drops a client puzzle and keeps the lock', () => {
 	const body = sampleInput([
-		{ clueId: sampleIds.clues.c1, kind: 'scytale' },
+		lock(sampleIds.clues.c1),
 	])
 	const first = body.gameMetadata.clues[0]
 	assert.ok(first)
@@ -98,7 +136,7 @@ test('create schema drops a client puzzle and keeps the lock', () => {
 	assert.ok(stored)
 	assert.equal('puzzle' in stored, false)
 	assert.deepEqual(parsed.data.locks, [
-		{ clueId: sampleIds.clues.c1, kind: 'scytale' },
+		lock(sampleIds.clues.c1),
 	])
 })
 
@@ -113,7 +151,7 @@ test('no locks leave every clue unlocked', () => {
 test('an essential clue is locked as required from the sentence', () => {
 	const meta = metadata()
 	const published = publishCase(
-		sampleInput([{ clueId: sampleIds.clues.c1, kind: 'scytale' }]),
+		sampleInput([lock(sampleIds.clues.c1)]),
 	)
 	const clue = published.gameMetadata.clues.find(
 		(item) => item.id === sampleIds.clues.c1,
@@ -153,7 +191,7 @@ test('a client cipher and role are replaced', () => {
 	const built = buildCasePuzzles(
 		{ ...meta, clues },
 		sampleResult.answer,
-		[{ clueId: sampleIds.clues.c1, kind: 'scytale' }],
+		[lock(sampleIds.clues.c1)],
 	)
 	const puzzle = built.clues.find(
 		(clue) => clue.id === sampleIds.clues.c1,
@@ -174,7 +212,7 @@ test('a redundant copy is optional', () => {
 		clues: [...meta.clues, copy],
 	}
 	const built = buildCasePuzzles(withCopy, sampleResult.answer, [
-		{ clueId: copy.id, kind: 'scytale' },
+		lock(copy.id),
 	])
 	assert.equal(
 		built.clues.find((clue) => clue.id === copy.id)?.puzzle?.role,
@@ -188,7 +226,7 @@ test('a redundant copy is optional', () => {
 
 test('a sentence with no unique diameter names the clue and stores nothing', () => {
 	const input = sampleInput([
-		{ clueId: sampleIds.clues.c1, kind: 'scytale' },
+		lock(sampleIds.clues.c1),
 	])
 	assert.throws(
 		() =>
@@ -222,7 +260,7 @@ test('an unknown clue and a duplicate lock are rejected', () => {
 	assert.throws(
 		() =>
 			buildCasePuzzles(meta, sampleResult.answer, [
-				{ clueId: 'missing-clue', kind: 'scytale' },
+				lock('missing-clue'),
 			]),
 		(error: unknown) => {
 			assert.ok(error instanceof PuzzleLockError)
@@ -233,8 +271,8 @@ test('an unknown clue and a duplicate lock are rejected', () => {
 	assert.throws(
 		() =>
 			buildCasePuzzles(meta, sampleResult.answer, [
-				{ clueId: sampleIds.clues.c1, kind: 'scytale' },
-				{ clueId: sampleIds.clues.c1, kind: 'scytale' },
+				lock(sampleIds.clues.c1),
+				lock(sampleIds.clues.c1),
 			]),
 		/nhiều hơn một lần/,
 	)
@@ -245,6 +283,7 @@ test('suggest picks a required clue and skips ones already locked', () => {
 	const first = suggestPuzzleLock(meta, sampleResult.answer, [])
 	assert.ok(first)
 	assert.equal(first.kind, 'scytale')
+	assert.equal(first.hint, '')
 	assert.equal(
 		clueLockRole(meta, sampleResult.answer, first.clueId),
 		'required',
@@ -268,4 +307,77 @@ test('the clue step does not name a puzzle kind', () => {
 	)
 	assert.match(source, /listPuzzleKinds/)
 	assert.doesNotMatch(source, /scytale/)
+	assert.doesNotMatch(source, /caesar/)
+})
+
+test('a caesar lock stores the hint and the solver ignores it', () => {
+	const meta = metadata()
+	const built = buildCasePuzzles(meta, sampleResult.answer, [
+		lock(sampleIds.clues.c1, 'caesar', '  Ngữ cảnh <b>đêm ấy</b>  '),
+	])
+	const clue = built.clues.find((item) => item.id === sampleIds.clues.c1)
+	assert.ok(clue?.puzzle)
+	assert.equal(clue.puzzle.kind, 'caesar')
+	assert.equal(clue.puzzle.role, 'required')
+	assert.equal(clue.puzzle.hint, 'Ngữ cảnh đêm ấy')
+	if (clue.puzzle.kind !== 'caesar') return
+	const sentence = clueToText(clue, built)
+	assert.equal(
+		decodeCaesar(clue.puzzle.cipher, clue.puzzle.shift),
+		normalizeCaesarSentence(sentence),
+	)
+	assert.notEqual(clue.puzzle.shift, 0)
+	const altered = {
+		...built,
+		clues: built.clues.map((item) =>
+			item.puzzle
+				? {
+						...item,
+						puzzle: {
+							...item.puzzle,
+							hint: 'Một gợi ý khác, vẫn chỉ là ngữ cảnh.',
+						},
+					}
+				: item,
+		),
+	}
+	assert.deepEqual(solveCase(meta), solveCase(built))
+	assert.deepEqual(solveCase(built), solveCase(altered))
+	assert.doesNotThrow(() => {
+		assertUniquelySolvable(built, sampleResult.answer)
+		assertUniquelySolvable(altered, sampleResult.answer)
+	})
+})
+
+test('a blank or oversized hint is rejected before a cipher is stored', () => {
+	const meta = metadata()
+	assert.throws(
+		() =>
+			buildCasePuzzles(meta, sampleResult.answer, [
+				lock(sampleIds.clues.c1, 'caesar', '   '),
+			]),
+		/gợi ý ngắn/,
+	)
+	assert.throws(
+		() =>
+			buildCasePuzzles(meta, sampleResult.answer, [
+				lock(sampleIds.clues.c1, 'scytale', 'a'.repeat(201)),
+			]),
+		/gợi ý ngắn/,
+	)
+	assert.throws(
+		() =>
+			buildCasePuzzles(
+				meta,
+				sampleResult.answer,
+				[lock(sampleIds.clues.c1, 'caesar')],
+				() => '...',
+			),
+		(error: unknown) => {
+			assert.ok(error instanceof PuzzleLockError)
+			assert.match(error.publicMessage, /Caesar/)
+			assert.match(error.publicMessage, /chữ cái/)
+			return true
+		},
+	)
 })

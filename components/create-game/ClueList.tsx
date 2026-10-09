@@ -53,13 +53,17 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
     const index = clues.findIndex((clue) => clue.id === clueId);
     setSuggestNote(
       index >= 0
-        ? `Đã khóa manh mối #${index + 1}.`
-        : "Đã khóa một manh mối.",
+        ? `Đã khóa manh mối #${index + 1}. Hãy thêm gợi ý.`
+        : "Đã khóa một manh mối. Hãy thêm gợi ý.",
     );
   };
 
-  const handleSetLock = (clueId: string, kind: PuzzleKind | null) => {
-    setLock(clueId, kind);
+  const handleSetLock = (
+    clueId: string,
+    kind: PuzzleKind | null,
+    hint?: string,
+  ) => {
+    setLock(clueId, kind, hint);
     setSuggestNote(null);
   };
 
@@ -94,7 +98,7 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
       </div>
       <p className="text-sm text-pencil/70">
         Khóa một manh mối thành mật thư. Máy chủ tạo mật mã và vai trò
-        khi bạn tạo vụ án.
+        khi bạn tạo vụ án. Gợi ý là bắt buộc với mỗi khóa.
       </p>
       {suggestNote ? (
         <p className="text-sm text-pen" role="status">
@@ -182,6 +186,7 @@ shadow-paper -rotate-1
                         handleSetLock(
                           clue.id,
                           event.target.value as PuzzleKind,
+                          lock.hint,
                         );
                       }}
                       className="
@@ -195,6 +200,42 @@ rounded-wobbly-sm text-base text-pencil
                         </option>
                       ))}
                     </select>
+                  ) : null}
+                  {lock ? (
+                    <div className="w-full min-w-[12rem] flex-1">
+                      <label
+                        htmlFor={`hint-${clue.id}`}
+                        className="text-sm text-pencil"
+                      >
+                        Gợi ý
+                      </label>
+                      <input
+                        id={`hint-${clue.id}`}
+                        value={lock.hint}
+                        maxLength={200}
+                        required
+                        aria-invalid={lock.hint.trim().length === 0}
+                        aria-describedby={`hint-help-${clue.id}`}
+                        onChange={(event) => {
+                          handleSetLock(
+                            clue.id,
+                            lock.kind,
+                            event.target.value,
+                          );
+                        }}
+                        className="
+mt-1 w-full border-2 border-pencil bg-card px-3 py-1
+rounded-wobbly-sm text-base text-pencil
+"
+                      />
+                      <p
+                        id={`hint-help-${clue.id}`}
+                        className="mt-1 text-sm text-pencil/70"
+                      >
+                        Gợi ý chỉ mô tả ngữ cảnh. Không thêm sự kiện
+                        hay manh mối mới.
+                      </p>
+                    </div>
                   ) : null}
                 </div>
               ) : null}

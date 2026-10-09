@@ -1,6 +1,7 @@
 import { Lock } from "lucide-react";
 
 import { StickyTag } from "@/components/ui/sticky-tag";
+import { clueBoardText } from "@/features/puzzles/clue-board-text";
 import { Clue } from "@/types/detective";
 
 interface Props {
@@ -90,10 +91,8 @@ ${locked ? "bg-erased/70" : "bg-paper"}
                   )}
                 </StickyTag>
               </div>
-              <p className="text-base leading-relaxed text-pencil">
-                {locked
-                  ? "Dải giấy bị khóa. Mở để giải mật mã."
-                  : clue.text}
+              <p className="text-base leading-relaxed text-pencil whitespace-pre-wrap break-words">
+                {clueBoardText(clue, !locked)}
               </p>
             </button>
           );

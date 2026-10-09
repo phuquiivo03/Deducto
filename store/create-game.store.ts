@@ -8,7 +8,7 @@ import type {
 	IGeneratedCase,
 } from '@/features/game/game.schemas'
 import { prepareMetadataForSolver } from '@/features/game/prepare-metadata-for-solver'
-import type { PuzzleLockRequest } from '@/features/puzzles/lock-request'
+import type { PuzzleLockDraft } from '@/features/puzzles/lock-request'
 import { suggestPuzzleLock } from '@/features/puzzles/suggest-lock'
 export type CreatePhase = 'prompt' | 'generating' | 'editing' | 'submitting'
 
@@ -28,7 +28,7 @@ export interface CreateGameStore {
 	result: IAnswerAnswer | null
 	originalResult: IAnswerAnswer | null
 	issues: ZodIssue[]
-	locks: PuzzleLockRequest[]
+	locks: PuzzleLockDraft[]
 	setPrompt: (prompt: string) => void
 	setLevel: (level: GameLevelStrict) => void
 	setPhase: (phase: CreatePhase) => void
@@ -48,7 +48,11 @@ export interface CreateGameStore {
 	updateClue: (id: string, clue: IGameMetadata['clues'][number]) => void
 	removeClue: (id: string) => void
 	moveClue: (fromIndex: number, toIndex: number) => void
-	setLock: (clueId: string, kind: PuzzleLockRequest['kind'] | null) => void
+	setLock: (
+		clueId: string,
+		kind: PuzzleLockDraft['kind'] | null,
+		hint?: string,
+	) => void
 	suggestLock: () => string | null
 	setResult: (key: keyof IAnswerAnswer, id: string) => void
 	restoreOriginalResult: () => void
@@ -64,7 +68,7 @@ const initialState = {
 	result: null,
 	originalResult: null,
 	issues: [] as ZodIssue[],
-	locks: [] as PuzzleLockRequest[],
+	locks: [] as PuzzleLockDraft[],
 }
 
 export const useCreateGameStore = create<CreateGameStore>((set, get) => ({
@@ -213,9 +217,16 @@ export const useCreateGameStore = create<CreateGameStore>((set, get) => ({
 			issues: [],
 		})
 	},
-	setLock: (clueId, kind) => {
+	setLock: (clueId, kind, hint) => {
+		const current = get().locks.find((lock) => lock.clueId === clueId)
 		const locks = get().locks.filter((lock) => lock.clueId !== clueId)
-		if (kind) locks.push({ clueId, kind })
+		if (kind) {
+			locks.push({
+				clueId,
+				kind,
+				hint: hint ?? current?.hint ?? '',
+			})
+		}
 		set({ locks, issues: [] })
 	},
 	suggestLock: () => {

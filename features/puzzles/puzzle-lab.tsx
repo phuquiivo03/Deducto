@@ -333,7 +333,7 @@ export default function PuzzleLab () {
 				</h2>
 				<p className="mt-1 mb-4 text-base text-pencil/80">
 					This is the panel from the detective board. A locked clue
-					stays sealed until the scytale is solved.
+					stays sealed until the cipher is solved.
 				</p>
 				<div className="flex h-[32rem] overflow-hidden border-2 border-dashed border-pencil">
 					<CluePanel

@@ -935,37 +935,47 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 
 - The solver still reads structured clues only. A puzzle is an optional `puzzle` object on the clue (`features/game/game.schemas.ts`). It does not change deduction.
 - Ciphers are built in shared code from `clueToText`, never by the model. `gameServices.generate` calls `assertPuzzlesValid` after `assertUniquelySolvable` (generated drafts have no locks). `publishCase` does the same after it builds locks. A case with no locks passes that gate unchanged and stores clues with `puzzle` unset.
-- Create flow: the wizard records `{ clueId, kind }` only. `buildCasePuzzles` ignores any client cipher or role, computes `role` with `clueLockRole` (required when removing the clue breaks the unique solution, optional otherwise), then `generatePuzzle`. If a kind cannot wrap that sentence, `POST /api/game` returns **400** with the clue number, a short preview, and the reason. Nothing is stored. The wizard shows that message in the editor. Bedrock never emits puzzle fields.
+- Create flow: the wizard records `{ clueId, kind, hint }` only. The hint is required, trimmed, plain text, and at most 200 characters. Helper copy tells the creator to describe context and not add new facts. `buildCasePuzzles` ignores any client cipher or role, sanitizes the hint, computes `role` with `clueLockRole` (required when removing the clue breaks the unique solution, optional otherwise), then `generatePuzzle`. The hint is stored on the puzzle jsonb. The solver and `assertUniquelySolvable` do not read it. If a kind cannot wrap that sentence, or the hint is blank or too long, `POST /api/game` returns **400**. Nothing is stored. The wizard shows that message in the editor. Bedrock never emits puzzle fields.
+- Older stored puzzles with no `hint` still parse. While a lock is unsolved, the board shows the hint instead of the clue sentence (or a plain sealed line when no hint was stored). After the player solves it, the clue sentence shows again. The hint is rendered as text, not HTML.
 
 ## Registry
 
-- `features/puzzles/registry.ts` maps a kind to its generator and validator.
-- `features/puzzles/registry-ui.tsx` maps a kind to its solve modal.
-- `features/puzzles/schema.ts` is the zod union stored on the clue.
-- Scytale lives in `features/puzzles/scytale/` (types, encode/decode/generate, modal).
+- `features/puzzles/registry.ts` maps a kind to its generator, validator, flat ciphertext, and “does this tool decode the sentence?” check.
+- `features/puzzles/registry-ui.tsx` maps a kind to its solve tool. `toolkit.tsx` is the shared popup: one tab per registered kind, the same flat ciphertext for every tool. It does not open on the stored kind. A wrong tool only changes the reading.
+- `features/puzzles/schema.ts` is the zod union stored on the clue. `hint` is optional on that union.
+- Scytale lives in `features/puzzles/scytale/`. Caesar lives in `features/puzzles/caesar/`.
 
 ### Adding a kind
 
-1. Add `features/puzzles/<kind>/` with a zod schema, a player schema (no key), generator, validator, failure reason, and solve component.
-2. Add both schemas to the unions in `features/puzzles/schema.ts`.
-3. Register generate, validate, canGenerate, toPlayer, label, and failureReason in `registry.ts`, and the component in `registry-ui.tsx`.
-4. `buildCasePuzzles` sets `role` (`required` or `optional`) from `clueLockRole`. `validateCasePuzzles` checks that role with the existing solver. The create wizard picks the new kind up from `listPuzzleKinds()` with no wizard edit.
+1. Add `features/puzzles/<kind>/` with a zod schema, a player schema (no key), generator, validator, failure reason, `decodes`, `readingMatches`, `cipherText`, and a solve tool. The tool receives the flat ciphertext and reports its reading. It does not own the dialog.
+2. Add both schemas to the unions in `features/puzzles/schema.ts`. Keep `hint` optional on the stored schema.
+3. Register generate, validate, canGenerate, toPlayer, cipherText, decodes, readingMatches, label, and failureReason in `registry.ts`, and the tool in `registry-ui.tsx`.
+4. `buildCasePuzzles` sets `role` (`required` or `optional`) from `clueLockRole` and copies the sanitized hint. `validateCasePuzzles` checks that role with the existing solver and ignores the hint. The create wizard and the solve toolkit both pick the new kind up from the registry. No wizard or popup edit.
 
 ## Scytale
 
-- The sentence is written in rows of `columns` letters. The strip is the columns read downward. The player picks a diameter and reads the rows.
-- The row reading updates with the slider. The “khớp” stamp waits on `useDebounce` (`hooks/use-debounce.ts`, 400ms) so it appears only after the diameter stops changing.
+- The sentence is written in rows of `columns` letters. The strip is the columns read downward. The player picks a diameter and reads the rows. The tool shows a flat strip and does not title itself as the clue’s cipher or display the stored diameter.
 - Diameters `1` and `length` are the identity wrap, so they are excluded. Uniqueness is checked by trying every diameter from 2 through length − 1. A string that spells the sentence at two diameters is rejected. The generator walks outward from a near-square rod until it finds a unique one.
+
+## Caesar
+
+- Latin letters are shifted after Vietnamese diacritics are stripped and case is ignored. Other characters pass through. Shift `0` is the identity and is never stored. The generator hashes the normalized sentence to pick a shift in 1..25, then checks that only that shift restores the normalized sentence.
+- The solve tool is the paper wheel: drag or arrow keys rotate the inner ring, and the plain box shows the decoding. The shift number is not shown.
+
+## Toolkit
+
+- One clue is encrypted with exactly one kind. The player gets every registered tool and the same flat ciphertext. Only the correct tool can produce the canonical sentence (normalized, for Caesar). The other tools produce a different reading and no error.
+- The stored `kind` is still in the player payload, so a technical player can read it. The popup does not use it to choose the open tab. Hiding `kind` would need a payload change beyond this registry.
 
 ## Roles
 
 - `required`: removing that clue leaves the case not uniquely solved.
 - `optional`: removing that clue still leaves the one saved solution.
 - The seeded sample locks the first clue (Arthur in the library) as required. `applySamplePuzzles` copies that lock onto the loaded sample case when the rendered sentences still match and the row has no puzzle of its own.
-- The `clues.puzzle` jsonb column stores the full wrapper, including role and the scytale diameter. Player progress is not saved.
-- Before the case reaches the browser, `presentGameForPlayer` keeps `kind` and `strip` and drops `role` and `columns`. `GET /api/game/[id]` and `/case/[id]` both do this. The board still derives the sentence from the structured clue, because that is how `clueToText` and the solve modal know the reading matches. The diameter is not in that payload. A direct Data API read of `clues.puzzle` can still see the stored diameter, because the column is on the public-read `clues` table. Splitting it out would make `clues(*)` fail for the anon role, so case load would have to name every column. That migration is not in this change.
+- The `clues.puzzle` jsonb column stores the full wrapper, including role, the optional hint, the scytale diameter, and the Caesar shift. No migration. Player progress is not saved.
+- Before the case reaches the browser, `presentGameForPlayer` keeps `kind`, the flat ciphertext, and `hint`, and drops `role`, `columns`, and `shift`. `GET /api/game/[id]` and `/case/[id]` both do this. The board still derives the sentence from the structured clue, because that is how `clueToText` and the solve modal know the reading matches. The panel shows the hint until the puzzle is solved. The diameter and shift are not in that payload. `kind` is. A direct Data API read of `clues.puzzle` can still see the stored key, because the column is on the public-read `clues` table. Splitting it out would make `clues(*)` fail for the anon role, so case load would have to name every column. That migration is not in this change.
 
 ## Dev lab
 
 - `/dev/puzzles` clones the create-page shell and uses only `data/sample-be.ts`. It is not in the header or footer. The page sets `noindex`.
-- Pick a clue, choose required or optional, wrap it, read the validation report, and solve the modal. The embedded panel is the board's `CluePanel`.
+- Pick a clue, choose required or optional, wrap it, read the validation report, and solve through the same toolkit the board opens. The embedded panel is the board's `CluePanel`.

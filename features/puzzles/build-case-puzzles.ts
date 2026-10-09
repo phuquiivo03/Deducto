@@ -6,6 +6,10 @@ import type {
 import { clueToText } from '@/lib/clues.helper'
 
 import { clueLockRole } from './clue-lock-role'
+import {
+	PUZZLE_HINT_MAX,
+	sanitizePuzzleHint,
+} from './hint'
 import type { PuzzleLockRequest } from './lock-request'
 import {
 	generatePuzzle,
@@ -64,7 +68,8 @@ function previewSentence (sentence: string): string {
  *
  * Client ciphers and roles on the clues are discarded. Role comes
  * from `clueLockRole`. Generation uses the registry and the canonical
- * sentence. An empty lock list returns the case with no puzzles.
+ * sentence. The creator hint is stored on the puzzle and is not read
+ * by the solver. An empty lock list returns the case with no puzzles.
  */
 export function buildCasePuzzles (
 	metadata: IGameMetadata,
@@ -102,8 +107,20 @@ export function buildCasePuzzles (
 		const sentence = sentenceOf(clue, base)
 		const role = clueLockRole(base, result, clue.id)
 		const label = puzzleRegistry[lock.kind].label
+		const hint = sanitizePuzzleHint(lock.hint)
+		if (hint.length < 1 || hint.length > PUZZLE_HINT_MAX) {
+			throw new PuzzleLockError(
+				[
+					`Manh mối ${index + 1} cần một gợi ý ngắn,`,
+					`tối đa ${PUZZLE_HINT_MAX} ký tự.`,
+				].join(' '),
+			)
+		}
 		try {
-			const puzzle = generatePuzzle(lock.kind, sentence, role)
+			const puzzle = {
+				...generatePuzzle(lock.kind, sentence, role),
+				hint,
+			}
 			clues[index] = { ...clue, puzzle }
 		} catch (error) {
 			const reason = puzzleFailureReason(lock.kind, error)
