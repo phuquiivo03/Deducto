@@ -1,0 +1,124 @@
+.scytale-body,
+.scytale-cap {
+	fill: var(--puzzle-paper);
+	stroke: var(--puzzle-ink);
+	stroke-width: 2.4;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.scytale-grain {
+	fill: none;
+	stroke: var(--puzzle-ink);
+	stroke-width: 1.2;
+	stroke-linecap: round;
+	opacity: 0.35;
+}
+
+.scytale-band {
+	fill: var(--puzzle-paper);
+	stroke: var(--puzzle-ink);
+	stroke-width: 1.6;
+	stroke-linejoin: round;
+}
+
+.scytale-outline {
+	fill: none;
+	stroke: var(--puzzle-ink);
+	stroke-width: 2.4;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.scytale-letter {
+	font-family: var(--font-patrick-hand), cursive;
+	font-weight: 700;
+	fill: var(--puzzle-cipher);
+	text-anchor: middle;
+	dominant-baseline: middle;
+	user-select: none;
+}
+
+.scytale-space {
+	stroke: var(--puzzle-ink);
+	stroke-width: 1.5;
+	stroke-linecap: round;
+}
+
+.scytale-knob {
+	fill: var(--puzzle-gold);
+	stroke: var(--puzzle-graphite);
+	stroke-width: 1.4;
+}
+
+.scytale-hatch {
+	stroke: var(--puzzle-cipher);
+	stroke-width: 1;
+}
+
+.scytale-hit {
+	fill: transparent;
+	cursor: grab;
+	touch-action: none;
+}
+
+.scytale-hit:active {
+	cursor: grabbing;
+}
+
+.scytale-handle:focus-visible {
+	outline: 3px solid var(--puzzle-gold);
+	outline-offset: 4px;
+}
+
+.scytale-slider {
+	position: relative;
+	height: 2.75rem;
+	min-width: 0;
+	flex: 1;
+	touch-action: none;
+	cursor: pointer;
+	user-select: none;
+}
+
+.scytale-slider:focus-visible {
+	outline: 3px solid var(--puzzle-gold);
+	outline-offset: 2px;
+	border-radius: 999px;
+}
+
+.scytale-slider-track {
+	position: absolute;
+	top: 50%;
+	right: 0.7rem;
+	left: 0.7rem;
+	height: 4px;
+	transform: translateY(-50%);
+	border-radius: 999px;
+	background: var(--puzzle-ink);
+}
+
+.scytale-slider-thumb {
+	position: absolute;
+	top: 50%;
+	width: 1.35rem;
+	height: 1.35rem;
+	transform: translateY(-50%);
+	border: 2px solid var(--puzzle-ink);
+	border-radius: 999px;
+	background: var(--puzzle-gold);
+	box-shadow: 2px 3px 0 rgb(58 51 44 / 18%);
+	pointer-events: none;
+	transition: left 0.18s ease;
+}
+
+.scytale-still .scytale-slider-thumb,
+.scytale-slider-live .scytale-slider-thumb {
+	transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.scytale-slider-thumb {
+		transition: none;
+	}
+}

@@ -944,6 +944,7 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 - `features/puzzles/registry-ui.tsx` maps a kind to its solve tool. `toolkit.tsx` is the shared popup: one tab per registered kind, the same flat ciphertext for every tool. It does not open on the stored kind. A wrong tool only changes the reading.
 - `features/puzzles/schema.ts` is the zod union stored on the clue. `hint` is optional on that union.
 - Scytale lives in `features/puzzles/scytale/`. Caesar lives in `features/puzzles/caesar/`.
+- `features/puzzles/paper-kit.tsx` shares the paper palette, hand-drawn field borders, round buttons, and the two cipher boxes. The Caesar wheel and the Scytale rod both use it.
 
 ### Adding a kind
 
@@ -954,13 +955,13 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 
 ## Scytale
 
-- The sentence is written in rows of `columns` letters. The strip is the columns read downward. The player picks a diameter and reads the rows. The tool shows a flat strip and does not title itself as the clue’s cipher or display the stored diameter.
-- Diameters `1` and `length` are the identity wrap, so they are excluded. Uniqueness is checked by trying every diameter from 2 through length − 1. A string that spells the sentence at two diameters is rejected. The generator walks outward from a near-square rod until it finds a unique one.
+- The sentence is written in rows of `columns` letters. The strip is the columns read downward. Diameters `1` and `length` are the identity wrap, so they are excluded. Uniqueness is checked by trying every diameter from 2 through length − 1. A string that spells the sentence at two diameters is rejected. The generator walks outward from a near-square rod until it finds a unique one.
+- The solve tool draws a horizontal paper rod. One paper strip winds around it: each turn meets the next, the back of the rod is hidden, letters squash toward the top and bottom, and a loose tail hangs off the end. Dragging the rod end, the slider, or the left and right arrow keys changes the thickness, which changes the pitch, and the strip rewraps. The column count is not shown. The stored diameter stays off the client. Two boxes show the cipher and the live reading. When the reading equals the clue sentence, the letters glow gold and the toolkit's existing solved stamp appears. `prefers-reduced-motion` turns off the slider's movement.
 
 ## Caesar
 
 - Latin letters are shifted after Vietnamese diacritics are stripped and case is ignored. Other characters pass through. Shift `0` is the identity and is never stored. The generator hashes the normalized sentence to pick a shift in 1..25, then checks that only that shift restores the normalized sentence.
-- The solve tool is the paper wheel: drag or arrow keys rotate the inner ring, and the plain box shows the decoding. The shift number is not shown.
+- The solve tool is the paper wheel: drag or arrow keys rotate the inner ring, and the plain box shows the decoding. The shift number is not shown. The wheel uses the shared paper kit for its palette, round buttons, and text boxes.
 
 ## Toolkit
 
