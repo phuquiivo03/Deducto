@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { storedPuzzleHintSchema } from '@/features/puzzles/hint'
 import { puzzleRoleSchema } from '@/features/puzzles/puzzle-role'
 
 /**
@@ -15,6 +16,7 @@ export const scytalePuzzleSchema = z
 		role: puzzleRoleSchema,
 		columns: z.number().int().min(2),
 		strip: z.string().min(1),
+		hint: storedPuzzleHintSchema,
 	})
 	.superRefine((puzzle, ctx) => {
 		const length = Array.from(puzzle.strip).length
@@ -35,6 +37,7 @@ export type ScytalePuzzle = z.infer<typeof scytalePuzzleSchema>
 export const scytalePlayerPuzzleSchema = z.object({
 	kind: z.literal('scytale'),
 	strip: z.string().min(1),
+	hint: storedPuzzleHintSchema,
 })
 
 export type ScytalePlayerPuzzle = z.infer<

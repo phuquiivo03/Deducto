@@ -15,12 +15,13 @@ function asMetadata (game: IGame): IGameMetadata | null {
 /**
  * Drop cipher secrets before a case reaches the browser.
  *
- * Stored puzzles keep `role` and the scytale diameter. Players receive
- * `kind` and `strip` only. The canonical sentence is still derivable
- * from the structured clue (the board renders it with `clueToText`
- * and the solve modal compares the reading to that sentence). Hiding
- * the sentence would mean withholding those fields until a server
- * check, which the current board does not do.
+ * Stored puzzles keep `role`, the scytale diameter, and the Caesar
+ * shift. Players receive `kind`, the flat ciphertext, and the hint.
+ * `kind` remains in the payload, so a technical player can read it.
+ * The solve UI does not open that kind for them. The canonical
+ * sentence is still derivable from the structured clue (the board
+ * hides it behind the hint until the puzzle is solved, and the solve
+ * modal compares the reading to that sentence).
  */
 export function presentGameForPlayer (game: IGame): IGame {
 	const metadata = asMetadata(game)

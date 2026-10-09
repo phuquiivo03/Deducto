@@ -296,10 +296,10 @@ function lockSampleClue(game: IGame): IGame {
   const targetId = sampleIds.clues.c1;
   const clue = meta.clues.find((item) => item.id === targetId);
   if (!clue) return game;
-  const puzzle = generateScytalePuzzle(
-    clueToText(clue, meta),
-    "required",
-  );
+  const puzzle = {
+    ...generateScytalePuzzle(clueToText(clue, meta), "required"),
+    hint: "Ghi chép về ông Arthur trong đêm xảy ra vụ án.",
+  };
   return {
     ...game,
     gameMetadata: {

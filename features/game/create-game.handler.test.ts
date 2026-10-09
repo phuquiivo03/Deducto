@@ -8,6 +8,10 @@ import { clueWriteData } from '@/features/game/clue-write'
 import { publishCase } from '@/features/game/publish-case'
 import type { IPersistGameInput } from '@/features/game/publish-case'
 import { buildCasePuzzles } from '@/features/puzzles/build-case-puzzles'
+import {
+	decodeCaesar,
+	normalizeCaesarSentence,
+} from '@/features/puzzles/caesar/caesar'
 import { decodeScytale } from '@/features/puzzles/scytale/scytale'
 import { clueToText } from '@/lib/clues.helper'
 
@@ -21,8 +25,10 @@ function metadata (): IGameMetadata {
 	return value
 }
 
+const HINT = 'Ghi chép về ông Arthur trong đêm xảy ra vụ án.'
+
 function body (
-	locks?: { clueId: string; kind: 'scytale' }[],
+	locks?: { clueId: string; kind: 'scytale' | 'caesar'; hint: string }[],
 	extraClue?: Record<string, unknown>,
 ) {
 	const meta = metadata()
@@ -55,7 +61,7 @@ test('POST /api/game persists a server-built puzzle and ignores a client cipher'
 	const response = await handleCreateGamePost(
 		post(
 			body(
-				[{ clueId: sampleIds.clues.c1, kind: 'scytale' }],
+				[{ clueId: sampleIds.clues.c1, kind: 'scytale', hint: HINT }],
 				{
 					puzzle: {
 						kind: 'scytale',
@@ -86,6 +92,7 @@ test('POST /api/game persists a server-built puzzle and ignores a client cipher'
 	assert.ok(clue?.puzzle)
 	assert.equal(clue.puzzle.role, 'required')
 	assert.equal(clue.puzzle.kind, 'scytale')
+	assert.equal(clue.puzzle.hint, HINT)
 	if (clue.puzzle.kind !== 'scytale') return
 	assert.notEqual(clue.puzzle.strip, 'hacked')
 	const sentence = clueToText(clue, prepared.gameMetadata)
@@ -104,10 +111,72 @@ test('POST /api/game persists a server-built puzzle and ignores a client cipher'
 	assert.equal(clueWriteData(unlocked, (id) => id).puzzle, undefined)
 })
 
+test('POST /api/game persists a Caesar lock and its hint', async () => {
+	const saved: IPersistGameInput[] = []
+	const response = await handleCreateGamePost(
+		post(
+			body([
+				{
+					clueId: sampleIds.clues.c1,
+					kind: 'caesar',
+					hint: `  ${HINT}  `,
+				},
+			]),
+		),
+		{
+			getSessionUserId: async () => sampleIds.user,
+			createGame: async (input) => {
+				saved.push(publishCase(input))
+				return 'caesar-game'
+			},
+		},
+	)
+	assert.equal(response.status, 201)
+	const prepared = saved[0]
+	assert.ok(prepared)
+	const clue = prepared.gameMetadata.clues.find(
+		(item) => item.id === sampleIds.clues.c1,
+	)
+	assert.ok(clue?.puzzle)
+	assert.equal(clue.puzzle.kind, 'caesar')
+	assert.equal(clue.puzzle.role, 'required')
+	assert.equal(clue.puzzle.hint, HINT)
+	if (clue.puzzle.kind !== 'caesar') return
+	assert.notEqual(clue.puzzle.shift, 0)
+	assert.equal(
+		decodeCaesar(clue.puzzle.cipher, clue.puzzle.shift),
+		normalizeCaesarSentence(
+			clueToText(clue, prepared.gameMetadata),
+		),
+	)
+})
+
+test('POST /api/game rejects a lock that has no hint', async () => {
+	let writes = 0
+	const payload = body()
+	const response = await handleCreateGamePost(
+		post({
+			...payload,
+			locks: [{ clueId: sampleIds.clues.c1, kind: 'caesar' }],
+		}),
+		{
+			getSessionUserId: async () => sampleIds.user,
+			createGame: async () => {
+				writes += 1
+				return 'nope'
+			},
+		},
+	)
+	assert.equal(response.status, 400)
+	assert.equal(writes, 0)
+	const json = (await response.json()) as { success: boolean }
+	assert.equal(json.success, false)
+})
+
 test('POST /api/game returns 400 and stores nothing when a lock cannot be built', async () => {
 	let writes = 0
 	const response = await handleCreateGamePost(
-		post(body([{ clueId: sampleIds.clues.c1, kind: 'scytale' }])),
+		post(body([{ clueId: sampleIds.clues.c1, kind: 'scytale', hint: HINT }])),
 		{
 			getSessionUserId: async () => sampleIds.user,
 			createGame: async (input) => {

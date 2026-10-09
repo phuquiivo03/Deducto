@@ -5,7 +5,7 @@ import type {
 import { clueToText } from '@/lib/clues.helper'
 
 import { clueLockRole } from './clue-lock-role'
-import type { PuzzleLockRequest } from './lock-request'
+import type { PuzzleLockDraft } from './lock-request'
 import {
 	listPuzzleKinds,
 	puzzleRegistry,
@@ -23,12 +23,13 @@ interface Candidate {
  * Pick one unlocked clue and a registry kind that can wrap it.
  * Prefers a clue the case cannot lose, then a longer sentence.
  * Kind order follows the registry, so a new kind needs no wizard edit.
+ * The hint is left blank for the creator to fill in.
  */
 export function suggestPuzzleLock (
 	metadata: IGameMetadata,
 	result: IAnswerAnswer,
 	lockedIds: readonly string[],
-): PuzzleLockRequest | null {
+): PuzzleLockDraft | null {
 	const kinds = listPuzzleKinds()
 	if (kinds.length === 0) return null
 	const taken = new Set(lockedIds)
@@ -55,5 +56,5 @@ export function suggestPuzzleLock (
 	pool.sort((a, b) => b.length - a.length)
 	const best = pool[0]
 	if (!best) return null
-	return { clueId: best.clueId, kind: best.kind }
+	return { clueId: best.clueId, kind: best.kind, hint: '' }
 }

@@ -21,8 +21,19 @@ test('players receive the strip without the diameter or role', () => {
 		(item) => item.id === sampleIds.clues.c1,
 	)
 	assert.ok(clue?.puzzle)
-	assert.deepEqual(Object.keys(clue.puzzle).sort(), ['kind', 'strip'])
+	assert.deepEqual(Object.keys(clue.puzzle).sort(), [
+		'hint',
+		'kind',
+		'strip',
+	])
 	assert.equal(clue.puzzle.kind, 'scytale')
+	if (clue.puzzle.kind !== 'scytale') return
+	assert.equal(
+		clue.puzzle.hint,
+		'Ghi chép về ông Arthur trong đêm xảy ra vụ án.',
+	)
+	assert.equal(clue.puzzle.hint.includes('Thư viện'), false)
+	assert.equal(clue.puzzle.hint.includes('<'), false)
 	const encoded = JSON.stringify(clue.puzzle)
 	assert.equal(encoded.includes('columns'), false)
 	assert.equal(encoded.includes('role'), false)

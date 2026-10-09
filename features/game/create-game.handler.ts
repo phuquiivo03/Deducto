@@ -16,7 +16,7 @@ export interface CreateGameHandlerDeps {
 
 /**
  * POST /api/game.
- * Locks are `{ clueId, kind }` only. The service builds the cipher.
+ * Locks are `{ clueId, kind, hint }`. The service builds the cipher.
  */
 export async function handleCreateGamePost (
 	request: Request,
