@@ -954,6 +954,7 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 ## Scytale
 
 - The sentence is written in rows of `columns` letters. The strip is the columns read downward. The player picks a diameter and reads the rows.
+- The row reading updates with the slider. The “khớp” stamp waits on `useDebounce` (`hooks/use-debounce.ts`, 400ms) so it appears only after the diameter stops changing.
 - Diameters `1` and `length` are the identity wrap, so they are excluded. Uniqueness is checked by trying every diameter from 2 through length − 1. A string that spells the sentence at two diameters is rejected. The generator walks outward from a near-square rod until it finds a unique one.
 
 ## Roles
