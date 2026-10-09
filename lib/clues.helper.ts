@@ -68,6 +68,23 @@ const getMotive = (
 /**
  * Convert a clue into a human-readable sentence.
  */
+
+const translateAttributeName = (attribute: string): string => {
+  switch (attribute) {
+    case "location":
+      return "Hiện trường";
+    case "weapon":
+      return "Hung khí";
+    case "suspect":
+      return "Hung thủ";
+    case "motive":
+      return "Động cơ";
+    case "material":
+      return "Vật liệu hung khí";
+    default:
+      return attribute;
+  }
+};
 export const clueToText = (clue: IClue, metadata: IGameMetadata): string => {
   const suspect = getSuspect(clue.suspect_id, metadata);
   const weapon = getWeapon(clue.weapon_id, metadata);
@@ -96,7 +113,7 @@ export const clueToText = (clue: IClue, metadata: IGameMetadata): string => {
         const attributeName = formatAttributeName(clue.attribute);
 
         if (clue.attribute === "weight") {
-          return `The ${weapon.name} is ${clue.value.toLowerCase()}.`;
+          return `${weapon.name} is ${clue.value.toLowerCase()}.`;
         }
 
         if (clue.attribute === "material") {
@@ -112,7 +129,7 @@ export const clueToText = (clue: IClue, metadata: IGameMetadata): string => {
         return `The ${location.name} has ${attributeName} ${clue.value}.`;
       }
 
-      return `The ${formatAttributeName(clue.attribute)} is ${clue.value}.`;
+      return `${translateAttributeName(formatAttributeName(clue.attribute))} là ${clue.value}.`;
     }
 
     /**
@@ -161,10 +178,10 @@ export const clueToText = (clue: IClue, metadata: IGameMetadata): string => {
     case "LOCATION": {
       if (weapon && location) {
         if (clue.relation === "NOT_EQUAL") {
-          return `The ${weapon.name} không được tìm thấy ở ${location.name}.`;
+          return `${weapon.name} không được tìm thấy ở ${location.name}.`;
         }
 
-        return `The ${weapon.name} được tìm thấy ở ${location.name}.`;
+        return `${weapon.name} được tìm thấy ở ${location.name}.`;
       }
 
       if (suspect && location) {
