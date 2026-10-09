@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@import '../features/puzzles/paper-kit.css';
+@import '../features/puzzles/scytale/scytale-rod.css';
 
 @theme {
 	--color-paper: #fdfbf7;
@@ -113,25 +115,6 @@ button {
 	animation: puzzle-stamp 220ms ease-out;
 }
 
-.caesar-wheel {
-	--caesar-paper: #f7f1e3;
-	--caesar-ink: #2b3a55;
-	--caesar-cipher: #a13d32;
-	--caesar-gold: #c8932b;
-	--caesar-graphite: #3a332c;
-	color: var(--caesar-graphite);
-}
-
-@media (prefers-color-scheme: dark) {
-	.caesar-wheel {
-		--caesar-paper: #242b26;
-		--caesar-ink: #e7e2d0;
-		--caesar-cipher: #e8a598;
-		--caesar-gold: #e8c26b;
-		--caesar-graphite: #ede8d8;
-	}
-}
-
 .caesar-letter {
 	font-family: var(--font-patrick-hand), cursive;
 	font-size: 16px;
@@ -143,16 +126,12 @@ button {
 }
 
 .caesar-outer {
-	fill: var(--caesar-ink);
+	fill: var(--puzzle-ink);
 }
 
 .caesar-inner {
-	fill: var(--caesar-cipher);
+	fill: var(--puzzle-cipher);
 	font-weight: 700;
-}
-
-.caesar-glow {
-	fill: var(--caesar-gold);
 }
 
 .caesar-stroke,
@@ -162,7 +141,7 @@ button {
 .caesar-pin,
 .caesar-hub {
 	fill: none;
-	stroke: var(--caesar-ink);
+	stroke: var(--puzzle-ink);
 	stroke-linecap: round;
 }
 
@@ -177,18 +156,18 @@ button {
 }
 
 .caesar-disk {
-	fill: var(--caesar-paper);
+	fill: var(--puzzle-paper);
 }
 
 .caesar-hatch {
-	stroke: var(--caesar-cipher);
+	stroke: var(--puzzle-cipher);
 	stroke-width: 1;
 }
 
 .caesar-pin,
 .caesar-hub {
-	fill: var(--caesar-gold);
-	stroke: var(--caesar-graphite);
+	fill: var(--puzzle-gold);
+	stroke: var(--puzzle-graphite);
 	stroke-width: 1.4;
 }
 
@@ -212,62 +191,8 @@ button {
 }
 
 .caesar-rotor:focus-visible {
-	outline: 3px solid var(--caesar-gold);
+	outline: 3px solid var(--puzzle-gold);
 	outline-offset: 4px;
-}
-
-.caesar-round {
-	display: inline-flex;
-	width: 2.75rem;
-	height: 2.75rem;
-	align-items: center;
-	justify-content: center;
-	border: 2px solid var(--caesar-ink);
-	border-radius: 999px;
-	background: var(--caesar-paper);
-	color: var(--caesar-graphite);
-	font-family: var(--font-patrick-hand), cursive;
-	font-size: 1.25rem;
-	box-shadow: 2px 3px 0 rgb(58 51 44 / 18%);
-}
-
-.caesar-round:focus-visible {
-	outline: 3px solid var(--caesar-gold);
-	outline-offset: 2px;
-}
-
-.caesar-field {
-	display: block;
-	border: 2px solid var(--caesar-ink);
-	border-radius: 12px 4px 14px 5px / 5px 14px 4px 12px;
-	background: var(--caesar-paper);
-	padding: 6px 8px;
-}
-
-.caesar-field-label {
-	display: block;
-	font-family: var(--font-mali), cursive;
-	font-size: 0.95rem;
-	color: var(--caesar-ink);
-}
-
-.caesar-field-label-cipher {
-	color: var(--caesar-cipher);
-}
-
-.caesar-field-box {
-	display: block;
-	width: 100%;
-	height: 2.75rem;
-	resize: none;
-	overflow: auto;
-	border: 0;
-	background: transparent;
-	padding: 2px 0 0;
-	color: var(--caesar-graphite);
-	font-family: var(--font-patrick-hand), cursive;
-	font-size: 0.9rem;
-	line-height: 1.25;
 }
 
 @media (prefers-reduced-motion: reduce) {

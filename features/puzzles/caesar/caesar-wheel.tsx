@@ -2,8 +2,9 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 
-import { decodeCaesar } from './caesar'
+import { CipherFields, PaperRoundButton, wobblePath } from '../paper-kit'
 import { useReportReading, type PuzzleToolProps } from '../toolkit'
+import { decodeCaesar } from './caesar'
 
 const LETTERS = Array.from({ length: 26 }, (_, index) =>
 	String.fromCharCode(65 + index),
@@ -13,27 +14,6 @@ const CX = 200
 const CY = 200
 const R_OUTER = 158
 const R_INNER = 102
-
-function wobblePath (
-	cx: number,
-	cy: number,
-	radius: number,
-	seed: number,
-): string {
-	const steps = 40
-	let path = ''
-	for (let index = 0; index <= steps; index += 1) {
-		const theta = (index / steps) * Math.PI * 2
-		const wobble =
-			1 +
-			Math.sin(theta * 3 + seed) * 0.016 +
-			Math.cos(theta * 7 + seed) * 0.01
-		const x = cx + Math.cos(theta) * radius * wobble
-		const y = cy + Math.sin(theta) * radius * wobble
-		path += `${index === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`
-	}
-	return `${path}Z`
-}
 
 function letterPoint (index: number, radius: number) {
 	const degrees = -90 + index * STEP
@@ -221,7 +201,7 @@ function CaesarSession ({
 	}
 
 	return (
-		<div className="caesar-wheel space-y-3">
+		<div className="puzzle-paper space-y-3">
 			<div className="mx-auto w-[min(100%,280px)]">
 				<svg
 					ref={svgRef}
@@ -302,7 +282,7 @@ function CaesarSession ({
 									y={point.y}
 									className={
 										aligned
-											? 'caesar-letter caesar-inner caesar-glow'
+											? 'caesar-letter caesar-inner puzzle-glow'
 											: 'caesar-letter caesar-inner'
 									}
 									style={{ transform: `rotate(${point.rot}deg)` }}
@@ -321,7 +301,7 @@ function CaesarSession ({
 								y={point.y}
 								className={
 									index === 0
-										? 'caesar-letter caesar-outer caesar-glow'
+										? 'caesar-letter caesar-outer puzzle-glow'
 										: 'caesar-letter caesar-outer'
 								}
 								style={{ transform: `rotate(${point.rot}deg)` }}
@@ -352,47 +332,20 @@ function CaesarSession ({
 				Vòng ngoài là chữ gốc. Vòng trong là chữ mật mã.
 			</p>
 			<div className="flex items-center justify-center gap-3">
-				<button
-					type="button"
-					className="caesar-round"
-					aria-label="Xoay trái một chữ"
+				<PaperRoundButton
+					label="Xoay trái một chữ"
 					onClick={() => rotateBy(-1)}
 				>
 					↺
-				</button>
-				<button
-					type="button"
-					className="caesar-round"
-					aria-label="Xoay phải một chữ"
+				</PaperRoundButton>
+				<PaperRoundButton
+					label="Xoay phải một chữ"
 					onClick={() => rotateBy(1)}
 				>
 					↻
-				</button>
+				</PaperRoundButton>
 			</div>
-			<div className="grid gap-2 sm:grid-cols-2">
-				<label className="caesar-field">
-					<span className="caesar-field-label">Văn bản mật mã</span>
-					<textarea
-						readOnly
-						rows={2}
-						spellCheck={false}
-						value={cipher}
-						className="caesar-field-box"
-					/>
-				</label>
-				<label className="caesar-field">
-					<span className="caesar-field-label caesar-field-label-cipher">
-						Văn bản gốc
-					</span>
-					<textarea
-						readOnly
-						rows={2}
-						spellCheck={false}
-						value={plain}
-						className="caesar-field-box"
-					/>
-				</label>
-			</div>
+			<CipherFields cipher={cipher} plain={plain} />
 		</div>
 	)
 }

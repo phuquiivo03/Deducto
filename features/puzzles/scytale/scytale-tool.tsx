@@ -1,196 +1,407 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { Minus, Plus } from 'lucide-react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 
-import { cn } from '@/lib/cn'
-
+import { CipherFields, PaperRoundButton } from '../paper-kit'
 import { useReportReading, type PuzzleToolProps } from '../toolkit'
 import {
 	codePoints,
 	decodeScytale,
 	openingScytaleColumns,
-	placeScytale,
+	scytaleReadingMatches,
 } from './scytale'
+import {
+	columnBounds,
+	columnsFromRatio,
+	dragColumns,
+	scytaleWrapLayout,
+	stepColumns,
+	thicknessLabel,
+	thicknessRatio,
+	type WrapLetter,
+} from './wrap-geometry'
 
-function Glyph ({ char }: { char: string }) {
-	const blank = char === ' '
+/**
+ * Horizontal paper rod. Thickness is the column count, drawn
+ * but never printed. The stored diameter is not in this payload.
+ * The slider's ARIA value is a percent so the count is not read out.
+ */
+export function ScytaleTool (props: PuzzleToolProps) {
 	return (
-		<span
-			aria-label={blank ? 'dấu cách' : undefined}
-			className={cn(
-				'inline-flex h-8 min-w-7 shrink-0 items-center justify-center',
-				'border-2 border-pencil bg-card px-0.5',
-				'font-heading text-base leading-none',
-				blank && 'bg-erased',
-			)}
-		>
-			{blank ? '' : char}
-		</span>
+		<ScytaleSession
+			key={props.cipher}
+			cipher={props.cipher}
+			sentence={props.sentence}
+			onReading={props.onReading}
+		/>
 	)
 }
 
-/**
- * Column chooser for a flat ciphertext strip.
- * The stored diameter is not shown. The number on the control is
- * the player's current choice.
- */
-export function ScytaleTool ({
+function usePrefersReducedMotion (): boolean {
+	const [reduced, setReduced] = useState(false)
+	useEffect(() => {
+		const media = window.matchMedia(
+			'(prefers-reduced-motion: reduce)',
+		)
+		const apply = () => {
+			setReduced(media.matches)
+		}
+		apply()
+		media.addEventListener('change', apply)
+		return () => {
+			media.removeEventListener('change', apply)
+		}
+	}, [])
+	return reduced
+}
+
+function ScytaleSession ({
 	cipher,
 	sentence,
 	onReading,
-}: PuzzleToolProps) {
-	const stripChars = useMemo(() => codePoints(cipher), [cipher])
-	const maxColumns = Math.max(2, stripChars.length - 1)
+}: {
+	cipher: string
+	sentence: string
+	onReading: (reading: string) => void
+}) {
+	const hatchId = `scytale-hatch-${useId().replace(/:/g, '')}`
+	const rodRef = useRef<SVGGElement>(null)
+	const reduced = usePrefersReducedMotion()
+	const [live, setLive] = useState(false)
+	const length = useMemo(() => codePoints(cipher).length, [cipher])
 	const [columns, setColumns] = useState(() =>
 		openingScytaleColumns(cipher, sentence),
 	)
-	const safeColumns = Math.min(maxColumns, Math.max(2, columns))
-	const grid = placeScytale(cipher, safeColumns)
+	const bounds = columnBounds(length)
+	const safeColumns = stepColumns(columns, 0, length)
+	const layout = useMemo(
+		() => scytaleWrapLayout(cipher, safeColumns),
+		[cipher, safeColumns],
+	)
 	const reading = decodeScytale(cipher, safeColumns)
+	const matched = scytaleReadingMatches(reading, sentence)
 	useReportReading(reading, onReading)
 
-	const setDiameter = (next: number) => {
-		setColumns(Math.min(maxColumns, Math.max(2, next)))
+	const shift = (delta: number) => {
+		setColumns((current) => stepColumns(current, delta, length))
+	}
+
+	const onArrows = (event: React.KeyboardEvent) => {
+		if (event.key === 'ArrowLeft') {
+			event.preventDefault()
+			shift(-1)
+		}
+		if (event.key === 'ArrowRight') {
+			event.preventDefault()
+			shift(1)
+		}
 	}
 
 	return (
-		<div className="space-y-4">
-			<section aria-labelledby="scytale-strip-label">
-				<h3
-					id="scytale-strip-label"
-					className="font-heading text-lg text-pencil"
+		<div
+			className={
+				reduced
+					? 'puzzle-paper scytale-still space-y-3'
+					: 'puzzle-paper space-y-3'
+			}
+		>
+			<div className="mx-auto w-full">
+				<Rod
+					hatchId={hatchId}
+					letters={layout.letters}
+					layout={layout}
+					matched={matched}
+					rodRef={rodRef}
+					length={length}
+					columns={safeColumns}
+					onArrows={onArrows}
+					onColumns={setColumns}
+					onLive={setLive}
+				/>
+			</div>
+			<p className="text-center text-sm text-pencil/70">
+				Dải giấy quấn quanh thanh. Đọc mỗi vòng từ trái sang phải.
+			</p>
+			<div className="flex items-center gap-3">
+				<PaperRoundButton
+					label="Làm thanh mỏng hơn"
+					onClick={() => shift(-1)}
+					disabled={safeColumns <= bounds.min}
 				>
-					Dải giấy
-				</h3>
-				<p
-					className="
-mt-1 max-h-12 overflow-y-auto break-all
-text-sm leading-snug text-pencil
-"
+					‹
+				</PaperRoundButton>
+				<ThicknessSlider
+					columns={safeColumns}
+					length={length}
+					live={live}
+					onArrows={onArrows}
+					onColumns={setColumns}
+					onLive={setLive}
+				/>
+				<PaperRoundButton
+					label="Làm thanh dày hơn"
+					onClick={() => shift(1)}
+					disabled={safeColumns >= bounds.max}
 				>
-					{cipher}
-				</p>
-			</section>
+					›
+				</PaperRoundButton>
+			</div>
+			<CipherFields cipher={cipher} plain={reading} />
+		</div>
+	)
+}
 
-			<section aria-labelledby="scytale-columns-label">
-				<div className="flex items-baseline justify-between gap-3">
-					<h3
-						id="scytale-columns-label"
-						className="font-heading text-lg text-pencil"
-					>
-						Số cột
-					</h3>
-					<p className="font-heading text-lg text-pencil">
-						{safeColumns}
-					</p>
-				</div>
-				<p className="text-sm text-pencil/70">
-					Chọn số cột, rồi đọc từng hàng từ trái sang phải.
-				</p>
-				<div className="mt-2 flex items-center gap-3">
-					<button
-						type="button"
-						className="
-inline-flex h-11 w-11 items-center justify-center
-border-2 border-pencil bg-card rounded-wobbly-sm
-disabled:opacity-40
-focus-visible:outline focus-visible:outline-2
-focus-visible:outline-offset-2 focus-visible:outline-pen
-"
-						aria-label="Bớt một cột"
-						onClick={() => setDiameter(safeColumns - 1)}
-						disabled={safeColumns <= 2}
-					>
-						<Minus className="h-5 w-5" strokeWidth={2.5} />
-					</button>
-					<input
-						type="range"
-						min={2}
-						max={maxColumns}
-						step={1}
-						value={safeColumns}
-						aria-labelledby="scytale-columns-label"
-						aria-valuemin={2}
-						aria-valuemax={maxColumns}
-						aria-valuenow={safeColumns}
-						aria-valuetext={`${safeColumns} cột`}
-						onChange={(event) => {
-							setDiameter(Number(event.target.value))
-						}}
-						className="h-11 w-full accent-pen"
+function Rod ({
+	hatchId,
+	letters,
+	layout,
+	matched,
+	rodRef,
+	length,
+	columns,
+	onArrows,
+	onColumns,
+	onLive,
+}: {
+	hatchId: string
+	letters: WrapLetter[]
+	layout: ReturnType<typeof scytaleWrapLayout>
+	matched: boolean
+	rodRef: React.RefObject<SVGGElement | null>
+	length: number
+	columns: number
+	onArrows: (event: React.KeyboardEvent) => void
+	onColumns: (next: number) => void
+	onLive: (live: boolean) => void
+}) {
+	const dragRef = useRef<{
+		pointer: number
+		x: number
+		y: number
+		columns: number
+	} | null>(null)
+	const { rod } = layout
+	const ratio = thicknessRatio(columns, length)
+
+	const onPointerDown = (event: React.PointerEvent<SVGRectElement>) => {
+		event.currentTarget.setPointerCapture(event.pointerId)
+		rodRef.current?.focus()
+		onLive(true)
+		dragRef.current = {
+			pointer: event.pointerId,
+			x: event.clientX,
+			y: event.clientY,
+			columns,
+		}
+	}
+
+	const onPointerMove = (event: React.PointerEvent<SVGRectElement>) => {
+		const drag = dragRef.current
+		if (!drag || drag.pointer !== event.pointerId) return
+		onColumns(
+			dragColumns(
+				drag.columns,
+				event.clientX - drag.x,
+				event.clientY - drag.y,
+				length,
+			),
+		)
+	}
+
+	const onPointerUp = (event: React.PointerEvent<SVGRectElement>) => {
+		if (dragRef.current?.pointer !== event.pointerId) return
+		dragRef.current = null
+		onLive(false)
+	}
+
+	return (
+		<svg
+			viewBox={`0 0 ${layout.view.width} ${layout.view.height}`}
+			role="group"
+			aria-label="Thanh scytale với dải giấy quấn quanh"
+			className="h-auto w-full touch-none overflow-visible"
+		>
+			<defs>
+				<pattern
+					id={hatchId}
+					width="6"
+					height="6"
+					patternUnits="userSpaceOnUse"
+					patternTransform="rotate(35)"
+				>
+					<line
+						x1="0"
+						y1="0"
+						x2="0"
+						y2="6"
+						className="scytale-hatch"
 					/>
-					<button
-						type="button"
-						className="
-inline-flex h-11 w-11 items-center justify-center
-border-2 border-pencil bg-card rounded-wobbly-sm
-disabled:opacity-40
-focus-visible:outline focus-visible:outline-2
-focus-visible:outline-offset-2 focus-visible:outline-pen
-"
-						aria-label="Thêm một cột"
-						onClick={() => setDiameter(safeColumns + 1)}
-						disabled={safeColumns >= maxColumns}
+				</pattern>
+			</defs>
+			<path d={rod.body} className="scytale-body" aria-hidden />
+			{rod.grain.map((d, index) => (
+				<path
+					key={`grain-${index}`}
+					d={d}
+					className="scytale-grain"
+					aria-hidden
+				/>
+			))}
+			{layout.bands.map((d, index) => (
+				<path
+					key={`band-${index}`}
+					d={d}
+					className="scytale-band"
+					aria-hidden
+				/>
+			))}
+			<g aria-hidden>
+				{letters.map((letter) => (
+					<g
+						key={`letter-${letter.index}`}
+						transform={
+							`translate(${letter.x} ${letter.y}) ` +
+							`rotate(${letter.tilt})`
+						}
 					>
-						<Plus className="h-5 w-5" strokeWidth={2.5} />
-					</button>
-				</div>
-			</section>
+						{letter.char === ' ' ? (
+							<line
+								x1={-4}
+								y1={3}
+								x2={4}
+								y2={3}
+								className="scytale-space"
+							/>
+						) : (
+							<text
+								className={
+									matched
+										? 'scytale-letter puzzle-glow'
+										: 'scytale-letter'
+								}
+								fontSize={layout.fontSize}
+							>
+								{letter.char}
+							</text>
+						)}
+					</g>
+				))}
+			</g>
+			<g
+				ref={rodRef}
+				className="scytale-handle"
+				tabIndex={0}
+				role="slider"
+				aria-label="Đầu thanh, kéo hoặc dùng phím mũi tên để đổi độ dày"
+				aria-orientation="horizontal"
+				aria-valuemin={0}
+				aria-valuemax={100}
+				aria-valuenow={Math.round(ratio * 100)}
+				aria-valuetext={thicknessLabel(columns, length)}
+				onKeyDown={onArrows}
+			>
+				<path d={rod.cap} className="scytale-cap" />
+				<ellipse
+					cx={rod.capCx}
+					cy={rod.cy}
+					rx={rod.capRx * 0.78}
+					ry={rod.radius * 0.78}
+					fill={`url(#${hatchId})`}
+					stroke="none"
+				/>
+				<circle
+					cx={rod.capCx}
+					cy={rod.cy}
+					r={5}
+					className="scytale-knob"
+				/>
+				<rect
+					x={rod.capCx - rod.capRx - 6}
+					y={rod.cy - rod.radius}
+					width={rod.capRx * 2 + 18}
+					height={rod.radius * 2}
+					className="scytale-hit"
+					onPointerDown={onPointerDown}
+					onPointerMove={onPointerMove}
+					onPointerUp={onPointerUp}
+					onPointerCancel={onPointerUp}
+				/>
+			</g>
+		</svg>
+	)
+}
 
-			<section aria-labelledby="scytale-wrap-label">
-				<h3
-					id="scytale-wrap-label"
-					className="font-heading text-lg text-pencil"
-				>
-					Khi quấn lên thanh
-				</h3>
-				<div className="mt-2 overflow-x-auto pb-2">
-					<div className="puzzle-grid w-max" key={safeColumns}>
-						<div
-							className="mt-1 grid gap-1"
-							style={{
-								gridTemplateColumns:
-									`repeat(${safeColumns}, minmax(1.75rem, auto))`,
-							}}
-							aria-label="Bảng chữ sau khi quấn"
-						>
-							{grid.map((row, rowIndex) =>
-								row.map((cell, columnIndex) => (
-									<span key={`${rowIndex}-${columnIndex}`}>
-										{cell ? (
-											<Glyph char={cell} />
-										) : (
-											<span className="inline-flex h-8 min-w-7" />
-										)}
-									</span>
-								)),
-							)}
-						</div>
-						<div
-							className="mx-2 mt-3 h-3 rounded-full border-2 border-pencil bg-erased"
-							aria-hidden
-						/>
-					</div>
-				</div>
-			</section>
+function ThicknessSlider ({
+	columns,
+	length,
+	live,
+	onArrows,
+	onColumns,
+	onLive,
+}: {
+	columns: number
+	length: number
+	live: boolean
+	onArrows: (event: React.KeyboardEvent) => void
+	onColumns: (next: number) => void
+	onLive: (live: boolean) => void
+}) {
+	const trackRef = useRef<HTMLDivElement>(null)
+	const ratio = thicknessRatio(columns, length)
 
-			<section aria-labelledby="scytale-reading-label">
-				<h3
-					id="scytale-reading-label"
-					className="font-heading text-lg text-pencil"
-				>
-					Đọc theo hàng
-				</h3>
-				<p
-					className="
-mt-1 max-h-12 overflow-y-auto break-words
-text-sm leading-snug text-pencil
-"
-				>
-					{reading}
-				</p>
-			</section>
+	const setFromClientX = (clientX: number) => {
+		const rect = trackRef.current?.getBoundingClientRect()
+		if (!rect || rect.width <= 0) return
+		const next = (clientX - rect.left) / rect.width
+		onColumns(columnsFromRatio(next, length))
+	}
+
+	return (
+		<div
+			ref={trackRef}
+			className={
+				live
+					? 'scytale-slider scytale-slider-live'
+					: 'scytale-slider'
+			}
+			role="slider"
+			tabIndex={0}
+			aria-label="Độ dày của thanh"
+			aria-orientation="horizontal"
+			aria-valuemin={0}
+			aria-valuemax={100}
+			aria-valuenow={Math.round(ratio * 100)}
+			aria-valuetext={thicknessLabel(columns, length)}
+			onKeyDown={onArrows}
+			onPointerDown={(event) => {
+				event.currentTarget.setPointerCapture(event.pointerId)
+				onLive(true)
+				setFromClientX(event.clientX)
+			}}
+			onPointerMove={(event) => {
+				const captured = event.currentTarget.hasPointerCapture(
+					event.pointerId,
+				)
+				if (!captured) return
+				setFromClientX(event.clientX)
+			}}
+			onPointerUp={(event) => {
+				const captured = event.currentTarget.hasPointerCapture(
+					event.pointerId,
+				)
+				if (!captured) return
+				onLive(false)
+			}}
+			onPointerCancel={() => {
+				onLive(false)
+			}}
+		>
+			<span className="scytale-slider-track" aria-hidden />
+			<span
+				className="scytale-slider-thumb"
+				style={{ left: `calc(${ratio} * (100% - 1.35rem))` }}
+				aria-hidden
+			/>
 		</div>
 	)
 }
