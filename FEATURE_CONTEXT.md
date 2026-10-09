@@ -956,7 +956,7 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 ## Scytale
 
 - The sentence is written in rows of `columns` letters. The strip is the columns read downward. Diameters `1` and `length` are the identity wrap, so they are excluded. Uniqueness is checked by trying every diameter from 2 through length − 1. A string that spells the sentence at two diameters is rejected. The generator walks outward from a near-square rod until it finds a unique one.
-- The solve tool draws a horizontal paper rod with the ciphertext strip wrapped around it. Dragging the rod end, the slider, or the left and right arrow keys changes the thickness, and the strip rewraps. The column count is not shown. The stored diameter stays off the client. Two boxes show the cipher and the live reading. When the reading equals the clue sentence, the letters glow gold and the toolkit's existing solved stamp appears. `prefers-reduced-motion` turns off the slider's movement.
+- The solve tool draws a horizontal paper rod. One paper strip winds around it: each turn meets the next, the back of the rod is hidden, letters squash toward the top and bottom, and a loose tail hangs off the end. Dragging the rod end, the slider, or the left and right arrow keys changes the thickness, which changes the pitch, and the strip rewraps. The column count is not shown. The stored diameter stays off the client. Two boxes show the cipher and the live reading. When the reading equals the clue sentence, the letters glow gold and the toolkit's existing solved stamp appears. `prefers-reduced-motion` turns off the slider's movement.
 
 ## Caesar
 

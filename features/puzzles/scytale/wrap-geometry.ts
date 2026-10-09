@@ -1,14 +1,15 @@
 import { codePoints, placeScytale } from './scytale'
 
 export const WRAP_VIEW_WIDTH = 640
-export const WRAP_VIEW_HEIGHT = 268
+export const WRAP_VIEW_HEIGHT = 292
 
-const CY = 134
+const CY = 118
 const LEFT = 28
 const RIGHT = 612
-const MIN_RADIUS = 48
-const MAX_RADIUS = 110
-const SLANT = 18
+const MIN_RADIUS = 44
+const MAX_RADIUS = 100
+const FRONT = 0.08
+const TAIL_DROP = 36
 
 export interface WrapLetter {
 	char: string
@@ -18,6 +19,10 @@ export interface WrapLetter {
 	x: number
 	y: number
 	tilt: number
+	/** cos(theta). 1 faces the viewer; <= 0 is the back of the rod. */
+	scaleY: number
+	visible: boolean
+	theta: number
 }
 
 export interface ScytaleRod {
@@ -36,11 +41,15 @@ export interface ScytaleWrap {
 	columns: number
 	rows: number
 	radius: number
+	pitch: number
 	fontSize: number
 	view: { width: number; height: number }
 	rod: ScytaleRod
 	letters: WrapLetter[]
-	bands: string[]
+	/** Front arcs of the one helical strip. The back is not drawn. */
+	ribbons: string[]
+	lead: string
+	tail: string
 }
 
 export function columnBounds (
@@ -205,70 +214,147 @@ function grainPaths (radius: number, capRx: number): string[] {
 	})
 }
 
-export function ribbonPath (
-	letters: WrapLetter[],
-	row: number,
-): string {
-	const rowLetters = letters
-		.filter((letter) => letter.row === row)
-		.sort((a, b) => a.column - b.column)
-	const first = rowLetters[0]
-	const last = rowLetters[rowLetters.length - 1]
-	if (!first || !last) return ''
-	const pad = 8
-	const x0 = first.x - pad
-	const x1 = last.x + pad
-	const y0 = first.y
-	const y1 = last.y
-	const dx = x1 - x0
-	const dy = y1 - y0
-	const len = Math.hypot(dx, dy) || 1
-	const half = 10
-	const nx = (-dy / len) * half
-	const ny = (dx / len) * half
-	const steps = 10
-	let path = ''
-	for (let index = 0; index <= steps; index += 1) {
-		const t = index / steps
-		const x = x0 + dx * t
-		const y = y0 + dy * t + wobbleOffset(row + 0.3, t) * 0.4
-		const command = index === 0 ? 'M' : 'L'
-		path += `${command}${(x + nx).toFixed(1)} ${(y + ny).toFixed(1)}`
+interface HelixPoint {
+	x: number
+	y: number
+	theta: number
+	scaleY: number
+}
+
+/**
+ * One narrow strip wound edge to edge.
+ * `turn` 0 is the top of the first wrap. A full turn advances `pitch`
+ * along the rod and 2π around it. theta 0 faces the viewer.
+ */
+function helixPoint (
+	turn: number,
+	x0: number,
+	pitch: number,
+	radius: number,
+): HelixPoint {
+	const theta = turn * Math.PI * 2 - Math.PI / 2
+	const scaleY = Math.cos(theta)
+	return {
+		x: x0 + turn * pitch,
+		y: CY + radius * Math.sin(theta),
+		theta,
+		scaleY,
 	}
-	for (let index = steps; index >= 0; index -= 1) {
-		const t = index / steps
-		const x = x0 + dx * t
-		const y = y0 + dy * t + wobbleOffset(row + 1.3, t) * 0.4
-		path += `L${(x - nx).toFixed(1)} ${(y - ny).toFixed(1)}`
+}
+
+function ribbonFrom (
+	points: HelixPoint[],
+	half: number,
+): string {
+	const first = points[0]
+	if (!first || points.length < 2) return ''
+	let path = ''
+	for (let index = 0; index < points.length; index += 1) {
+		const point = points[index]
+		if (!point) continue
+		const y = point.y + wobbleOffset(0.6, index / 6) * 0.35
+		const command = index === 0 ? 'M' : 'L'
+		path += `${command}${(point.x - half).toFixed(1)} ${y.toFixed(1)}`
+	}
+	for (let index = points.length - 1; index >= 0; index -= 1) {
+		const point = points[index]
+		if (!point) continue
+		const y = point.y + wobbleOffset(1.4, index / 6) * 0.35
+		path += `L${(point.x + half).toFixed(1)} ${y.toFixed(1)}`
 	}
 	return `${path}Z`
 }
 
+function frontRibbons (
+	turns: number,
+	x0: number,
+	pitch: number,
+	radius: number,
+): string[] {
+	const samples = Math.max(8, Math.ceil(turns * 24))
+	const half = pitch / 2
+	const ribbons: string[] = []
+	let current: HelixPoint[] = []
+	const flush = () => {
+		const path = ribbonFrom(current, half)
+		if (path) ribbons.push(path)
+		current = []
+	}
+	for (let step = 0; step <= samples; step += 1) {
+		const turn = (step / samples) * turns
+		const point = helixPoint(turn, x0, pitch, radius)
+		if (point.scaleY > 0.02) {
+			current.push(point)
+		} else if (current.length > 0) {
+			flush()
+		}
+	}
+	if (current.length > 0) flush()
+	return ribbons
+}
+
+function leadPath (x0: number, radius: number): string {
+	const y = CY - radius
+	const x1 = Math.max(LEFT + 8, x0 - 20)
+	const y1 = CY - radius * 0.42
+	const half = 8
+	return [
+		`M${x1.toFixed(1)} ${y1.toFixed(1)}`,
+		`L${(x0 - half).toFixed(1)} ${(y + 3).toFixed(1)}`,
+		`L${(x0 + half).toFixed(1)} ${(y + 3).toFixed(1)}`,
+		`L${(x1 + 10).toFixed(1)} ${(y1 + 7).toFixed(1)}`,
+		'Z',
+	].join('')
+}
+
+function tailPath (x: number, y: number, half: number): string {
+	const drop = TAIL_DROP
+	const midY = y + drop * 0.5
+	const endY = y + drop
+	const endX = x + Math.min(14, half * 0.2)
+	const topL = x - half
+	const topR = x + half
+	const botL = endX - half * 0.55
+	const botR = endX + half * 0.28
+	const midX = (topL + 8).toFixed(1)
+	const endLeft = botL.toFixed(1)
+	const endRight = botR.toFixed(1)
+	const riseX = (topR - 4).toFixed(1)
+	return [
+		`M${topL.toFixed(1)} ${y.toFixed(1)}`,
+		`Q${midX} ${midY.toFixed(1)} ${endLeft} ${endY.toFixed(1)}`,
+		`L${endRight} ${endY.toFixed(1)}`,
+		`Q${riseX} ${midY.toFixed(1)} ${topR.toFixed(1)} ${y.toFixed(1)}`,
+		'Z',
+	].join('')
+}
+
+/**
+ * Wind `strip` on a rod of thickness `columns`.
+ * One turn goes around the rod and holds one grid column. Reading
+ * left to right follows a grid row: those letters share a height.
+ * The back (cos <= 0) is omitted, and the tail leaves at the bottom.
+ */
 export function scytaleWrapLayout (
 	strip: string,
 	columns: number,
 ): ScytaleWrap {
-	const chars = codePoints(strip)
-	const length = chars.length
-	const safe = stepColumns(columns, 0, length)
-	const grid = placeScytale(strip, safe)
-	const rows = Math.max(1, grid.length)
-	const radius = radiusFor(safe, length)
+	const length = codePoints(strip).length
+	const bound = Math.max(length, 2)
+	const safe = stepColumns(columns, 0, bound)
+	const radius = radiusFor(safe, bound)
 	const capRx = capRadius(radius)
-	const innerLeft = LEFT + 20
-	const innerRight = RIGHT - capRx - 20
-	const innerWidth = Math.max(1, innerRight - innerLeft)
-	const pitch = Math.min(22, (WRAP_VIEW_HEIGHT - 36) / rows)
-	const y0 = CY - ((rows - 1) * pitch) / 2
-	const colGap = innerWidth / safe
+	const rodLeft = LEFT + 18
+	const rodRight = RIGHT - capRx - 10
+	const full = Math.max(48, rodRight - rodLeft)
+	const grid = length >= safe ? placeScytale(strip, safe) : []
+	const rows = Math.max(1, grid.length)
+	const turnsTotal = Math.max(safe, 0.4)
+	const pitch = full / (turnsTotal + 1)
+	const x0 = rodLeft + pitch / 2
+	const arc = (2 * Math.PI * radius) / rows
 	const fontSize = Math.round(
-		Math.max(8, Math.min(16, colGap * 0.62, pitch * 0.68)),
-	)
-	const tilt = Number(
-		(
-			(Math.atan2(SLANT, Math.max(1, innerWidth)) * 180) /
-			Math.PI
-		).toFixed(2),
+		Math.max(8, Math.min(15, arc * 0.42, pitch * 0.48)),
 	)
 	const letters: WrapLetter[] = []
 	let index = 0
@@ -276,28 +362,41 @@ export function scytaleWrapLayout (
 		for (let row = 0; row < rows; row += 1) {
 			const char = grid[row]?.[column] ?? ''
 			if (!char) continue
-			const across = safe === 1 ? 0.5 : column / (safe - 1)
+			const around = rows === 1
+				? 0.25
+				: (row + 0.5) / rows
+			const point = helixPoint(
+				column + around,
+				x0,
+				pitch,
+				radius,
+			)
+			const dx = pitch / rows
+			const dy = radius * point.scaleY * (2 * Math.PI / rows)
+			const raw = (Math.atan2(dy, dx) * 180) / Math.PI
+			const tilt = Math.max(-32, Math.min(32, raw))
 			letters.push({
 				char,
 				index,
 				row,
 				column,
-				x: innerLeft + (column + 0.5) * colGap,
-				y: y0 + row * pitch + (across - 0.5) * SLANT,
-				tilt,
+				x: point.x,
+				y: point.y,
+				tilt: Number(tilt.toFixed(2)),
+				scaleY: point.scaleY,
+				visible: point.scaleY > FRONT,
+				theta: point.theta,
 			})
 			index += 1
 		}
 	}
-	const bands: string[] = []
-	for (let row = 0; row < rows; row += 1) {
-		const band = ribbonPath(letters, row)
-		if (band) bands.push(band)
-	}
+	const peel = helixPoint(turnsTotal - 0.5, x0, pitch, radius)
+	const wound = letters.length > 0
 	return {
 		columns: safe,
 		rows,
 		radius,
+		pitch,
 		fontSize,
 		view: { width: WRAP_VIEW_WIDTH, height: WRAP_VIEW_HEIGHT },
 		rod: {
@@ -312,6 +411,10 @@ export function scytaleWrapLayout (
 			grain: grainPaths(radius, capRx),
 		},
 		letters,
-		bands,
+		ribbons: wound
+			? frontRibbons(turnsTotal - 0.5, x0, pitch, radius)
+			: [],
+		lead: wound ? leadPath(x0, radius) : '',
+		tail: wound ? tailPath(peel.x, peel.y, pitch / 2) : '',
 	}
 }

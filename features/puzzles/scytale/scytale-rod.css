@@ -22,6 +22,14 @@
 	stroke-linejoin: round;
 }
 
+.scytale-outline {
+	fill: none;
+	stroke: var(--puzzle-ink);
+	stroke-width: 2.4;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
 .scytale-letter {
 	font-family: var(--font-patrick-hand), cursive;
 	font-weight: 700;

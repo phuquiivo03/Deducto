@@ -247,45 +247,67 @@ function Rod ({
 					aria-hidden
 				/>
 			))}
-			{layout.bands.map((d, index) => (
+			{layout.lead ? (
 				<path
-					key={`band-${index}`}
+					d={layout.lead}
+					className="scytale-band"
+					aria-hidden
+				/>
+			) : null}
+			{layout.ribbons.map((d, index) => (
+				<path
+					key={`ribbon-${index}`}
 					d={d}
 					className="scytale-band"
 					aria-hidden
 				/>
 			))}
+			<path
+				d={rod.body}
+				className="scytale-outline"
+				aria-hidden
+			/>
+			{layout.tail ? (
+				<path
+					d={layout.tail}
+					className="scytale-band"
+					aria-hidden
+				/>
+			) : null}
 			<g aria-hidden>
-				{letters.map((letter) => (
-					<g
-						key={`letter-${letter.index}`}
-						transform={
-							`translate(${letter.x} ${letter.y}) ` +
-							`rotate(${letter.tilt})`
-						}
-					>
-						{letter.char === ' ' ? (
-							<line
-								x1={-4}
-								y1={3}
-								x2={4}
-								y2={3}
-								className="scytale-space"
-							/>
-						) : (
-							<text
-								className={
-									matched
-										? 'scytale-letter puzzle-glow'
-										: 'scytale-letter'
-								}
-								fontSize={layout.fontSize}
-							>
-								{letter.char}
-							</text>
-						)}
-					</g>
-				))}
+				{letters
+					.filter((letter) => letter.visible)
+					.map((letter) => (
+						<g
+							key={`letter-${letter.index}`}
+							transform={
+								`translate(${letter.x} ${letter.y}) ` +
+								`scale(1 ${letter.scaleY}) ` +
+								`rotate(${letter.tilt})`
+							}
+						>
+							{letter.char === ' ' ? (
+								<line
+									x1={-4}
+									y1={3}
+									x2={4}
+									y2={3}
+									className="scytale-space"
+								/>
+							) : (
+								<text
+									className={
+										matched
+											? 'scytale-letter puzzle-glow'
+											: 'scytale-letter'
+									}
+									fontSize={layout.fontSize}
+								>
+									{letter.char}
+								</text>
+							)}
+						</g>
+					))}
 			</g>
 			<g
 				ref={rodRef}

@@ -77,7 +77,24 @@ test('the scytale tool does not print the column count', () => {
 	assert.doesNotMatch(source, /aria-valuenow=\{(?:safe)?columns\}/)
 })
 
-test('the wrap places every code point on a diagonal row', () => {
+function pathNumbers (path: string): number[] {
+	return (path.match(/-?\d+\.?\d*/g) ?? []).map(Number)
+}
+
+function pathSpan (path: string): { yMin: number; yMax: number } {
+	const nums = pathNumbers(path)
+	let yMin = Infinity
+	let yMax = -Infinity
+	for (let index = 1; index < nums.length; index += 2) {
+		const y = nums[index]
+		if (y === undefined) continue
+		if (y < yMin) yMin = y
+		if (y > yMax) yMax = y
+	}
+	return { yMin, yMax }
+}
+
+test('the strip is one helix wound around the rod', () => {
 	const strip = 'AB CDEFGH'
 	const layout = scytaleWrapLayout(strip, 3)
 	assert.equal(layout.columns, 3)
@@ -86,18 +103,39 @@ test('the wrap places every code point on a diagonal row', () => {
 	assert.equal(layout.view.height, WRAP_VIEW_HEIGHT)
 	assert.equal(readStrip(layout), strip)
 	assert.equal(readRows(layout), decodeScytale(strip, 3))
-	assert.ok(layout.fontSize >= 8 && layout.fontSize <= 16)
-	assert.equal(layout.bands.length, 3)
-	for (const band of layout.bands) {
-		assert.match(band, /^M/)
-		assert.match(band, /Z$/)
+	assert.ok(layout.fontSize >= 8 && layout.fontSize <= 15)
+	assert.equal(layout.ribbons.length, 3)
+	assert.match(layout.lead, /^M/)
+	assert.match(layout.lead, /Z$/)
+	assert.match(layout.tail, /^M/)
+	assert.match(layout.tail, /Z$/)
+	for (const ribbon of layout.ribbons) {
+		assert.match(ribbon, /^M/)
+		assert.match(ribbon, /Z$/)
 	}
+	const curved = layout.ribbons.some((ribbon) => {
+		const span = pathSpan(ribbon)
+		return span.yMax - span.yMin > layout.radius
+	})
+	assert.equal(curved, true)
+	const tail = pathSpan(layout.tail)
+	assert.ok(tail.yMax > layout.rod.cy + layout.radius)
 	const indexes = new Set(layout.letters.map((letter) => letter.index))
 	assert.equal(indexes.size, Array.from(strip).length)
+	let hidden = 0
 	for (const letter of layout.letters) {
+		const y = layout.rod.cy + layout.radius * Math.sin(letter.theta)
+		const scale = Math.cos(letter.theta)
+		assert.ok(Math.abs(letter.y - y) < 0.02)
+		assert.ok(Math.abs(letter.scaleY - scale) < 0.0001)
+		assert.equal(letter.visible, letter.scaleY > 0.08)
+		assert.ok(letter.tilt >= -32 && letter.tilt <= 32)
 		assert.ok(letter.x > 0 && letter.x < WRAP_VIEW_WIDTH)
 		assert.ok(letter.y > 0 && letter.y < WRAP_VIEW_HEIGHT)
+		if (!letter.visible) hidden += 1
 	}
+	assert.ok(hidden > 0)
+	assert.ok(layout.letters.some((letter) => letter.visible))
 	for (let row = 0; row < layout.rows; row += 1) {
 		const line = layout.letters
 			.filter((letter) => letter.row === row)
@@ -107,33 +145,47 @@ test('the wrap places every code point on a diagonal row', () => {
 			const curr = line[index]
 			assert.ok(prev && curr)
 			assert.ok(curr.x > prev.x)
-			assert.ok(Math.abs(curr.y - prev.y) <= 20)
+			assert.ok(Math.abs(curr.y - prev.y) < 0.02)
+			assert.ok(Math.abs(curr.scaleY - prev.scaleY) < 0.0001)
 		}
 	}
 })
 
 test('a thicker rod is strictly wider and rewraps the sentence', () => {
 	const text = 'ABCDEFGHJK'
-	let previous = 0
+	let previousRadius = 0
+	let previousPitch = Infinity
 	for (let columns = 2; columns < text.length; columns += 1) {
 		const layout = scytaleWrapLayout(text, columns)
-		assert.ok(layout.radius > previous)
-		previous = layout.radius
+		assert.ok(layout.radius > previousRadius)
+		assert.ok(layout.pitch < previousPitch)
+		previousRadius = layout.radius
+		previousPitch = layout.pitch
 		assert.equal(readRows(layout), decodeScytale(text, columns))
 	}
 	const thin = scytaleWrapLayout(text, 2)
 	const thick = scytaleWrapLayout(text, text.length - 1)
 	assert.notEqual(thin.rod.body, thick.rod.body)
 	assert.ok(thick.rows < thin.rows)
+	assert.ok(thick.radius > thin.radius)
+	const ordered = [...thin.letters].sort((a, b) => a.index - b.index)
+	const diagonal = ordered.some((letter, index) => {
+		const next = ordered[index + 1]
+		if (!next || !letter.visible || !next.visible) return false
+		return next.x !== letter.x && next.y !== letter.y
+	})
+	assert.equal(diagonal, true)
 	for (const layout of [thin, thick]) {
 		const paths = [
 			layout.rod.body,
 			layout.rod.cap,
 			...layout.rod.grain,
-			...layout.bands,
+			...layout.ribbons,
+			layout.lead,
+			layout.tail,
 		]
 		for (const path of paths) {
-			const nums = (path.match(/-?\d+\.?\d*/g) ?? []).map(Number)
+			const nums = pathNumbers(path)
 			for (let index = 0; index < nums.length; index += 2) {
 				const x = nums[index]
 				const y = nums[index + 1]
@@ -150,4 +202,14 @@ test('a thicker rod is strictly wider and rewraps the sentence', () => {
 	assert.equal(readRows(solved), ARTHUR)
 	const missed = scytaleWrapLayout(strip, columns + 1)
 	assert.notEqual(readRows(missed), ARTHUR)
+	const rowIndexes = solved.letters
+		.filter((letter) => letter.row === 0)
+		.map((letter) => letter.index)
+	const missedYs = rowIndexes.map((index) => {
+		const letter = missed.letters.find((item) => item.index === index)
+		assert.ok(letter)
+		return letter.y
+	})
+	const firstY = missedYs[0] ?? 0
+	assert.ok(missedYs.some((y) => Math.abs(y - firstY) > 1))
 })
