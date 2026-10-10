@@ -725,7 +725,7 @@ Seeded system user (see `sampleIds.user` in `data/sample-ids.ts`):
 - Browser client: `infrastructure/supabase/client.ts`
 - Server client: `infrastructure/supabase/server.ts`
 - Session refresh: root `proxy.ts` → `infrastructure/supabase/update-session.ts` (`getUser()` on matched routes)
-- OAuth callback: `app/auth/callback/route.ts` exchanges the code, upserts `users` from Google metadata, redirects to `next` or `/`
+- OAuth callback: `app/auth/callback/route.ts` exchanges the code, then `saveSignedInProfile` upserts `users` with the service role and redirects to `next` or `/`. The signed-in browser role cannot upsert this table.
 - Sign-in UI: `IntroCard` → `signInWithGoogle()` in `features/user/user.sign-in.ts`
 - **Start investigation** requires a signed-in user on the intro screen
 
@@ -899,7 +899,7 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 ## Public creator fields
 
 - `public.users` exposes `id`, `name`, and `avatar` to the Data API. A row is visible when it is the signed-in user or when that user has created a game.
-- `email`, `created_at`, and `updated_at` are not granted to `anon` or `authenticated`. The auth callback still writes the signed-in user's email and returns `id, name, avatar`.
+- `email`, `created_at`, and `updated_at` are not granted to `anon` or `authenticated`. The auth callback writes the profile with the service role, including email.
 - Migration: `prisma/migrations/20261005120000_restrict_users_public_profile`.
 
 ## Auth callback

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { profileFromAuthUser } from "@/features/user/user.oauth";
+import { saveSignedInProfile } from "@/features/user/user.profile";
 import { createClient } from "@/infrastructure/supabase/server";
 import { safeNextPath } from "@/lib/safe-next-path";
 
@@ -14,37 +14,16 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createClient();
-  const { error: sessionError } =
+  const { data, error: sessionError } =
     await supabase.auth.exchangeCodeForSession(code);
 
-  if (sessionError) {
+  if (sessionError || !data.user) {
     return NextResponse.redirect(`${origin}/?auth=error`);
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (user) {
-    const profile = profileFromAuthUser(user);
-    const now = new Date().toISOString();
-    const { error: upsertError } = await supabase
-      .from("users")
-      .upsert(
-        {
-          id: profile.id,
-          name: profile.name,
-          email: profile.email,
-          avatar: profile.avatar,
-          updated_at: now,
-        },
-        { onConflict: "id" },
-      )
-      .select("id, name, avatar");
-
-    if (upsertError) {
-      console.error(upsertError);
-      return NextResponse.redirect(`${origin}/?auth=profile-error`);
-    }
+  const saved = await saveSignedInProfile(data.user);
+  if (!saved) {
+    return NextResponse.redirect(`${origin}/?auth=profile-error`);
   }
 
   return NextResponse.redirect(new URL(nextPath, origin));
