@@ -15,10 +15,7 @@ interface VisibilityFlagProps {
   visibility: IShortGame["visibility"];
 }
 
-export function VisibilityFlag({
-  gameId,
-  visibility,
-}: VisibilityFlagProps) {
+export function VisibilityFlag({ gameId, visibility }: VisibilityFlagProps) {
   const queryClient = useQueryClient();
   const [current, setCurrent] = useState(visibility);
   const [open, setOpen] = useState(false);
@@ -102,7 +99,7 @@ export function VisibilityFlag({
       <button
         type="button"
         className={cn(
-          "relative z-20 inline-block border-2 border-pencil px-3 py-1",
+          "relative z-20 inline-block border-2 border-pencil px-3 py-1  hover:text-pen",
           "rounded-wobbly-sm text-sm shadow-hard-sm",
           current === "public"
             ? "bg-marker text-card"
