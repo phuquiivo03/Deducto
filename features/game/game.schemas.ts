@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { gameVisibilitySchema } from "@/features/game/game-visibility";
 import { puzzleLockRequestSchema } from "@/features/puzzles/lock-request";
 import { cluePuzzleSchema } from "@/features/puzzles/schema";
 
@@ -165,6 +166,7 @@ export const gameSchema = z.object({
   description: z.string(),
   banner: z.string(),
   level: gameLevelSchema,
+  visibility: gameVisibilitySchema,
   created_at: z.string(),
 });
 export type IGame = z.infer<typeof gameSchema>;
@@ -422,6 +424,7 @@ export const shortGameShema = gameSchema.pick({
   description: true,
   banner: true,
   level: true,
+  visibility: true,
   created_at: true,
 });
 export type IShortGame = z.infer<typeof shortGameShema> & {

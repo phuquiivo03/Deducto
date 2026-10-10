@@ -19,13 +19,40 @@ import { publishCase } from './publish-case'
 import { normalizeDraft } from './case-draft'
 import { generateCaseLogic } from './case-generator'
 import { GameNotFoundError } from './game-errors'
+import { canReadGame, publicCatalog } from './game-visibility'
+import type { GameVisibility } from './game-visibility'
+import { getSessionUserId } from '@/features/user/user.auth'
 
 const getById = async (id: string): Promise<IGame> => {
 	const game = await gameRepositories.getGame(id)
 	if (!game) {
 		throw new GameNotFoundError()
 	}
+	if (!(await canViewerRead(game, id))) {
+		throw new GameNotFoundError()
+	}
 	return game
+}
+
+async function canViewerRead (game: IGame, id: string): Promise<boolean> {
+	const viewerId = game.visibility === 'public'
+		? null
+		: await getSessionUserId()
+	const isCreator = Boolean(
+		viewerId &&
+			viewerId.toLowerCase() === game.creator.toLowerCase(),
+	)
+	const hasSolved = viewerId && !isCreator
+		? Boolean(
+			await submissionRepositories.findByUserAndGame(viewerId, id),
+		)
+		: false
+	return canReadGame({
+		visibility: game.visibility,
+		creatorId: game.creator,
+		viewerId,
+		hasSolved,
+	})
 }
 const isResolved = async (userId: string, gameId: string): Promise<boolean> => {
 	const submission = await submissionRepositories.findByUserAndGame(
@@ -96,6 +123,7 @@ const generate = async (
 			description: entities.description,
 			banner: entities.banner,
 			level,
+			visibility: 'private',
 			created_at: createdAt,
 			gameMetadata: {
 				id: metaId,
@@ -124,7 +152,7 @@ const create = async (
 }
 
 const findPublic = async (): Promise<IShortGame[]> => {
-	return gameRepositories.findPublic()
+	return publicCatalog(await gameRepositories.findPublic())
 }
 
 const findSolved = async (userId: string): Promise<IShortGame[]> => {
@@ -138,6 +166,14 @@ const findByUserId = async (userId: string): Promise<IShortGame[]> => {
 	return res
 }
 
+const updateVisibility = async (
+	gameId: string,
+	userId: string,
+	visibility: GameVisibility,
+): Promise<boolean> => {
+	return gameRepositories.updateVisibility(gameId, userId, visibility)
+}
+
 const gameServices = {
 	getById,
 	isResolved,
@@ -146,6 +182,7 @@ const gameServices = {
 	findPublic,
 	findSolved,
 	findByUserId,
+	updateVisibility,
 }
 
 export default gameServices

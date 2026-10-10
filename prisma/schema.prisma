@@ -38,6 +38,11 @@ enum ClueAttribute {
 	found_at
 }
 
+enum GameVisibility {
+	private
+	public
+}
+
 model GameMetadata {
 	id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 	suspects  Suspect[]
@@ -71,6 +76,7 @@ model Game {
 	description    String
 	banner         String
 	level          String
+	visibility     GameVisibility   @default(private)
 	createdAt      DateTime         @default(now()) @map("created_at")
 	gameMetadataId String           @unique @map("game_metadata_id") @db.Uuid
 	creator        User             @relation("GameCreator", fields: [creatorId], references: [id], onDelete: Restrict)
@@ -80,6 +86,7 @@ model Game {
 	accusationAttempts AccusationAttempt[]
 
 	@@index([creatorId])
+	@@index([visibility])
 	@@map("games")
 }
 

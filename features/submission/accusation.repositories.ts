@@ -8,6 +8,7 @@ import {
   type AccusationSolution,
   type SubmitAccusationInput,
 } from "@/features/game/accusation-decision"
+import { canReadGame, readVisibility } from "@/features/game/game-visibility"
 
 const submit = async (
   input: SubmitAccusationInput,
@@ -25,14 +26,33 @@ const submit = async (
         SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0::bigint))
       `
 
+      const game = await tx.game.findUnique({
+        where: { id: gameId },
+        select: { creatorId: true, visibility: true },
+      })
+      if (!game) {
+        return { type: "missing" }
+      }
+
       const existingSolve = await tx.userSubmission.findUnique({
         where: { userId_gameId: { userId, gameId } },
         select: { userId: true },
       })
+      const alreadySolved = existingSolve !== null
+      if (
+        !canReadGame({
+          visibility: readVisibility(game.visibility),
+          creatorId: game.creatorId,
+          viewerId: userId,
+          hasSolved: alreadySolved,
+        })
+      ) {
+        return { type: "missing" }
+      }
+
       const attemptsUsed = await tx.accusationAttempt.count({
         where: { userId, gameId },
       })
-      const alreadySolved = existingSolve !== null
 
       let solution: AccusationSolution | null = null
       if (shouldReadSolution({ alreadySolved, attemptsUsed })) {

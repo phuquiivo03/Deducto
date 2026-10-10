@@ -18,9 +18,13 @@ import {
   type GameDbRow,
   type ShortGameDbRow,
 } from "./game.mapper";
+import {
+  NEW_GAME_VISIBILITY,
+  type GameVisibility,
+} from "./game-visibility";
 
 const SHORT_GAME_COLUMNS =
-  "id, creator_id, title, description, banner, level, created_at" as const;
+  "id, creator_id, title, description, banner, level, visibility, created_at" as const;
 
 function toInputJson(
   value: Record<string, unknown> | undefined,
@@ -168,6 +172,7 @@ const createGame = async (
         description: input.description,
         banner: input.banner,
         level: input.level,
+        visibility: NEW_GAME_VISIBILITY,
         gameMetadataId: metadataId,
       },
     });
@@ -193,7 +198,8 @@ const findPublic = async (): Promise<IShortGame[]> => {
     .select<
       string,
       ShortGameDbRow
-    >(`${SHORT_GAME_COLUMNS},creator_id(name,avatar)`);
+    >(`${SHORT_GAME_COLUMNS},creator_id(name,avatar)`)
+    .eq("visibility", "public");
   if (error) {
     console.error("findPublic:", error.message);
     return [];
@@ -236,6 +242,18 @@ const findResolved = async (id: string): Promise<IShortGame[]> => {
     .map(mapShortGameFromDb);
 };
 
+const updateVisibility = async (
+  gameId: string,
+  creatorId: string,
+  visibility: GameVisibility,
+): Promise<boolean> => {
+  const result = await prisma.game.updateMany({
+    where: { id: gameId, creatorId },
+    data: { visibility },
+  });
+  return result.count === 1;
+};
+
 const gameRepositories = {
   getGame,
   getResult,
@@ -244,5 +262,6 @@ const gameRepositories = {
   findPublic,
   findByUserId,
   findResolved,
+  updateVisibility,
 };
 export default gameRepositories;
