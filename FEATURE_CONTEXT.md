@@ -878,6 +878,7 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 
 - Route: `app/store/page.tsx` (`/store`).
 - Catalog of detective cases with three collections via query `tab`: `public` (default), `solved`, `my`.
+- **Public** lists only cases with `visibility = public`. **Solved** lists every case the signed-in user has solved, including private ones. **My cases** lists cases that user created, private and public.
 - Data loads on the server through `gameServices.findPublic`, `findSolved`, and `findByUserId` (same sources as `GET /api/game?tab=…`). Public tab does not require sign-in; solved and my require a session or show a Google sign-in empty state.
 
 ## UI
@@ -887,6 +888,7 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 - Search (`q` in the URL) filters the current tab’s list client-side by title, description, and creator.
 - Price controls (free-only checkbox, min/max inputs) are present in the UI; filtering by price is not wired until cases expose a catalog price (see `listedSchema` in `game.schemas.ts`).
 - Case cards alternate tape/tack decoration with slight rotation on hover; tokens match the global hand-drawn system (`paper`, `pencil`, `pen`, `marker`, `postit`).
+- On **My cases** only, the card shows a Public or Private flag. The flag opens `ModalShell`. The case stays as it is until **Xác nhận**, which sends `PATCH /api/game/[id]` with `{ visibility }` and then updates that card.
 - Banner paths are passed through `withDisplayBanners` (`lib/case-banner-server.ts`). A local path that is not a file in `public/` is omitted, so the card keeps the blank paper panel. Other http(s) URLs render with a plain `img` that hides itself on error, because `next/image` only allows `lh3.googleusercontent.com`.
 - Header nav includes **Store** and **Create** ([`components/layout/Header.tsx`](components/layout/Header.tsx)).
 
@@ -906,13 +908,14 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 
 ## API errors
 
-- Create, generate, result, case load, and solve-status handlers log the exception and return a fixed message via `publicApiFailure`. Client JSON does not include the thrown message.
+- Create, generate, result, case load, solve-status, and visibility handlers log the exception and return a fixed message via `publicApiFailure`. Client JSON does not include the thrown message.
 
 # 19. The case you open is the case you play
 
 ## Case file
 
 - `/case/[id]` loads the game on the server with `gameServices.getById`.
+- A private case loads only for its creator or a player who has already solved it. Everyone else gets the same **404** as a missing id (`GameNotFoundError`), including `GET /api/game/[id]` and `POST /api/game/[id]/result`. The response does not say the case is private.
 - `IntroCard` shows that game’s title, description, difficulty (`level`), and victim.
 - There is no victim column. `victimFromDescription` in `lib/case-file.ts` reads a leading “was found / discovered / killed / murdered” phrase. If the description does not name one, the row says “Not named”.
 - A missing game calls `notFound()` and renders `app/case/[id]/not-found.tsx` (“Case not found”). Other load failures render `error.tsx` (“Could not open this case”). The intro is not filled with sample copy.
@@ -974,9 +977,37 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 - `optional`: removing that clue still leaves the one saved solution.
 - The seeded sample locks the first clue (Arthur in the library) as required. `applySamplePuzzles` copies that lock onto the loaded sample case when the rendered sentences still match and the row has no puzzle of its own.
 - The `clues.puzzle` jsonb column stores the full wrapper, including role, the optional hint, the scytale diameter, and the Caesar shift. No migration. Player progress is not saved.
-- Before the case reaches the browser, `presentGameForPlayer` keeps `kind`, the flat ciphertext, and `hint`, and drops `role`, `columns`, and `shift`. `GET /api/game/[id]` and `/case/[id]` both do this. The board still derives the sentence from the structured clue, because that is how `clueToText` and the solve modal know the reading matches. The panel shows the hint until the puzzle is solved. The diameter and shift are not in that payload. `kind` is. A direct Data API read of `clues.puzzle` can still see the stored key, because the column is on the public-read `clues` table. Splitting it out would make `clues(*)` fail for the anon role, so case load would have to name every column. That migration is not in this change.
+- Before the case reaches the browser, `presentGameForPlayer` keeps `kind`, the flat ciphertext, and `hint`, and drops `role`, `columns`, and `shift`. `GET /api/game/[id]` and `/case/[id]` both do this. The board still derives the sentence from the structured clue, because that is how `clueToText` and the solve modal know the reading matches. The panel shows the hint until the puzzle is solved. The diameter and shift are not in that payload. `kind` is. A direct Data API read of `clues.puzzle` still returns the stored key, but only when the caller can already open that case. `clues` SELECT follows the parent game (public, creator, or an existing solve). Splitting the key into another column is still not done, so `clues(*)` keeps working for those readers.
 
 ## Dev lab
 
 - `/dev/puzzles` clones the create-page shell and uses only `data/sample-be.ts`. It is not in the header or footer. The page sets `noindex`.
 - Pick a clue, choose required or optional, wrap it, read the validation report, and solve through the same toolkit the board opens. The embedded panel is the board's `CluePanel`.
+
+---
+
+# 21. Case privacy
+
+## Visibility
+
+- `games.visibility` is a Postgres enum `GameVisibility` (`private` | `public`), `NOT NULL`, default `private`.
+- Migration: `prisma/migrations/20261010122000_game_visibility`. It adds the enum and the column only. Existing rows, including the seeded sample cases, stay private because of that default. There is no backfill to `public`, so the public store is empty until a creator publishes.
+- `POST /api/game` always stores `private`. The create wizard has no visibility control. A client field named `visibility` is not part of `createGameInputSchema`.
+
+## Who can open a case
+
+- Public: anyone, including signed-out readers.
+- Private: the creator, or a user who already has a `user_submissions` row for that case.
+- Anyone else receives **404**, not 403. That covers `/case/[id]`, `GET /api/game/[id]`, and accusations (`POST /api/game/[id]/result` returns "Case not found" before the solution is read).
+- List endpoints select short columns only (no clues or solution). Public listing also filters `visibility = public` in the query and again in `publicCatalog`.
+
+## RLS
+
+- `games_select_visible` replaces `games_public_read`.
+- Suspects, locations, weapons, motives, clues, and `game_metadata` SELECT only when the parent game row is visible to the caller, so a private case body is not readable through the Data API.
+- `results` stays without a public SELECT policy. The accusation path uses Prisma and the same read check.
+
+## Publishing
+
+- `PATCH /api/game/[id]` with `{ "visibility": "public" | "private" }` requires a session. Zod rejects anything else with `Invalid request`. The update matches `creator_id` to the session user. A missing case and a case the caller does not own both return **404** `Game not found`.
+- The flag and confirmation live on Store → My cases (`VisibilityFlag` + `ModalShell`).

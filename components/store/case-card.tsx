@@ -6,13 +6,19 @@ import { formatDifficulty } from "@/lib/case-file";
 import { cn } from "@/lib/cn";
 import { StickyTag } from "@/components/ui/sticky-tag";
 import { CaseBanner } from "@/components/store/case-banner";
+import { VisibilityFlag } from "@/components/store/visibility-flag";
 
 interface CaseCardProps {
   game: IShortGame;
   index?: number;
+  showVisibility?: boolean;
 }
 
-export function CaseCard({ game, index = 0 }: CaseCardProps) {
+export function CaseCard({
+  game,
+  index = 0,
+  showVisibility = false,
+}: CaseCardProps) {
   const banner = game.banner?.trim();
   const description =
     game.description.length > 120
@@ -22,16 +28,15 @@ export function CaseCard({ game, index = 0 }: CaseCardProps) {
   const tiltClass =
     index % 2 === 0 ? "-rotate-1 hover:rotate-1" : "rotate-1 hover:-rotate-1";
 
-  return (
-    <Link
-      href={`/case/${game.id}`}
-      className={cn(
-        "group relative flex flex-col overflow-hidden",
-        "border-2 border-pencil bg-card rounded-wobbly-md shadow-paper",
-        "transition-transform duration-100",
-        tiltClass,
-      )}
-    >
+  const cardClass = cn(
+    "group relative flex flex-col overflow-hidden",
+    "border-2 border-pencil bg-card rounded-wobbly-md shadow-paper",
+    "transition-transform duration-100",
+    tiltClass,
+  );
+
+  const body = (
+    <>
       {decoration === "tape" ? (
         <div
           className="
@@ -64,9 +69,21 @@ group-hover:text-pen transition-colors
           >
             {game.title}
           </h2>
-          <StickyTag className="shrink-0 text-sm rotate-0">
-            {formatDifficulty(String(game.level))}
-          </StickyTag>
+          {showVisibility ? (
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <StickyTag className="shrink-0 text-sm rotate-0">
+                {formatDifficulty(String(game.level))}
+              </StickyTag>
+              <VisibilityFlag
+                gameId={game.id}
+                visibility={game.visibility}
+              />
+            </div>
+          ) : (
+            <StickyTag className="shrink-0 text-sm rotate-0">
+              {formatDifficulty(String(game.level))}
+            </StickyTag>
+          )}
         </div>
         <p className="text-base text-pencil/75 leading-relaxed line-clamp-2">
           {description}
@@ -83,6 +100,25 @@ group-hover:text-pen transition-colors
           <p className="font-bold  text-sm">{game.creator?.name}</p>
         </div>
       </div>
-    </Link>
+    </>
+  );
+
+  if (!showVisibility) {
+    return (
+      <Link href={`/case/${game.id}`} className={cardClass}>
+        {body}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={cardClass}>
+      <Link
+        href={`/case/${game.id}`}
+        className="absolute inset-0 z-10"
+        aria-label={game.title}
+      />
+      {body}
+    </div>
   );
 }

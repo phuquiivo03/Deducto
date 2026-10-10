@@ -153,7 +153,11 @@ list-none p-0 m-0
         >
           {filtered.map((game, index) => (
             <li key={index}>
-              <CaseCard game={game} index={index} />
+              <CaseCard
+                game={game}
+                index={index}
+                showVisibility={tab === "my"}
+              />
             </li>
           ))}
         </ul>

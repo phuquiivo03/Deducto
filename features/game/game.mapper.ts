@@ -3,6 +3,7 @@ import type {
   IGameMetadata,
   IShortGame,
 } from "@/features/game/game.schemas";
+import { readVisibility } from "@/features/game/game-visibility";
 import { IUser } from "../user/user.schemas";
 
 /** Row shape returned by Supabase nested select on `games`. */
@@ -13,6 +14,7 @@ export interface GameDbRow {
   description: string;
   banner: string;
   level: string;
+  visibility: string;
   created_at: string;
   game_metadata_id?: string;
   game_metadata: IGameMetadata | null;
@@ -29,6 +31,7 @@ export interface ShortGameDbRow {
   description: string;
   banner: string;
   level: string;
+  visibility: string;
   created_at: string;
 }
 
@@ -40,6 +43,7 @@ export function mapShortGameFromDb(row: ShortGameDbRow): IShortGame {
     description: row.description,
     banner: row.banner,
     level: row.level,
+    visibility: readVisibility(row.visibility),
     created_at: row.created_at,
   };
 }
@@ -56,6 +60,7 @@ export function mapGameFromDb(row: GameDbRow | null): IGame | null {
     description: row.description,
     banner: row.banner,
     level: row.level,
+    visibility: readVisibility(row.visibility),
     created_at: row.created_at,
     gameMetadata: row.game_metadata,
   };

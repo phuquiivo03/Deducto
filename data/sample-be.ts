@@ -11,6 +11,7 @@ const sampleGameDraft: IGame = {
     "Trong bữa tối kín, một viên sapphire vô giá đột ngột biến mất. Bốn vị khách đều có mặt — mỗi người ở một căn phòng, với một món đồ và một động cơ khác nhau.",
   banner: "/images/cases/missing-sapphire.jpg",
   level: "easy",
+  visibility: "private",
   created_at: "2026-09-24T10:00:00Z",
 
   gameMetadata: {
