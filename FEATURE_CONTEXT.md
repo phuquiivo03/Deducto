@@ -180,8 +180,12 @@ notes;
 
 selected;
 
+focusedId;
+
 view;
 ```
+
+`focusedId` is the card the player last clicked on the board. It lives in `DetectiveBoard` beside `selected` and resets when the case changes.
 
 Do not put visual UI logic here.
 
@@ -285,6 +289,13 @@ Zoom:
 - Floating controls: zoom out, current percent (resets to 100%), zoom in
 - Ctrl + scroll zooms toward the cursor
 - Entity and note drags divide pointer movement by the current scale so cards stay under the cursor
+
+Focus:
+
+- A card click focuses that card. `relatedCardIds` (`related-card-ids.ts`) returns the other cards joined to it by a non-empty relationship.
+- Those cards, the focused card, and the lines that touch the focused card stay at full opacity. Every other card and line fades to 40% with a 200ms opacity transition. `prefers-reduced-motion` turns the transition off.
+- Faded cards stay draggable and can be clicked to move the focus.
+- Clicking the focused card again, or empty board space, clears `focusedId`. Opacity returns to normal. Inspector selection is unchanged.
 
 Coordinate system:
 

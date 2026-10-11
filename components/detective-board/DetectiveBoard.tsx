@@ -42,6 +42,8 @@ export default function DetectiveBoard() {
 
   const [selected, setSelected] = useState<string | null>(null);
 
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+
   const [view, setView] = useState<"board" | "grid">("board");
 
   const [solvedPuzzleIds, setSolvedPuzzleIds] = useState<string[]>([]);
@@ -110,6 +112,7 @@ export default function DetectiveBoard() {
     setRelationships([]);
     setNotes([]);
     setSelected(null);
+    setFocusedId(null);
     setView("board");
     setSolvedPuzzleIds([]);
     setOpenPuzzleId(null);
@@ -185,6 +188,8 @@ min-w-0
                 relationships={relationships}
                 selected={selected}
                 setSelected={setSelected}
+                focusedId={focusedId}
+                setFocusedId={setFocusedId}
                 notes={notes}
                 setNotes={setNotes}
                 onSetPairStatus={setPairStatus}

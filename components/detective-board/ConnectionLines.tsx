@@ -7,6 +7,7 @@ interface Props {
 	relationships: Relationship[]
 	draft?: { from: Entity; x: number; y: number }
 	activeId?: string | null
+	focusedId?: string | null
 	onLineClick?: (rel: Relationship, midX: number, midY: number) => void
 }
 
@@ -15,6 +16,7 @@ export default function ConnectionLines({
 	relationships,
 	draft,
 	activeId,
+	focusedId,
 	onLineClick,
 }: Props) {
 	return (
@@ -33,9 +35,21 @@ export default function ConnectionLines({
 				const midY = (p1.y + p2.y) / 2
 				const isActive = activeId === rel.id
 				const lineLabel = rel.label.trim()
+				const isDimmed = Boolean(
+					focusedId &&
+						rel.a !== focusedId &&
+						rel.b !== focusedId,
+				)
 
 				return (
-					<g key={rel.id}>
+					<g
+						key={rel.id}
+						className={`
+transition-opacity duration-200
+motion-reduce:transition-none
+${isDimmed ? 'opacity-40' : 'opacity-100'}
+`}
+					>
 						<line
 							x1={p1.x}
 							y1={p1.y}
