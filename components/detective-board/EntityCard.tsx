@@ -6,6 +6,7 @@ import { Entity } from '@/types/detective'
 interface Props {
 	entity: Entity
 	selected: boolean
+	dimmed: boolean
 	scale: number
 	onSelect: () => void
 	onMove: (x: number, y: number) => void
@@ -24,6 +25,7 @@ const PAPER_LINES =
 export default function EntityCard({
 	entity,
 	selected,
+	dimmed,
 	scale,
 	onSelect,
 	onMove,
@@ -55,7 +57,10 @@ export default function EntityCard({
 				window.addEventListener('pointermove', move)
 				window.addEventListener('pointerup', up)
 			}}
-			onClick={onSelect}
+			onClick={(e) => {
+				e.stopPropagation()
+				onSelect()
+			}}
 			style={{
 				left: entity.x,
 				top: entity.y,
@@ -65,8 +70,11 @@ export default function EntityCard({
 absolute z-10 w-[196px] min-h-[108px]
 bg-card border-2 rounded-wobbly-sm
 pt-7 pb-3 pl-9 pr-3 shadow-hard
-cursor-grab select-none transition-shadow duration-100
+cursor-grab select-none
+transition-[opacity,box-shadow] duration-200
+motion-reduce:transition-none
 hover:rotate-1
+${dimmed ? 'opacity-40' : 'opacity-100'}
 ${
 	selected
 		? 'border-pen shadow-hard-lg ring-2 ring-pen/20'

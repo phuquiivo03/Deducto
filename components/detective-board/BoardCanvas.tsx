@@ -12,6 +12,7 @@ import {
 
 import { findRelationshipByPair } from "@/lib/relationship-pairs";
 
+import { relatedCardIds } from "./related-card-ids";
 import EntityCard from "./EntityCard";
 import StickyNote from "./StickyNote";
 import ConnectionLines from "./ConnectionLines";
@@ -57,6 +58,10 @@ interface Props {
 
   setSelected: (id: string | null) => void;
 
+  focusedId: string | null;
+
+  setFocusedId: (id: string | null) => void;
+
   notes: Note[];
 
   setNotes: React.Dispatch<React.SetStateAction<Note[]>>;
@@ -87,6 +92,10 @@ export default function BoardCanvas({
   selected,
 
   setSelected,
+
+  focusedId,
+
+  setFocusedId,
 
   notes,
 
@@ -247,6 +256,22 @@ export default function BoardCanvas({
     [clientToBoard],
   );
 
+  const handleBoardClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (event.target !== event.currentTarget) return;
+      setFocusedId(null);
+    },
+    [setFocusedId],
+  );
+
+  const handleCardSelect = useCallback(
+    (id: string) => {
+      setSelected(id);
+      setFocusedId(focusedId === id ? null : id);
+    },
+    [focusedId, setFocusedId, setSelected],
+  );
+
   const handleLineClick = useCallback(
     (rel: Relationship, midX: number, midY: number) => {
       setPicker({
@@ -277,6 +302,10 @@ export default function BoardCanvas({
 
   const pickerLabel = pickerExisting?.label ?? "";
 
+  const relatedIds = focusedId
+    ? relatedCardIds(relationships, focusedId)
+    : null;
+
   const zoomPercent = Math.round(zoom * 100);
   const isMinZoom = zoom <= MIN_BOARD_ZOOM + 0.001;
   const isMaxZoom = zoom >= MAX_BOARD_ZOOM - 0.001;
@@ -305,12 +334,14 @@ bg-paper
 bg-[radial-gradient(#e5e0d8_1px,transparent_1px)]
 [background-size:24px_24px]
 "
+            onClick={handleBoardClick}
           >
         <ConnectionLines
           entities={entities}
           relationships={relationships}
           draft={draftLine}
           activeId={picker?.mode === "edit" ? picker.relId : null}
+          focusedId={focusedId}
           onLineClick={handleLineClick}
         />
 
@@ -319,8 +350,13 @@ bg-[radial-gradient(#e5e0d8_1px,transparent_1px)]
             key={entity.id}
             entity={entity}
             selected={selected === entity.id}
+            dimmed={
+              relatedIds !== null &&
+              entity.id !== focusedId &&
+              !relatedIds.has(entity.id)
+            }
             scale={zoom}
-            onSelect={() => setSelected(entity.id)}
+            onSelect={() => handleCardSelect(entity.id)}
             onMove={(x, y) => {
               setEntities((prev) => ({
                 ...prev,
