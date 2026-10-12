@@ -17,20 +17,42 @@ bg-paper border-b-2 border-dashed border-pencil
       </Link>
 
       <nav
-        className="hidden sm:flex items-center gap-8 text-lg font-body"
+        className="flex items-center gap-4 sm:gap-8 text-lg font-body"
         aria-label="Main"
       >
         <Link
           href="/store"
-          className="text-pencil wavy-underline hover:text-pen transition-colors"
+          className="
+hidden sm:inline text-pencil wavy-underline
+hover:text-pen transition-colors
+"
         >
           Cửa hàng
         </Link>
         <Link
           href="/create"
-          className="text-pencil wavy-underline hover:text-pen transition-colors"
+          className="
+hidden sm:inline text-pencil wavy-underline
+hover:text-pen transition-colors
+"
         >
           Tạo case
+        </Link>
+        <Link
+          href="/guide"
+          aria-label="Hướng dẫn"
+          title="Hướng dẫn"
+          className="
+inline-flex h-8 w-8 items-center justify-center
+rounded-wobbly-sm border-2 border-pencil bg-card
+font-heading text-lg leading-none text-pencil
+shadow-hard-sm hover:bg-postit hover:text-pen
+focus-visible:outline focus-visible:outline-2
+focus-visible:outline-offset-2 focus-visible:outline-pen
+transition-colors
+"
+        >
+          ?
         </Link>
       </nav>
       <BoardProfile />
