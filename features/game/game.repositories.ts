@@ -18,6 +18,7 @@ import {
   type GameDbRow,
   type ShortGameDbRow,
 } from "./game.mapper";
+import { assertOwnedCaseSlot } from "./game-errors";
 import {
   NEW_GAME_VISIBILITY,
   type GameVisibility,
@@ -110,6 +111,15 @@ const createGame = async (
   const gameId = randomUUID();
 
   await prisma.$transaction(async (tx) => {
+    // Same transaction as the insert. A second create for this
+    // account waits, then counts the committed rows.
+    const lockKey = `owned-cases:${creatorId.toLowerCase()}`;
+    await tx.$executeRaw`
+      SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0::bigint))
+    `;
+    const owned = await tx.game.count({ where: { creatorId } });
+    assertOwnedCaseSlot(owned);
+
     await tx.gameMetadata.create({
       data: {
         id: metadataId,

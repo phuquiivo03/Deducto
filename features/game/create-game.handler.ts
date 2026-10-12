@@ -1,4 +1,8 @@
 import {
+	isOwnedCaseLimit,
+	OWNED_CASE_LIMIT_MESSAGE,
+} from '@/features/game/game-errors'
+import {
 	createGameInputSchema,
 	type ICreateGameInput,
 } from '@/features/game/game.schemas'
@@ -61,6 +65,14 @@ export async function handleCreateGamePost (
 				message: lockMessage,
 			}
 			return Response.json(response, { status: 400 })
+		}
+		if (isOwnedCaseLimit(error)) {
+			const response: AppResponse<null> = {
+				data: null,
+				success: false,
+				message: OWNED_CASE_LIMIT_MESSAGE,
+			}
+			return Response.json(response, { status: 403 })
 		}
 		const response: AppResponse<null> = publicApiFailure(
 			'POST /api/game',

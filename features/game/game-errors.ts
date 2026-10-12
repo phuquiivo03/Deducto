@@ -12,6 +12,34 @@ export class CaseNotSolvableError extends Error {
   }
 }
 
+/** Rows in `games` for one creator. Deleting a row frees a slot. */
+export const MAX_OWNED_CASES = 5;
+
+export const OWNED_CASE_LIMIT_MESSAGE =
+  `Mỗi tài khoản chỉ được sở hữu tối đa ${MAX_OWNED_CASES} vụ án. ` +
+  "Xóa một vụ án để tạo thêm.";
+
+export class OwnedCaseLimitError extends Error {
+  constructor() {
+    super(OWNED_CASE_LIMIT_MESSAGE);
+    this.name = "OwnedCaseLimitError";
+  }
+}
+
+export function assertOwnedCaseSlot(owned: number): void {
+  if (owned >= MAX_OWNED_CASES) {
+    throw new OwnedCaseLimitError();
+  }
+}
+
+export function isOwnedCaseLimit(error: unknown): boolean {
+  if (error instanceof OwnedCaseLimitError) return true;
+  return (
+    error instanceof Error &&
+    error.message === OWNED_CASE_LIMIT_MESSAGE
+  );
+}
+
 export function publishErrorStatus(error: unknown): number {
   return error instanceof CaseNotSolvableError ? 400 : 500;
 }
