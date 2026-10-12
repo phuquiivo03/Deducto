@@ -864,6 +864,7 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 - Play flow: **Open a case** links to the seeded sample game (`lib/landing-constants.ts` → `/case/{sampleIds.game}`). Sign-in and **Start investigation** remain on `IntroCard` at `/case/[id]`.
 - **Create a case** links to `/create`.
 - Shared chrome: [`Header`](components/layout/Header.tsx), [`SiteFooter`](components/layout/site-footer.tsx), `max-w-5xl` sections, hand-drawn hero doodles.
+- Header links: **Cửa hàng** (`/store`), **Tạo case** (`/create`), and **?** (`/guide`, accessible name “Hướng dẫn”).
 
 ## Components
 
@@ -901,7 +902,7 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 - Case cards alternate tape/tack decoration with slight rotation on hover; tokens match the global hand-drawn system (`paper`, `pencil`, `pen`, `marker`, `postit`).
 - On **My cases** only, the card shows a Public or Private flag. The flag opens `ModalShell`. The case stays as it is until **Xác nhận**, which sends `PATCH /api/game/[id]` with `{ visibility }` and then updates that card.
 - Banner paths are passed through `withDisplayBanners` (`lib/case-banner-server.ts`). A local path that is not a file in `public/` is omitted, so the card keeps the blank paper panel. Other http(s) URLs render with a plain `img` that hides itself on error, because `next/image` only allows `lh3.googleusercontent.com`.
-- Header nav includes **Store** and **Create** ([`components/layout/Header.tsx`](components/layout/Header.tsx)).
+- Header nav includes **Cửa hàng**, **Tạo case**, and a **?** link to `/guide` ([`components/layout/Header.tsx`](components/layout/Header.tsx)). The **?** stays visible when the text links are hidden below the `sm` breakpoint.
 
 ---
 
@@ -1022,3 +1023,21 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 
 - `PATCH /api/game/[id]` with `{ "visibility": "public" | "private" }` requires a session. Zod rejects anything else with `Invalid request`. The update matches `creator_id` to the session user. A missing case and a case the caller does not own both return **404** `Game not found`.
 - The flag and confirmation live on Store → My cases (`VisibilityFlag` + `ModalShell`).
+
+---
+
+# 22. Guide (`/guide`)
+
+## Overview
+
+- Route: `app/guide/page.tsx`. Static server page. Vietnamese.
+- Chrome matches the store and landing pages: `Header`, `SiteFooter`, paper background, post-it `Card`s, `DoodleSquiggle`.
+- The header **?** links here. Accessible name is **Hướng dẫn**. Text nav links stay hidden below `sm`; the **?** stays on screen.
+
+## Copy
+
+Button and step names follow the live UI:
+
+- Play: **Cửa hàng**, **Tệp case**, **Tiếp tục với Google**, **Bắt đầu điều tra**, **Manh mối**, **Bảng điều tra**, **Bộ giải mật mã**, **Caesar**, **Scytale**, **Gợi ý**, **Cáo buộc**, **Hung thủ**, **Hung khí**, **Hiện trường**, **Động cơ**, **Gửi cáo buộc**, **Thời gian điều tra**.
+- Create: **Tạo case** (generate), sections **Tổng quan** through **Đáp án**, **Khóa mật thư**, **Gợi ý** (required), **Chưa thể tạo vụ án**, **Logic hợp lệ**, **Tạo vụ án**. The creator does not pick required vs optional; `clueLockRole` does that at publish.
+- Publish: new cases stay **Private**. **Cửa hàng** → **Các case của tôi**, then the card flag and **Xác nhận**, switches the label to **Public**.
