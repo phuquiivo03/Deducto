@@ -309,6 +309,8 @@ Coordinate system:
 Board area
 ```
 
+Board width and height are not fixed. Each render takes the largest `entity.x` as width and the largest `entity.y` as height (those maxima may come from different cards). Sticky notes do not affect extent. With no entities, both dimensions are `0`.
+
 ### EntityCard.tsx
 
 Represents an entity on the board.

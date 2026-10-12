@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ZoomIn, ZoomOut } from "lucide-react";
 
 import {
@@ -18,8 +25,6 @@ import StickyNote from "./StickyNote";
 import ConnectionLines from "./ConnectionLines";
 import RelationshipPopover from "./RelationshipPopover";
 
-const BOARD_WIDTH = 1560;
-const BOARD_HEIGHT = 980;
 const MIN_BOARD_ZOOM = 0.25;
 const MAX_BOARD_ZOOM = 2;
 const ZOOM_STEP = 0.1;
@@ -28,6 +33,16 @@ type ScrollPoint = { left: number; top: number };
 
 function clampBoardZoom(value: number) {
   return Math.min(MAX_BOARD_ZOOM, Math.max(MIN_BOARD_ZOOM, value));
+}
+
+function boardExtent(entities: Record<string, Entity>) {
+  let width = 0;
+  let height = 0;
+  for (const entity of Object.values(entities)) {
+    if (entity.x > width) width = entity.x + 200;
+    if (entity.y > height) height = entity.y + 200;
+  }
+  return { width, height };
 }
 
 type DraftState = { fromId: string; x: number; y: number };
@@ -116,18 +131,15 @@ export default function BoardCanvas({
   const [draft, setDraft] = useState<DraftState | null>(null);
   const [picker, setPicker] = useState<PickerState | null>(null);
 
-  const clientToBoard = useCallback(
-    (clientX: number, clientY: number) => {
-      const rect = boardRef.current?.getBoundingClientRect();
-      if (!rect) return { x: 0, y: 0 };
-      const scale = zoomRef.current || 1;
-      return {
-        x: (clientX - rect.left) / scale,
-        y: (clientY - rect.top) / scale,
-      };
-    },
-    [],
-  );
+  const clientToBoard = useCallback((clientX: number, clientY: number) => {
+    const rect = boardRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    const scale = zoomRef.current || 1;
+    return {
+      x: (clientX - rect.left) / scale,
+      y: (clientY - rect.top) / scale,
+    };
+  }, []);
 
   const queueZoom = useCallback(
     (nextZoom: number, anchor?: { x: number; y: number }) => {
@@ -306,6 +318,11 @@ export default function BoardCanvas({
     ? relatedCardIds(relationships, focusedId)
     : null;
 
+  const { width: boardWidth, height: boardHeight } = useMemo(
+    () => boardExtent(entities),
+    [entities],
+  );
+
   const zoomPercent = Math.round(zoom * 100);
   const isMinZoom = zoom <= MIN_BOARD_ZOOM + 0.001;
   const isMaxZoom = zoom >= MAX_BOARD_ZOOM - 0.001;
@@ -316,15 +333,15 @@ export default function BoardCanvas({
         <div
           className="relative"
           style={{
-            width: BOARD_WIDTH * zoom,
-            height: BOARD_HEIGHT * zoom,
+            width: boardWidth * zoom,
+            height: boardHeight * zoom,
           }}
         >
           <div
             ref={boardRef}
             style={{
-              width: BOARD_WIDTH,
-              height: BOARD_HEIGHT,
+              width: boardWidth,
+              height: boardHeight,
               transform: `scale(${zoom})`,
               transformOrigin: "top left",
             }}
@@ -336,110 +353,110 @@ bg-[radial-gradient(#e5e0d8_1px,transparent_1px)]
 "
             onClick={handleBoardClick}
           >
-        <ConnectionLines
-          entities={entities}
-          relationships={relationships}
-          draft={draftLine}
-          activeId={picker?.mode === "edit" ? picker.relId : null}
-          focusedId={focusedId}
-          onLineClick={handleLineClick}
-        />
+            <ConnectionLines
+              entities={entities}
+              relationships={relationships}
+              draft={draftLine}
+              activeId={picker?.mode === "edit" ? picker.relId : null}
+              focusedId={focusedId}
+              onLineClick={handleLineClick}
+            />
 
-        {Object.values(entities).map((entity) => (
-          <EntityCard
-            key={entity.id}
-            entity={entity}
-            selected={selected === entity.id}
-            dimmed={
-              relatedIds !== null &&
-              entity.id !== focusedId &&
-              !relatedIds.has(entity.id)
-            }
-            scale={zoom}
-            onSelect={() => handleCardSelect(entity.id)}
-            onMove={(x, y) => {
-              setEntities((prev) => ({
-                ...prev,
+            {Object.values(entities).map((entity) => (
+              <EntityCard
+                key={entity.id}
+                entity={entity}
+                selected={selected === entity.id}
+                dimmed={
+                  relatedIds !== null &&
+                  entity.id !== focusedId &&
+                  !relatedIds.has(entity.id)
+                }
+                scale={zoom}
+                onSelect={() => handleCardSelect(entity.id)}
+                onMove={(x, y) => {
+                  setEntities((prev) => ({
+                    ...prev,
 
-                [entity.id]: {
-                  ...prev[entity.id],
+                    [entity.id]: {
+                      ...prev[entity.id],
 
-                  x,
+                      x,
 
-                  y,
-                },
-              }));
-            }}
-            onStartConnect={(e) => handleStartConnect(entity.id, e)}
-          />
-        ))}
+                      y,
+                    },
+                  }));
+                }}
+                onStartConnect={(e) => handleStartConnect(entity.id, e)}
+              />
+            ))}
 
-        {notes.map((note) => (
-          <StickyNote
-            key={note.id}
-            note={note}
-            scale={zoom}
-            onMove={(x, y) => {
-              setNotes((prev) =>
-                prev.map((n) =>
-                  n.id === note.id
-                    ? {
-                        ...n,
+            {notes.map((note) => (
+              <StickyNote
+                key={note.id}
+                note={note}
+                scale={zoom}
+                onMove={(x, y) => {
+                  setNotes((prev) =>
+                    prev.map((n) =>
+                      n.id === note.id
+                        ? {
+                            ...n,
 
-                        x,
+                            x,
 
-                        y,
-                      }
-                    : n,
-                ),
-              );
-            }}
-            onDelete={() => {
-              setNotes((prev) => prev.filter((n) => n.id !== note.id));
-            }}
-            onChange={(text) => {
-              setNotes((prev) =>
-                prev.map((n) =>
-                  n.id === note.id
-                    ? {
-                        ...n,
+                            y,
+                          }
+                        : n,
+                    ),
+                  );
+                }}
+                onDelete={() => {
+                  setNotes((prev) => prev.filter((n) => n.id !== note.id));
+                }}
+                onChange={(text) => {
+                  setNotes((prev) =>
+                    prev.map((n) =>
+                      n.id === note.id
+                        ? {
+                            ...n,
 
-                        text,
-                      }
-                    : n,
-                ),
-              );
-            }}
-          />
-        ))}
+                            text,
+                          }
+                        : n,
+                    ),
+                  );
+                }}
+              />
+            ))}
 
-        {picker && (
-          <RelationshipPopover
-            key={
-              picker.mode === "create"
-                ? `create-${picker.a}-${picker.b}`
-                : `edit-${picker.relId}`
-            }
-            x={picker.x}
-            y={picker.y}
-            current={pickerCurrent}
-            currentLabel={pickerLabel}
-            onClose={() => setPicker(null)}
-            onSave={(status, label) => {
-              if (picker.mode === "create") {
-                onSetPairStatus(picker.a, picker.b, status, label);
-              } else {
-                onUpdateRelationship(picker.relId, status, label);
-              }
-              setPicker(null);
-            }}
-            onRemove={
-              picker.mode === "edit"
-                ? () => onRemoveRelationship(picker.relId)
-                : undefined
-            }
-          />
-        )}
+            {picker && (
+              <RelationshipPopover
+                key={
+                  picker.mode === "create"
+                    ? `create-${picker.a}-${picker.b}`
+                    : `edit-${picker.relId}`
+                }
+                x={picker.x}
+                y={picker.y}
+                current={pickerCurrent}
+                currentLabel={pickerLabel}
+                onClose={() => setPicker(null)}
+                onSave={(status, label) => {
+                  if (picker.mode === "create") {
+                    onSetPairStatus(picker.a, picker.b, status, label);
+                  } else {
+                    onUpdateRelationship(picker.relId, status, label);
+                  }
+                  setPicker(null);
+                }}
+                onRemove={
+                  picker.mode === "edit"
+                    ? () => onRemoveRelationship(picker.relId)
+                    : undefined
+                }
+              />
+            )}
           </div>
         </div>
       </div>
