@@ -10,6 +10,7 @@ import BoardCanvas from "./BoardCanvas";
 import InspectorPanel from "./InspectorPanel";
 import GridView from "./GridView";
 import MobileNav from "./MobileNav";
+import { createBoardNote } from "./create-board-note";
 
 import {
   findRelationshipByPair,
@@ -105,6 +106,11 @@ export default function DetectiveBoard() {
     });
   };
 
+  const handleAddNote = () => {
+    setView("board");
+    setNotes((prev) => [...prev, createBoardNote(prev.length)]);
+  };
+
   useEffect(() => {
     if (!game) return;
     setEntities(gameToEntities(game));
@@ -179,7 +185,12 @@ flex-col
 min-w-0
 "
           >
-            <BoardToolbar view={view} setView={setView} entities={entities} />
+            <BoardToolbar
+              view={view}
+              setView={setView}
+              entities={entities}
+              onAddNote={handleAddNote}
+            />
 
             {view === "board" && (
               <BoardCanvas
