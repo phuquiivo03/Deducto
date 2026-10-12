@@ -1,6 +1,6 @@
 import { sampleIds } from "@/data/sample-ids";
 
-export const SAMPLE_CASE_PATH = `/case/${sampleIds.game}`;
+export const SAMPLE_CASE_PATH = `/case/07a0b4cd-56cf-4b3c-8a93-2c220b8fa2ed`;
 
 export const GUIDE_STEPS = [
   {
