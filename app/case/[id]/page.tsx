@@ -2,6 +2,12 @@ import CaseSession from "@/components/case/case-session";
 import { isGameNotFound } from "@/features/game/game-errors";
 import type { IGame } from "@/features/game/game.schemas";
 import gameServices from "@/features/game/game.services";
+import submissionRepositories from "@/features/submission/submission.repositories";
+import {
+  rankSubmissions,
+  type LeaderboardRow,
+} from "@/features/submission/submission.schemas";
+import { getSessionUserId } from "@/features/user/user.auth";
 import { applySamplePuzzles } from "@/features/puzzles/apply-sample-puzzles";
 import { presentGameForPlayer } from "@/features/puzzles/present-game";
 import { notFound, unstable_rethrow } from "next/navigation";
@@ -12,9 +18,14 @@ interface PageProps {
   }>;
 }
 
-async function loadCase(id: string): Promise<IGame | null> {
+async function loadCase(
+  id: string,
+): Promise<{ game: IGame; leaderboard: LeaderboardRow[] } | null> {
   try {
-    return await gameServices.getById(id);
+    const game = await gameServices.getById(id);
+    const viewerId = await getSessionUserId();
+    const solves = await submissionRepositories.findByGame(game.id);
+    return { game, leaderboard: rankSubmissions(solves, viewerId) };
   } catch (error) {
     unstable_rethrow(error);
     if (isGameNotFound(error)) return null;
@@ -24,15 +35,16 @@ async function loadCase(id: string): Promise<IGame | null> {
 
 export default async function CasePage({ params }: PageProps) {
   const { id } = await params;
-  const game = await loadCase(id);
-  if (!game) {
+  const loaded = await loadCase(id);
+  if (!loaded) {
     notFound();
   }
 
   return (
     <CaseSession
-      key={game.id}
-      game={presentGameForPlayer(applySamplePuzzles(game))}
+      key={loaded.game.id}
+      game={presentGameForPlayer(applySamplePuzzles(loaded.game))}
+      leaderboard={loaded.leaderboard}
     />
   );
 }

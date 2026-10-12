@@ -1041,3 +1041,12 @@ Button and step names follow the live UI:
 - Play: **Cửa hàng**, **Tệp case**, **Tiếp tục với Google**, **Bắt đầu điều tra**, **Manh mối**, **Bảng điều tra**, **Bộ giải mật mã**, **Caesar**, **Scytale**, **Gợi ý**, **Cáo buộc**, **Hung thủ**, **Hung khí**, **Hiện trường**, **Động cơ**, **Gửi cáo buộc**, **Thời gian điều tra**.
 - Create: **Tạo case** (generate), sections **Tổng quan** through **Đáp án**, **Khóa mật thư**, **Gợi ý** (required), **Chưa thể tạo vụ án**, **Logic hợp lệ**, **Tạo vụ án**. The creator does not pick required vs optional; `clueLockRole` does that at publish.
 - Publish: new cases stay **Private**. **Cửa hàng** → **Các case của tôi**, then the card flag and **Xác nhận**, switches the label to **Public**.
+
+---
+
+# 23. Per-case leaderboard
+
+- The case file screen lists solves under the case introduction, before **Bắt đầu điều tra**.
+- Rank is `user_submissions.time_taken`, ascending. A row exists only after a player solves the case. The list is the top 10, plus the signed-in player when their rank is outside that page.
+- `submissionRepositories.findByGame` reads those rows. The page calls it only after `getById`, so a private case keeps the existing read rule. The Data API still lets a player select only their own submission, so this read uses the service role and returns the display name and time.
+- A signed-out player sees `GoogleLoginButton` (**Tiếp tục với Google**) in place of **Bắt đầu điều tra**. Sign-in uses the current case path as `next`, so the callback returns to that case.

@@ -2,14 +2,22 @@
 
 import { useEffect, useState } from "react";
 
+import CaseLeaderboard from "@/components/case/case-leaderboard";
 import DetectiveBoard from "@/components/detective-board/DetectiveBoard";
 import Container from "@/components/layout/Container";
 import IntroCard from "@/components/ui/IntroCard";
 import type { IGame } from "@/features/game/game.schemas";
+import type { LeaderboardRow } from "@/features/submission/submission.schemas";
 import { caseFileFromGame } from "@/lib/case-file";
 import { useGameStore } from "@/store/game.store";
 
-export default function CaseSession({ game }: { game: IGame }) {
+export default function CaseSession({
+  game,
+  leaderboard,
+}: {
+  game: IGame;
+  leaderboard: LeaderboardRow[];
+}) {
   const setGame = useGameStore((state) => state.setGame);
   const setIsSolved = useGameStore((state) => state.setIsSolved);
   const startClock = useGameStore((state) => state.startClock);
@@ -45,18 +53,21 @@ export default function CaseSession({ game }: { game: IGame }) {
   };
 
   return (
-    <main className="h-screen overflow-hidden">
+    <main className={started ? "h-screen overflow-hidden" : "min-h-screen"}>
       {started ? (
         <DetectiveBoard />
       ) : (
         <Container>
-          <IntroCard
-            title={file.title}
-            description={file.description}
-            difficulty={file.difficulty}
-            victim={file.victim}
-            start={handleStart}
-          />
+          <div className="space-y-6">
+            <IntroCard
+              title={file.title}
+              description={file.description}
+              difficulty={file.difficulty}
+              victim={file.victim}
+              start={handleStart}
+            />
+            <CaseLeaderboard entries={leaderboard} />
+          </div>
         </Container>
       )}
     </main>

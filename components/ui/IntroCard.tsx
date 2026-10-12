@@ -1,8 +1,12 @@
 "use client";
 
-import { useAuthUser } from "@/hooks/use-auth-user";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
+import GoogleLoginButton from "@/components/ui/GoogleLoginButton";
 import { StickyTag } from "@/components/ui/sticky-tag";
+import { signInWithGoogle } from "@/features/user/user.sign-in";
+import { useAuthUser } from "@/hooks/use-auth-user";
 
 import Card from "./Card";
 
@@ -13,6 +17,7 @@ export default function IntroCard({
   victim,
   start,
   disabled = false,
+  startError = null,
 }: {
   title: string;
   description: string;
@@ -20,8 +25,23 @@ export default function IntroCard({
   victim: string;
   start: () => void;
   disabled?: boolean;
+  startError?: string | null;
 }) {
   const { user, isLoading } = useAuthUser();
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [signInError, setSignInError] = useState<string | null>(null);
+  const showLogin = !user && !isLoading;
+
+  const handleGoogleSignIn = async () => {
+    setSignInError(null);
+    setIsSigningIn(true);
+    try {
+      await signInWithGoogle();
+    } catch {
+      setSignInError("Không thể đăng nhập bằng Google.");
+      setIsSigningIn(false);
+    }
+  };
 
   return (
     <Card decoration="tack" tone="postit" tilt="left" className="mb-0">
@@ -45,16 +65,29 @@ export default function IntroCard({
       </div>
 
       <div className="mt-6 space-y-4">
-        <Button
-          type="button"
-          onClick={start}
-          disabled={disabled || !user}
-          className="w-full"
-        >
-          Bắt đầu điều tra
-        </Button>
+        {showLogin ? (
+          <GoogleLoginButton
+            onClick={handleGoogleSignIn}
+            isSigningIn={isSigningIn}
+          />
+        ) : (
+          <Button
+            type="button"
+            onClick={start}
+            disabled={disabled || !user}
+            className="w-full"
+          >
+            Bắt đầu điều tra
+          </Button>
+        )}
 
-        {!user && !isLoading ? (
+        {startError || signInError ? (
+          <p className="text-sm text-marker text-center" role="alert">
+            {startError ?? signInError}
+          </p>
+        ) : null}
+
+        {showLogin ? (
           <p className="text-sm text-pencil/60 text-center">
             Đăng nhập với Google để chơi và lưu lại các case đã giải quyết.
           </p>
