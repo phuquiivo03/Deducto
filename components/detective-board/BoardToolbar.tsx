@@ -15,6 +15,7 @@ interface Props {
   view: "board" | "grid";
   setView: (v: "board" | "grid") => void;
   entities: Record<string, Entity>;
+  onAddNote: () => void;
 }
 
 function GameClock() {
@@ -38,7 +39,12 @@ font-heading text-pencil tabular-nums
   );
 }
 
-export default function BoardToolbar({ view, setView, entities }: Props) {
+export default function BoardToolbar({
+  view,
+  setView,
+  entities,
+  onAddNote,
+}: Props) {
   const [accusationOpen, setAccusationOpen] = useState(false);
   const { isSolved } = useGameStore();
   return (
@@ -91,6 +97,7 @@ flex bg-erased/50 rounded-wobbly-sm p-1 gap-1 border-2 border-pencil
 
           <button
             type="button"
+            onClick={onAddNote}
             className={buttonClassName({
               variant: "secondary",
               size: "sm",

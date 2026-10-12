@@ -260,9 +260,14 @@ Clock:
 - Stops when this session solves the case (`freezeClock`)
 - The stopped elapsed seconds are sent as `time_taken` with the accusation
 
+Add note:
+
+- `+ Thêm ghi chú` calls `onAddNote`
+- `DetectiveBoard` appends a blank `Note` from `createBoardNote` and shows the board
+- `BoardCanvas` renders that note with the existing `StickyNote`
+
 Future extensions:
 
-- Add note
 - Reset board
 - Export board
 
@@ -940,7 +945,7 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 
 - `TopBar` title is `game.title`. The denominator is `relationshipCapacityForGame` (one confirmed link per row in each of the six cross-type grids).
 - `CaseBrief`, directly under `TopBar`, shows that case’s description on the board and in the grid. It stays on screen while cards, clues, and the inspector change.
-- A fresh board starts with no sticky notes. The old “Probably Violet…” seed is not copied onto every case.
+- A fresh board starts with no sticky notes. The old “Probably Violet…” seed is not copied onto every case. `+ Thêm ghi chú` adds a blank note on the board.
 - Entity cards use `entityTypeLabel`. Motive cards say “Motive”.
 - Grid headings cover suspect×motive, weapon×motive, and location×motive as well as the original three blocks.
 - Opening a case resets `isSolved` before `/api/game/[id]/resolved` answers, so a previous solve does not stick to the next case.
