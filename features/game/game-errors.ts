@@ -12,12 +12,11 @@ export class CaseNotSolvableError extends Error {
   }
 }
 
-/** Rows in `games` for one creator. Deleting a row frees a slot. */
+/** Rows in `games` for one creator. */
 export const MAX_OWNED_CASES = 5;
 
 export const OWNED_CASE_LIMIT_MESSAGE =
-  `Mỗi tài khoản chỉ được sở hữu tối đa ${MAX_OWNED_CASES} vụ án. ` +
-  "Xóa một vụ án để tạo thêm.";
+  `Mỗi tài khoản chỉ được sở hữu tối đa ${MAX_OWNED_CASES} vụ án.`;
 
 export class OwnedCaseLimitError extends Error {
   constructor() {
