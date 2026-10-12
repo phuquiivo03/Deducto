@@ -763,6 +763,7 @@ Prisma-created tables need explicit `GRANT` for Supabase API roles (`anon`, `aut
 - **Create case** validates with `createGameInputSchema` (Zod + reference checks), then `POST /api/game`.
 - On the clue step the creator can lock any clue and pick a kind from `listPuzzleKinds()` (Scytale today). **Gợi ý khóa** selects one sensible clue (a clue the case cannot lose, otherwise the longest sentence a registered kind can wrap). The client sends `locks: [{ clueId, kind }]`. It does not send a cipher, a diameter, or a role.
 - On success, Prisma creates `game_metadata` (nested suspects, weapons, locations, motives, clues), `games`, and `results` in one transaction. AI ids are remapped to new UUIDs in `features/game/game.repositories.ts` (`createGame`). Locked clues store the server-built `puzzle` jsonb.
+- Each account may own at most 5 cases (`games` rows with that `creator_id`). `createGame` takes `pg_advisory_xact_lock` on the user, counts, then inserts in that same transaction, so concurrent creates cannot both pass the check. A sixth case returns **403** and `Mỗi tài khoản chỉ được sở hữu tối đa 5 vụ án.` The create wizard does not check the limit; it shows the API message.
 - Client redirects to `/case/{id}`.
 
 ## API
