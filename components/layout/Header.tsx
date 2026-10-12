@@ -38,6 +38,8 @@ hover:text-pen transition-colors
         >
           Tạo case
         </Link>
+      </nav>
+      <div className="flex items-center gap-4">
         <Link
           href="/guide"
           aria-label="Hướng dẫn"
@@ -54,8 +56,8 @@ transition-colors
         >
           ?
         </Link>
-      </nav>
-      <BoardProfile />
+        <BoardProfile />
+      </div>
     </header>
   );
 }
