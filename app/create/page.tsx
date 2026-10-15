@@ -1,3 +1,4 @@
+import CreateCaseGuide from '@/components/create-game/create-case-guide'
 import CreateGameWizard from '@/components/create-game/CreateGameWizard'
 import Header from '@/components/layout/Header'
 import { SiteFooter } from '@/components/layout/site-footer'
@@ -7,6 +8,9 @@ export default function CreateGamePage() {
 		<div className="min-h-dvh bg-paper text-pencil">
 			<Header />
 			<main className="w-full max-w-5xl mx-auto px-6 py-20">
+				<div className="mb-4 flex justify-end">
+					<CreateCaseGuide />
+				</div>
 				<CreateGameWizard />
 			</main>
 			<SiteFooter />

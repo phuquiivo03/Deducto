@@ -264,7 +264,7 @@ Clock:
 
 Guide (`board-guide.tsx`):
 
-- A paper `?` sits to the left of the board/grid switch. It pulses until the player opens the guide once. The flag is `localStorage` key `deducto-board-guide-opened`.
+- A paper `?` (`HelpMark` in `components/ui/help-mark.tsx`) sits to the left of the board/grid switch. It pulses until the player opens the guide once. The flag is `localStorage` key `deducto-board-guide-opened`. The same button is used on `/create`.
 - Opening it starts a six-step tour with back, next, skip, and a `1 / 6` counter. The last next closes the tour. Escape skips.
 - Steps 1–4 show a clip from `public/guide/` (`step1.gif`, `step2.mp4`, `step3.gif`, `step4.gif`) and a Vietnamese sentence. The mp4 autoplays, muted, looping, and inline. If a file is missing, that step shows only the sentence.
 - Step 5 highlights the toolbar clock ("Thời gian phá án sẽ được ghi nhận"). Step 6 highlights the Cáo buộc button ("Khi đã có đủ chứng cứ, hãy buộc tội hung thủ").
@@ -772,6 +772,7 @@ Prisma-created tables need explicit `GRANT` for Supabase API roles (`anon`, `aut
 ## Flow
 
 - Page: `app/create/page.tsx` → client `CreateGameWizard`.
+- A `HelpMark` `?` sits above the wizard. It pulses until opened once (`localStorage` key `deducto-create-guide-opened`, separate from the board). Opening it shows `https://www.youtube-nocookie.com/embed/voTqUdLTCp4` with `autoplay=1`. Closing the modal unmounts the iframe, which stops playback.
 - Signed-in users enter a prompt and difficulty, then **Generate case** (`POST /api/generate`).
 - **Hybrid generation:** Bedrock (Nova 2 Lite) returns **story + entities only** — see `infrastructure/ai/system_prompt.md` (`aiCaseDraftSchema` in `features/game/game.schemas.ts`). `normalizeDraft` in `features/game/case-draft.ts` remaps short ids to UUIDs and fixes attribute distributions. `generateCaseLogic` in `features/game/case-generator.ts` builds a hidden world, A1 anchors, and clues, looping on `solveCase` until the tuple is unique. The API still responds with `{ game, result }` (`IGeneratedCase`). Story text is **Vietnamese**; schema enums stay English. Clue sentences are mixed VI/EN per `lib/clues.helper.ts`. Draft JSON is parsed via `lib/extract-json.ts`; invalid entity drafts retry once against Bedrock.
 - The draft lives in Zustand `store/create-game.store.ts`. Users edit overview fields, entities, clues (template-based), and the solution tuple.
