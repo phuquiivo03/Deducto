@@ -121,16 +121,19 @@ const CREATE_STEPS: Step[] = [
 		body: (
 			<>
 				Mỗi manh mối có <Ui>Che bằng thuộc tính</Ui>, cạnh{' '}
-				<Ui>Khóa mật thư</Ui>. Bật lên thì câu gốc bị giấu. Người
-				chơi thấy câu thuộc tính nói vòng — ví dụ{' '}
-				<Ui>Ann không sử dụng Dao lam</Ui> thành{' '}
-				<Ui>Người không sử dụng Dao lam thuận tay trái</Ui> và{' '}
-				<Ui>Ann là người duy nhất thuận tay trái</Ui>. Hệ thống
-				chọn bộ thuộc tính nhỏ nhất để nhận ra đúng thẻ; bạn được
-				thêm hoặc bớt. Bộ đó phải chỉ đúng một nghi phạm, hung khí
-				hoặc địa điểm, và cả vụ án vẫn còn đúng một đáp án thì
-				mới lưu được. Máy chủ kiểm tra lại. Từng câu thay thế
-				vẫn khóa mật thư được.
+				<Ui>Khóa mật thư</Ui>. Bật lên thì câu gốc bị giấu, thay
+				bằng một câu. Ví dụ{' '}
+				<Ui>Anh Minh không dùng Thước gỗ</Ui> thành{' '}
+				<Ui>
+					Người không sử dụng Thước gỗ thuận tay trái và có
+					tóc đen.
+				</Ui>{' '}
+				Hung khí và địa điểm cũng một câu, lấy thuộc tính đang
+				in trên thẻ. Người chơi tự nhận ra thẻ nào. Hệ thống
+				chọn bộ nhỏ nhất mà chỉ một thẻ khớp; bạn được sửa. Bộ
+				đó phải chỉ đúng một thẻ, và vụ án vẫn còn một đáp án,
+				thì mới lưu được. Máy chủ kiểm tra lại. Câu đó vẫn khóa
+				mật thư được.
 			</>
 		),
 	},
@@ -139,7 +142,7 @@ const CREATE_STEPS: Step[] = [
 		body: (
 			<>
 				Mỗi câu người chơi thấy có <Ui>Khóa mật thư</Ui>, kể cả
-				câu vừa che bằng thuộc tính. Tắt khóa thì câu hiện thẳng.
+				câu che bằng thuộc tính. Tắt khóa thì câu hiện thẳng.
 				Bật khóa thì chọn <Ui>Scytale</Ui> hoặc <Ui>Caesar</Ui>.{' '}
 				<Ui>Gợi ý</Ui> là bắt buộc nhập. Hệ thống tự gắn khóa là
 				bắt buộc hay tuỳ chọn khi bạn tạo vụ án.

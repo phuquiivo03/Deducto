@@ -12,8 +12,7 @@ import type { PuzzleLockDraft } from '@/features/puzzles/lock-request'
 import { suggestPuzzleLock } from '@/features/puzzles/suggest-lock'
 import {
 	expandAttributeVeils,
-	veilOnlyId,
-	veilRoleId,
+	veilClueId,
 	type AttributeVeilDraft,
 } from '@/lib/attribute-veil'
 export type CreatePhase = 'prompt' | 'generating' | 'editing' | 'submitting'
@@ -295,7 +294,7 @@ export function newClueId(): string {
 }
 
 function isVeilLock (lockId: string, clueId: string): boolean {
-	return lockId === veilRoleId(clueId) || lockId === veilOnlyId(clueId)
+	return lockId === veilClueId(clueId)
 }
 
 function isClueLock (lockId: string, clueId: string): boolean {

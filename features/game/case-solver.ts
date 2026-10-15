@@ -15,10 +15,10 @@ import {
 } from '@/lib/attribute-rules'
 import { detectTemplate } from '@/lib/clue-templates'
 import {
+	filtersAreVisible,
 	matchingIds,
 	parseVeil,
 	readVeilAttribute,
-	type VeilKind,
 } from '@/lib/attribute-veil'
 
 import { CaseNotSolvableError } from './game-errors'
@@ -541,13 +541,10 @@ function applyAttributeVeil (
 		return true
 	}
 	const ids = matchingIds(metadata, body.kind, body.filters)
-	if (body.role === 'only') {
-		const linked = veilEntityId(clue, body.kind)
-		if (!linked || ids.length !== 1 || ids[0] !== linked) {
-			constraints.issues.push(
-				`${label} does not uniquely identify its subject.`,
-			)
-		}
+	if (!filtersAreVisible(body) || ids.length !== 1) {
+		constraints.issues.push(
+			`${label} does not uniquely identify its subject.`,
+		)
 		return true
 	}
 	if (body.role === 'fact') {
@@ -567,10 +564,6 @@ function applyAttributeVeil (
 		if (actual !== body.fact.v) {
 			constraints.issues.push(`${label} disagrees with the card.`)
 		}
-		return true
-	}
-	if (ids.length === 0) {
-		constraints.issues.push(`${label} matches nobody in this case.`)
 		return true
 	}
 	if (body.role === 'at-location' || body.role === 'ban-location') {
@@ -649,12 +642,6 @@ function applyAttributeVeil (
 	}
 	constraints.issues.push(`${label} is not a supported deduction rule.`)
 	return true
-}
-
-function veilEntityId (clue: IClue, kind: VeilKind): string | undefined {
-	if (kind === 'suspect') return clue.suspect_id
-	if (kind === 'weapon') return clue.weapon_id
-	return clue.location_id
 }
 
 function applyClue (

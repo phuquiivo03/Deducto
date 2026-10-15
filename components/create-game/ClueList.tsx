@@ -12,9 +12,8 @@ import {
   suggestVeilAttributes,
   veilAttributeOptions,
   veilBlockReason,
-  veilOnlyId,
+  veilClueId,
   veilPreview,
-  veilRoleId,
 } from "@/lib/attribute-veil";
 import { newClueId, useCreateGameStore } from "@/store/create-game.store";
 import type { PuzzleLockDraft } from "@/features/puzzles/lock-request";
@@ -108,8 +107,8 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
         </div>
       </div>
       <p className="text-sm text-pencil/70">
-        Che bằng thuộc tính giấu câu gốc và thay bằng câu thuộc tính
-        nói vòng. Khóa mật thư giấu câu bằng Caesar hoặc Scytale (gợi
+        Che bằng thuộc tính giấu câu gốc và thay bằng một câu thuộc
+        tính. Khóa mật thư giấu câu bằng Caesar hoặc Scytale (gợi
         ý là bắt buộc). Máy chủ tạo mật mã khi bạn tạo vụ án.
       </p>
       {suggestNote ? (
@@ -222,21 +221,8 @@ shadow-paper -rotate-1
                   {shown.role ? (
                     <PlayerLine
                       text={shown.role}
-                      clueId={veilRoleId(clue.id)}
+                      clueId={veilClueId(clue.id)}
                       index={index}
-                      which="vai"
-                      locks={locks}
-                      kinds={kinds}
-                      defaultKind={defaultKind}
-                      onLock={handleSetLock}
-                    />
-                  ) : null}
-                  {shown.only ? (
-                    <PlayerLine
-                      text={shown.only}
-                      clueId={veilOnlyId(clue.id)}
-                      index={index}
-                      which="duy nhất"
                       locks={locks}
                       kinds={kinds}
                       defaultKind={defaultKind}
@@ -289,7 +275,6 @@ function PlayerLine({
   text,
   clueId,
   index,
-  which,
   locks,
   kinds,
   defaultKind,
@@ -298,7 +283,6 @@ function PlayerLine({
   text: string;
   clueId: string;
   index: number;
-  which: string;
   locks: PuzzleLockDraft[];
   kinds: { kind: PuzzleKind; label: string }[];
   defaultKind: PuzzleKind | undefined;
@@ -311,7 +295,7 @@ function PlayerLine({
         <CipherLock
           clueId={clueId}
           index={index}
-          label={`Khóa mật thư (${which})`}
+          label="Khóa mật thư"
           lock={locks.find((item) => item.clueId === clueId)}
           kinds={kinds}
           defaultKind={defaultKind}

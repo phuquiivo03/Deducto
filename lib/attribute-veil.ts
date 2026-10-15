@@ -1,6 +1,5 @@
 import type { ClueAttribute, IClue, IGameMetadata } from '@/features/game/game.schemas'
 import {
-	SUSPECT_RULE_ATTRIBUTES,
 	WEAPON_RULE_ATTRIBUTES,
 	attributeLabel,
 	isSuspectRuleAttribute,
@@ -27,7 +26,6 @@ export type VeilRole =
 	| 'weapon-not-at'
 	| 'anchor-location'
 	| 'fact'
-	| 'only'
 
 export interface VeilFilter {
 	a: string
@@ -45,7 +43,6 @@ export interface VeilBody {
 
 export interface VeilPreview {
 	role: string
-	only: string
 	unique: boolean
 	message: string | null
 }
@@ -80,13 +77,12 @@ const ROLES = new Set<string>([
 	'weapon-not-at',
 	'anchor-location',
 	'fact',
-	'only',
 ])
 
 interface VeilPlan {
 	kind: VeilKind
 	entityId: string
-	role: Exclude<VeilRole, 'only'>
+	role: VeilRole
 	refs: {
 		weapon_id?: string
 		location_id?: string
@@ -96,13 +92,29 @@ interface VeilPlan {
 	keys: readonly string[]
 }
 
-export function veilRoleId (clueId: string): string {
-	return `${clueId}:veil:role`
+export function veilClueId (clueId: string): string {
+	return `${clueId}:veil`
 }
 
-export function veilOnlyId (clueId: string): string {
-	return `${clueId}:veil:only`
+export function filtersAreVisible (body: VeilBody): boolean {
+	const keys =
+		body.kind === 'suspect'
+			? SUSPECT_KEYS
+			: body.kind === 'weapon'
+				? WEAPON_RULE_ATTRIBUTES
+				: LOCATION_KEYS
+	return body.filters.every((filter) =>
+		(keys as readonly string[]).includes(filter.a),
+	)
 }
+
+/** Card facts a player can see. Gender is not printed on the card. */
+const SUSPECT_KEYS = [
+	'handedness',
+	'height',
+	'hairColor',
+	'birthday',
+] as const
 
 export function parseVeil (value: string): VeilBody | null {
 	if (!value.startsWith('{"v":1')) return null
@@ -243,14 +255,12 @@ export function veilPreview (
 	if (!built.filters) {
 		return {
 			role: '',
-			only: '',
 			unique: false,
 			message: built.message,
 		}
 	}
 	return {
 		role: roleSentence(metadata, plan, built.filters),
-		only: onlySentence(metadata, plan, built.filters),
 		unique: built.unique,
 		message: built.unique ? null : built.message,
 	}
@@ -269,9 +279,8 @@ export function expandAttributeVeils (
 			return { ok: false, message: 'Mỗi manh mối chỉ che một lần.' }
 		}
 		seen.add(veil.clueId)
-		const roleId = veilRoleId(veil.clueId)
-		const onlyId = veilOnlyId(veil.clueId)
-		if (taken.has(roleId) || taken.has(onlyId)) {
+		const roleId = veilClueId(veil.clueId)
+		if (taken.has(roleId)) {
 			return { ok: false, message: 'Mã manh mối che bị trùng.' }
 		}
 		const clue = metadata.clues.find((item) => item.id === veil.clueId)
@@ -301,12 +310,6 @@ export function veilClueText (
 	const body = parseVeil(clue.value)
 	if (!body) return null
 	const phrase = phraseOf(body.kind, body.filters)
-	if (body.role === 'only') {
-		const name =
-			nameOf(metadata, body.kind, entityIdOf(clue, body.kind)) ??
-			'Thẻ'
-		return onlyLine(body.kind, name, phrase)
-	}
 	const location =
 		metadata.locations.find((item) => item.id === clue.location_id)
 			?.name ?? 'địa điểm'
@@ -347,32 +350,14 @@ function buildVeilClues (
 	}
 	if (plan.motive) roleBody.motive = plan.motive
 	if (plan.fact) roleBody.fact = plan.fact
-	const onlyBody: VeilBody = {
-		v: 1,
-		kind: plan.kind,
-		role: 'only',
-		filters,
-	}
-	const onlyRefs =
-		plan.kind === 'suspect'
-			? { suspect_id: plan.entityId }
-			: plan.kind === 'weapon'
-				? { weapon_id: plan.entityId }
-				: { location_id: plan.entityId }
 	return {
 		ok: true,
 		clues: [
 			makeClue(
-				veilRoleId(clue.id),
+				veilClueId(clue.id),
 				attribute,
 				encode(roleBody),
 				plan.refs,
-			),
-			makeClue(
-				veilOnlyId(clue.id),
-				attribute,
-				encode(onlyBody),
-				onlyRefs,
 			),
 		],
 	}
@@ -499,7 +484,7 @@ function planOf (
 				'suspect',
 				suspectId,
 				clue,
-				SUSPECT_RULE_ATTRIBUTES,
+				SUSPECT_KEYS,
 			)
 		}
 		if (weaponId) {
@@ -527,7 +512,7 @@ function suspectPlan (
 		entityId,
 		role,
 		refs,
-		keys: SUSPECT_RULE_ATTRIBUTES,
+		keys: SUSPECT_KEYS,
 	}
 }
 
@@ -647,9 +632,9 @@ function roleLine (
 		case 'ban-motive':
 			return `Người không có động cơ là ${body.motive} ${phrase}.`
 		case 'weapon-at':
-			return `Hung khí ${phrase} được tìm thấy ở ${location}.`
+			return `Hung khí được tìm thấy ở ${location} ${phrase}.`
 		case 'weapon-not-at':
-			return `Hung khí ${phrase} không được tìm thấy ở ${location}.`
+			return `Hung khí không được tìm thấy ở ${location} ${phrase}.`
 		case 'anchor-location':
 			return `Hiện trường gây án ${phrase}.`
 		case 'fact': {
@@ -668,25 +653,6 @@ function roleLine (
 		default:
 			return phrase
 	}
-}
-
-function onlySentence (
-	metadata: IGameMetadata,
-	plan: VeilPlan,
-	filters: readonly VeilFilter[],
-): string {
-	const name = nameOf(metadata, plan.kind, plan.entityId) ?? 'Thẻ'
-	return onlyLine(plan.kind, name, phraseOf(plan.kind, filters))
-}
-
-function onlyLine (kind: VeilKind, name: string, phrase: string): string {
-	if (kind === 'weapon') {
-		return `${name} là hung khí duy nhất ${phrase}.`
-	}
-	if (kind === 'location') {
-		return `${name} là địa điểm duy nhất ${phrase}.`
-	}
-	return `${name} là người duy nhất ${phrase}.`
 }
 
 function phraseOf (
@@ -717,27 +683,6 @@ function joinVi (parts: string[]): string {
 	if (parts.length <= 1) return parts[0] ?? ''
 	if (parts.length === 2) return `${parts[0]} và ${parts[1]}`
 	return `${parts.slice(0, -1).join(', ')} và ${parts[parts.length - 1]}`
-}
-
-function nameOf (
-	metadata: IGameMetadata,
-	kind: VeilKind,
-	id: string | undefined,
-): string | null {
-	if (!id) return null
-	const items =
-		kind === 'suspect'
-			? metadata.suspects
-			: kind === 'weapon'
-				? metadata.weapons
-				: metadata.locations
-	return items.find((item) => item.id === id)?.name ?? null
-}
-
-function entityIdOf (clue: IClue, kind: VeilKind): string | undefined {
-	if (kind === 'suspect') return clue.suspect_id
-	if (kind === 'weapon') return clue.weapon_id
-	return clue.location_id
 }
 
 function makeClue (
