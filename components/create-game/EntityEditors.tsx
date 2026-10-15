@@ -149,14 +149,13 @@ function SuspectFields({
             required
           >
             <option value="">Chọn…</option>
-            {withCurrent(
-              ["female", "male", "nonbinary"],
-              suspect.gender,
-            ).map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
+            {withCurrent(["female", "male", "nonbinary"], suspect.gender).map(
+              (value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ),
+            )}
           </select>
         </FieldShell>
       </div>
@@ -171,12 +170,11 @@ function SuspectFields({
           value={suspect.attributes?.height ?? ""}
           onChange={(e) =>
             updateAttributes("suspects", suspect.id, {
-              height: e.target.value === "" ? undefined : Number(e.target.value),
+              height:
+                e.target.value === "" ? undefined : Number(e.target.value),
             })
           }
-          className={inputClass(
-            typeof suspect.attributes?.height !== "number",
-          )}
+          className={inputClass(typeof suspect.attributes?.height !== "number")}
         />
       </FieldShell>
       <FieldShell
@@ -221,14 +219,13 @@ function SuspectFields({
           className={inputClass(!suspect.attributes?.handedness)}
         >
           <option value="">Chọn…</option>
-          {withCurrent(
-            ["LEFT", "RIGHT"],
-            suspect.attributes?.handedness,
-          ).map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
+          {withCurrent(["LEFT", "RIGHT"], suspect.attributes?.handedness).map(
+            (value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ),
+          )}
         </select>
       </FieldShell>
       <FieldShell
@@ -417,14 +414,13 @@ function LocationFields({
           className={inputClass(!location.attributes?.type?.trim())}
         >
           <option value="">Chọn…</option>
-          {withCurrent(
-            ["indoor", "outdoor"],
-            location.attributes?.type,
-          ).map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
+          {withCurrent(["indoor", "outdoor"], location.attributes?.type).map(
+            (value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ),
+          )}
         </select>
       </FieldShell>
       <FieldShell
@@ -440,9 +436,7 @@ function LocationFields({
               characteristic: e.target.value,
             })
           }
-          className={inputClass(
-            !location.attributes?.characteristic?.trim(),
-          )}
+          className={inputClass(!location.attributes?.characteristic?.trim())}
         />
       </FieldShell>
     </>
@@ -519,8 +513,8 @@ export default function EntityEditors({
     <>
       <EntitySection id="section-suspects" title="Nghi phạm">
         <p className="text-sm text-pencil/70">
-          Điền đủ thuộc tính. Che bằng thuộc tính chỉ đọc các ô này,
-          không đọc mô tả.
+          Điền đủ thuộc tính. Che bằng thuộc tính chỉ đọc các ô này, không đọc
+          mô tả.
         </p>
         {metadata.suspects.map((s, i) => (
           <CollapsibleCard
