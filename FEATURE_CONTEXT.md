@@ -138,6 +138,8 @@ DetectiveBoard
 |-- CluePanel
 |
 |-- BoardToolbar
+| |
+| |-- BoardGuide
 |
 |-- BoardCanvas
 | |
@@ -259,6 +261,13 @@ Clock:
 - Ticks every second on the toolbar as `MM:SS`, or `HH:MM:SS` after one hour
 - Stops when this session solves the case (`freezeClock`)
 - The stopped elapsed seconds are sent as `time_taken` with the accusation
+
+Guide (`board-guide.tsx`):
+
+- A paper `?` sits to the left of the board/grid switch. It pulses until the player opens the guide once. The flag is `localStorage` key `deducto-board-guide-opened`.
+- Opening it starts a six-step tour with back, next, skip, and a `1 / 6` counter. The last next closes the tour. Escape skips.
+- Steps 1–4 show a clip from `public/guide/` (`step1.gif`, `step2.mp4`, `step3.gif`, `step4.gif`) and a Vietnamese sentence. The mp4 autoplays, muted, looping, and inline. If a file is missing, that step shows only the sentence.
+- Step 5 highlights the toolbar clock ("Thời gian phá án sẽ được ghi nhận"). Step 6 highlights the Cáo buộc button ("Khi đã có đủ chứng cứ, hãy buộc tội hung thủ").
 
 Add note:
 
