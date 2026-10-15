@@ -788,8 +788,10 @@ Schemas: `features/game/game.schemas.ts` (`generateRequestSchema`, `aiCaseDraftS
 
 - Place, weapon, and motive are bijections from suspects. A weapon is found in the location of the suspect who holds it.
 - Pair clues use the entity ids (the same ids the sentence renderer uses). Motive clues and crime-level anchors use `value`.
-- Anchors are `ATTRIBUTE` + `REQUIRED` with no suspect, weapon, or location id. They constrain the murderer (`location`, `motive`, `handedness`, `hairColor`) or the murder weapon (`weight`, `material`).
-- An entity fact (`ATTRIBUTE` + `EQUAL` on one card) does not narrow the grid. A fact that disagrees with that card is rejected.
+- Anchors are `ATTRIBUTE` + `REQUIRED` with no suspect, weapon, or location id. They constrain the murderer (`location`, `motive`, `handedness`, `hairColor`, `height`, `gender`, `birthday`) or the murder weapon (`weight`, `material`, `type`). `NOT_EQUAL` with no id excludes that value.
+- An entity fact (`ATTRIBUTE` + `EQUAL` or `NOT_EQUAL` on one card) does not narrow the grid. A fact that disagrees with that card is rejected.
+- A class ban is `EXCLUSION` + `NOT_EQUAL` with a suspect attribute (`handedness`, `height`, `gender`, `hairColor`, `birthday`), a `weapon_id`, and no `suspect_id`. Every suspect who has that value is forbidden that weapon. The value must occur on at least one suspect. It does not have to name a single person.
+- Create requires the structured attributes those rules read: suspect gender, height, hair color, handedness, and birthday; weapon weight, type, and material; location type and characteristic. Descriptions stay optional.
 - The solution is the tuple (murderer, their weapon, their location, their motive). Other guests may stay partly ambiguous.
 
 `gameServices.generate` and `publishCase` (used by `gameServices.create`) call `assertUniquelySolvable`. A draft with no solution, more than one tuple, a clue the solver cannot read, or a saved answer that is not that tuple throws `CaseNotSolvableError`. The create wizard blocks **Tạo vụ án** until the live check is valid. `POST /api/game` still rejects that draft and stores nothing.
@@ -803,8 +805,10 @@ Groups larger than 6 are rejected instead of searching. Difficulty cases are siz
 ## Clue templates
 
 - `lib/clue-templates.ts` mirrors system prompt section 6.6 (E1–E4, L1–L4, R1–R4, A1, A2).
+- `lib/attribute-rules.ts` adds template clues over structured attributes: named suspect or weapon `=` / `≠`, culprit or murder-weapon `=` / `≠`, and “suspects with attribute = value cannot use weapon”. Sentences are Vietnamese via `attributeRuleText`, used by `clueToText`.
 - `detectTemplate`, `buildClue`, and `resolveClueValueForSubmit` keep clue sentences aligned with entity names before save.
-- UI: `components/create-game/ClueList.tsx`, `ClueEditor.tsx`; preview uses `clueToText` from `lib/clues.helper.ts`.
+- UI: `components/create-game/ClueList.tsx`, `ClueEditor.tsx`, `attribute-rule-form.tsx`. Each clue still has the cipher lock toggle (unlocked text, or Caesar/Scytale plus a required hint).
+- `features/game/possibility-report.ts` powers the wizard panel **Còn N khả năng**: a short list when few remain, a distinguishing attribute (“Chỉ có Ann thuận tay trái.”), and the contradicting clues when none remain. **Tạo vụ án** stays disabled unless that count is 1, the saved answer matches, and attributes are filled. `POST /api/game` re-checks both the schema and `assertUniquelySolvable`.
 
 ## UI components
 

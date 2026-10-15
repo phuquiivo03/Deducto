@@ -14,8 +14,13 @@ import {
   type TemplateKey,
 } from "@/lib/clue-templates";
 import { clueToText } from "@/lib/clues.helper";
+import { ruleFromClue } from "@/lib/attribute-rules";
 import { useCreateGameStore } from "@/store/create-game.store";
 
+import {
+  AttributeRuleFields,
+  attributeRuleClue,
+} from "./attribute-rule-form";
 import { inputClass } from "./field-shell";
 
 function anchorValueOptions(
@@ -69,6 +74,22 @@ export default function ClueEditor({
   metadata: IGameMetadata;
 }) {
   const updateClue = useCreateGameStore((s) => s.updateClue);
+  const rule = ruleFromClue(clue);
+  if (rule) {
+    return (
+      <div className="space-y-3 pt-2">
+        <AttributeRuleFields
+          draft={rule}
+          metadata={metadata}
+          onChange={(next) => {
+            const built = attributeRuleClue(clue.id, next, clue.puzzle);
+            if (built) updateClue(clue.id, built);
+          }}
+        />
+      </div>
+    );
+  }
+
   const detected = detectTemplate(clue);
   const templateKey = detected === "custom" ? "E1" : detected;
 

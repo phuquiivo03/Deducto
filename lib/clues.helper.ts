@@ -1,3 +1,4 @@
+import { attributeRuleText } from "@/lib/attribute-rules";
 import {
   formatAttributeName,
   formatAttributeValue,
@@ -86,6 +87,9 @@ const translateAttributeName = (attribute: string): string => {
   }
 };
 export const clueToText = (clue: IClue, metadata: IGameMetadata): string => {
+  const ruleText = attributeRuleText(clue, metadata);
+  if (ruleText) return ruleText;
+
   const suspect = getSuspect(clue.suspect_id, metadata);
   const weapon = getWeapon(clue.weapon_id, metadata);
   const location = getLocation(clue.location_id, metadata);

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { gameVisibilitySchema } from "@/features/game/game-visibility";
 import { puzzleLockRequestSchema } from "@/features/puzzles/lock-request";
 import { cluePuzzleSchema } from "@/features/puzzles/schema";
+import { attributeGaps } from "@/lib/attribute-rules";
 
 export const gameLevelSchema = z
   .enum(["easy", "medium", "hard"])
@@ -44,6 +45,7 @@ export const clueAttributeSchema = z.enum([
   "hairColor",
   "height",
   "birthday",
+  "gender",
   "weight",
   "material",
   "type",
@@ -416,6 +418,14 @@ export const createGameInputSchema = z
     checkNonEmpty(meta.weapons, "Weapon", ["gameMetadata", "weapons"]);
     checkNonEmpty(meta.locations, "Location", ["gameMetadata", "locations"]);
     checkNonEmpty(meta.motives, "Motive", ["gameMetadata", "motives"]);
+
+    for (const gap of attributeGaps(meta)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: gap.message,
+        path: gap.path,
+      });
+    }
   });
 export type ICreateGameInput = z.infer<typeof createGameInputSchema>;
 export const shortGameShema = gameSchema.pick({

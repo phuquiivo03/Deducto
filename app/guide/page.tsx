@@ -106,10 +106,37 @@ const CREATE_STEPS: Step[] = [
 		),
 	},
 	{
+		title: 'Thuộc tính',
+		body: (
+			<>
+				Điền đủ thuộc tính có cấu trúc trước khi viết luật: nghi
+				phạm (tay thuận, chiều cao, giới tính, màu tóc, ngày
+				sinh), hung khí (cân nặng, loại, vật liệu), địa điểm
+				(loại, đặc điểm). Mô tả tự do không dùng cho luật.
+			</>
+		),
+	},
+	{
+		title: 'Luật thuộc tính',
+		body: (
+			<>
+				Trong <Ui>Manh mối</Ui>, mở <Ui>Luật thuộc tính</Ui> và
+				chọn mẫu — không gõ câu tự do. Ví dụ{' '}
+				<Ui>Ann thuận tay trái</Ui>,{' '}
+				<Ui>Ann không cao 170 cm</Ui>,{' '}
+				<Ui>Nghi phạm thuận tay trái không sử dụng dao</Ui>,{' '}
+				<Ui>Hung thủ là nữ</Ui>, <Ui>Hung khí gây án nặng</Ui>.
+				Câu tiếng Việt hiện ngay bên dưới. Một luật chỉ thu hẹp,
+				không cần chỉ đúng một người.
+			</>
+		),
+	},
+	{
 		title: 'Mật thư',
 		body: (
 			<>
-				Bật <Ui>Khóa mật thư</Ui>, chọn <Ui>Scytale</Ui> hoặc{' '}
+				Mỗi manh mối có <Ui>Khóa mật thư</Ui>. Tắt khóa thì câu
+				hiện thẳng. Bật khóa thì chọn <Ui>Scytale</Ui> hoặc{' '}
 				<Ui>Caesar</Ui>. <Ui>Gợi ý</Ui> là bắt buộc nhập. Hệ
 				thống tự gắn khóa là bắt buộc hay tuỳ chọn khi bạn tạo
 				vụ án.
@@ -117,12 +144,15 @@ const CREATE_STEPS: Step[] = [
 		),
 	},
 	{
-		title: 'Một lời giải',
+		title: 'Còn N khả năng',
 		body: (
 			<>
-				Hệ thống kiểm tra để case có đúng một lời giải. Nếu báo{' '}
-				<Ui>Chưa thể tạo vụ án</Ui> thì thêm hoặc sửa manh mối.
-				Khi thấy <Ui>Logic hợp lệ</Ui>, bấm <Ui>Tạo vụ án</Ui>.
+				Bảng <Ui>Còn N khả năng</Ui> đếm lời giải còn lại. Khi
+				còn ít, danh sách hiện ra và gợi ý một thuộc tính phân
+				biệt (ví dụ chỉ một người thuận tay trái). Nếu còn 0,
+				dòng đỏ nêu các manh mối đang mâu thuẫn. <Ui>Tạo vụ án</Ui>{' '}
+				chỉ bấm được khi còn đúng 1 khả năng và thuộc tính đã
+				đủ. Máy chủ kiểm tra lại lúc lưu.
 			</>
 		),
 	},

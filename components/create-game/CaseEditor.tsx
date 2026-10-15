@@ -70,11 +70,7 @@ text-pencil/70 hover:bg-postit hover:text-pencil
       </nav>
 
       <div className="space-y-8 min-w-0">
-        <SolvabilityBanner
-          status={solvability.status}
-          messageVi={solvability.messageVi}
-          isChecking={solvability.isChecking}
-        />
+        <SolvabilityBanner view={solvability} />
         <ValidationSummary issues={issues} />
         <div className="lg:hidden flex gap-2 overflow-x-auto pb-1">
           {NAV.map((item) => (

@@ -12,6 +12,7 @@ import { newClueId, useCreateGameStore } from "@/store/create-game.store";
 import Card from "@/components/ui/Card";
 import { buttonClassName } from "@/components/ui/button";
 
+import AttributeRuleForm from "./attribute-rule-form";
 import ClueEditor from "./ClueEditor";
 
 export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
@@ -97,9 +98,11 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
         </div>
       </div>
       <p className="text-sm text-pencil/70">
-        Khóa một manh mối thành mật thư. Máy chủ tạo mật mã và vai trò
-        khi bạn tạo vụ án. Gợi ý là bắt buộc với mỗi khóa.
+        Thêm luật thuộc tính từ mẫu. Bật Khóa mật thư để giấu câu bằng
+        Caesar hoặc Scytale (gợi ý là bắt buộc); tắt khóa thì câu hiện
+        thẳng. Máy chủ tạo mật mã khi bạn tạo vụ án.
       </p>
+      <AttributeRuleForm metadata={metadata} />
       {suggestNote ? (
         <p className="text-sm text-pen" role="status">
           {suggestNote}
