@@ -6,9 +6,9 @@ import {
 	useRef,
 	useState,
 } from 'react'
-import { createPortal } from 'react-dom'
 
 import { buttonClassName } from '@/components/ui/button'
+import { HelpMark } from '@/components/ui/help-mark'
 import { cn } from '@/lib/cn'
 
 const SEEN_KEY = 'deducto-board-guide-opened'
@@ -57,22 +57,6 @@ interface GuideBox {
 function clamp (value: number, min: number, max: number) {
 	if (max < min) return min
 	return Math.min(Math.max(value, min), max)
-}
-
-function hasSeenGuide () {
-	try {
-		return window.localStorage.getItem(SEEN_KEY) === '1'
-	} catch {
-		return false
-	}
-}
-
-function markGuideSeen () {
-	try {
-		window.localStorage.setItem(SEEN_KEY, '1')
-	} catch {
-		// Private mode can block storage; the pulse stops for this visit.
-	}
 }
 
 function useGuideBox (selector: string | null) {
@@ -510,86 +494,37 @@ absolute inset-0 flex items-center justify-center p-3
 }
 
 /**
- * Pulsing help mark and the six-step tour on the investigation board.
- * The pulse stops after the player opens the guide once.
+ * Six-step tour on the investigation board.
+ * The shared help mark stops pulsing after the first open.
  */
 export default function BoardGuide () {
-	const triggerRef = useRef<HTMLButtonElement>(null)
-	const [isBlinking, setIsBlinking] = useState(false)
-	const [isOpen, setIsOpen] = useState(false)
 	const [index, setIndex] = useState(0)
-
-	useEffect(() => {
-		setIsBlinking(!hasSeenGuide())
-	}, [])
-
-	function handleOpen () {
-		markGuideSeen()
-		setIsBlinking(false)
-		setIndex(0)
-		setIsOpen(true)
-	}
-
-	function handleClose () {
-		setIsOpen(false)
-		triggerRef.current?.focus()
-	}
 
 	function handleBack () {
 		setIndex((current) => (current === 0 ? current : current - 1))
 	}
 
-	function handleNext () {
+	function handleNext (close: () => void) {
 		if (index >= STEPS.length - 1) {
-			handleClose()
+			close()
 			return
 		}
 		setIndex(index + 1)
 	}
 
 	return (
-		<>
-			<div className="relative shrink-0">
-				{isBlinking ? (
-					<span
-						aria-hidden
-						className="
-pointer-events-none absolute inset-0 rounded-full
-bg-marker/70 animate-ping
-"
-					/>
-				) : null}
-				<button
-					ref={triggerRef}
-					type="button"
-					onClick={handleOpen}
-					aria-label="Hướng dẫn"
-					aria-expanded={isOpen}
-					title="Hướng dẫn"
-					className="
-relative flex h-10 w-10 items-center justify-center
-rounded-full border-2 border-pencil bg-postit
-font-heading text-xl leading-none text-pencil
-shadow-hard-sm
-hover:translate-x-0.5 hover:translate-y-0.5
-focus-visible:outline focus-visible:outline-2
-focus-visible:outline-offset-2 focus-visible:outline-pen
-"
-				>
-					<span className={cn(isBlinking && 'guide-blink')}>?</span>
-				</button>
-			</div>
-			{isOpen
-				? createPortal(
-						<GuideDialog
-							index={index}
-							onBack={handleBack}
-							onNext={handleNext}
-							onClose={handleClose}
-						/>,
-						document.body,
-					)
-				: null}
-		</>
+		<HelpMark
+			storageKey={SEEN_KEY}
+			onOpen={() => setIndex(0)}
+		>
+			{(close) => (
+				<GuideDialog
+					index={index}
+					onBack={handleBack}
+					onNext={() => handleNext(close)}
+					onClose={close}
+				/>
+			)}
+		</HelpMark>
 	)
 }
