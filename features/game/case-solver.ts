@@ -2,8 +2,24 @@ import type {
 	IAnswerAnswer,
 	IClue,
 	IGameMetadata,
+	ISuspect,
+	IWeapon,
 } from '@/features/game/game.schemas'
+import {
+	attributeRuleKind,
+	attributeSeen,
+	isSuspectRuleAttribute,
+	isWeaponRuleAttribute,
+	readSuspectAttribute,
+	readWeaponAttribute,
+} from '@/lib/attribute-rules'
 import { detectTemplate } from '@/lib/clue-templates'
+import {
+	filtersAreVisible,
+	matchingIds,
+	parseVeil,
+	readVeilAttribute,
+} from '@/lib/attribute-veil'
 
 import { CaseNotSolvableError } from './game-errors'
 
@@ -55,8 +71,20 @@ interface Constraints {
 	anchorMotives: Set<string> | null
 	anchorHandedness: Set<string> | null
 	anchorHair: Set<string> | null
+	anchorHeight: Set<string> | null
+	anchorGender: Set<string> | null
+	anchorBirthday: Set<string> | null
 	anchorWeight: Set<string> | null
 	anchorMaterial: Set<string> | null
+	anchorType: Set<string> | null
+	banHandedness: Set<string>
+	banHair: Set<string>
+	banHeight: Set<string>
+	banGender: Set<string>
+	banBirthday: Set<string>
+	banWeight: Set<string>
+	banMaterial: Set<string>
+	banType: Set<string>
 	issues: string[]
 }
 
@@ -67,37 +95,62 @@ const MAX_GROUP = 6
  *
  * Place, weapon, and motive are bijections on the suspects. A weapon
  * is found where the suspect who holds it was. Crime-level anchors
- * (no entity id) constrain the murderer or the murder weapon. Entity
- * facts repeat a card and do not narrow the grid.
+ * (no entity id) constrain the murderer or the murder weapon. A
+ * negative anchor excludes that attribute value. A class ban ("people
+ * with this attribute cannot use this weapon") forbids the weapon for
+ * every matching suspect. A named attribute fact must agree with the
+ * card and does not narrow the grid.
  */
 export function solveCase (metadata: IGameMetadata): SolveOutcome {
+	const found = searchSolutions(metadata, 2)
+	return {
+		status: found.status,
+		tuple: found.status === 'unique' ? found.tuples[0] ?? null : null,
+		issues: found.issues,
+	}
+}
+
+export interface SolutionSearch {
+	status: SolveStatus
+	tuples: SolutionTuple[]
+	issues: string[]
+}
+
+/**
+ * Same deduction as `solveCase`, keeping up to `limit` tuples.
+ * Callers that need an exact count ask for one more than the cap.
+ */
+export function searchSolutions (
+	metadata: IGameMetadata,
+	limit: number,
+): SolutionSearch {
 	const structure = structuralIssues(metadata)
 	if (structure.length > 0) {
-		return { status: 'invalid', tuple: null, issues: structure }
+		return { status: 'invalid', tuples: [], issues: structure }
 	}
 
 	const constraints = interpretClues(metadata)
 	if (constraints.issues.length > 0) {
 		return {
 			status: 'invalid',
-			tuple: null,
+			tuples: [],
 			issues: constraints.issues,
 		}
 	}
 
 	const anchorIssues = anchorCoverageIssues(metadata, constraints)
 	if (anchorIssues.length > 0) {
-		return { status: 'none', tuple: null, issues: anchorIssues }
+		return { status: 'none', tuples: [], issues: anchorIssues }
 	}
 
-	const tuples = searchTuples(metadata, constraints)
+	const tuples = searchTuples(metadata, constraints, limit)
 	if (tuples.length === 0) {
-		return { status: 'none', tuple: null, issues: [] }
+		return { status: 'none', tuples: [], issues: [] }
 	}
 	if (tuples.length === 1) {
-		return { status: 'unique', tuple: tuples[0], issues: [] }
+		return { status: 'unique', tuples, issues: [] }
 	}
-	return { status: 'ambiguous', tuple: null, issues: [] }
+	return { status: 'ambiguous', tuples, issues: [] }
 }
 
 /**
@@ -233,8 +286,20 @@ function emptyConstraints (): Constraints {
 		anchorMotives: null,
 		anchorHandedness: null,
 		anchorHair: null,
+		anchorHeight: null,
+		anchorGender: null,
+		anchorBirthday: null,
 		anchorWeight: null,
 		anchorMaterial: null,
+		anchorType: null,
+		banHandedness: new Set(),
+		banHair: new Set(),
+		banHeight: new Set(),
+		banGender: new Set(),
+		banBirthday: new Set(),
+		banWeight: new Set(),
+		banMaterial: new Set(),
+		banType: new Set(),
 		issues: [],
 	}
 }
@@ -289,6 +354,296 @@ function interpretClues (metadata: IGameMetadata): Constraints {
 	return constraints
 }
 
+/**
+ * Attribute-rule clues. Returns true when this function owns the clue
+ * so the older template switch does not reject it as custom.
+ */
+function applyAttributeRule (
+	constraints: Constraints,
+	clue: IClue,
+	label: string,
+	metadata: IGameMetadata,
+	weaponIds: Set<string>,
+): boolean {
+	const kind = attributeRuleKind(clue)
+	if (!kind) return false
+	if (!clue.value.trim()) {
+		constraints.issues.push(
+			`${label} is not a supported deduction rule.`,
+		)
+		return true
+	}
+
+	if (kind === 'suspect-attr' && isSuspectRuleAttribute(clue.attribute)) {
+		const suspect = metadata.suspects.find(
+			(item) => item.id === clue.suspect_id,
+		)
+		if (!suspect) {
+			constraints.issues.push(
+				`${label} references a suspect that is not in this case.`,
+			)
+			return true
+		}
+		checkFact(
+			constraints,
+			label,
+			readSuspectAttribute(suspect, clue.attribute),
+			clue.value,
+			clue.relation,
+			`${suspect.name}'s ${clue.attribute}`,
+		)
+		return true
+	}
+
+	if (kind === 'weapon-attr' && isWeaponRuleAttribute(clue.attribute)) {
+		const weapon = metadata.weapons.find(
+			(item) => item.id === clue.weapon_id,
+		)
+		if (!weapon) {
+			constraints.issues.push(
+				`${label} references a weapon that is not in this case.`,
+			)
+			return true
+		}
+		checkFact(
+			constraints,
+			label,
+			readWeaponAttribute(weapon, clue.attribute),
+			clue.value,
+			clue.relation,
+			`the ${weapon.name}'s ${clue.attribute}`,
+		)
+		return true
+	}
+
+	if (kind === 'ban-weapon' && isSuspectRuleAttribute(clue.attribute)) {
+		const weaponId = knownId(
+			constraints,
+			label,
+			clue.weapon_id,
+			weaponIds,
+			'weapon',
+		)
+		if (!weaponId) return true
+		if (!attributeSeen(metadata, clue.attribute, clue.value)) {
+			constraints.issues.push(
+				`${label} names a ${clue.attribute} that no suspect has.`,
+			)
+			return true
+		}
+		for (const suspect of metadata.suspects) {
+			if (
+				readSuspectAttribute(suspect, clue.attribute) === clue.value
+			) {
+				addPair(constraints.wpnNeq, suspect.id, weaponId)
+			}
+		}
+		return true
+	}
+
+	if (kind === 'culprit-attr' || kind === 'murder-weapon-attr') {
+		if (clue.relation === 'REQUIRED') {
+			applyAnchor(constraints, clue, label, metadata)
+			return true
+		}
+		if (clue.relation === 'NOT_EQUAL') {
+			const owner =
+				kind === 'culprit-attr' ? 'suspect' : 'weapon'
+			if (!attributeSeen(metadata, clue.attribute, clue.value)) {
+				constraints.issues.push(
+					`${label} names a ${clue.attribute} that no ${owner} has.`,
+				)
+				return true
+			}
+			banAnchor(constraints, clue.attribute, clue.value)
+			return true
+		}
+	}
+
+	constraints.issues.push(`${label} is not a supported deduction rule.`)
+	return true
+}
+
+function checkFact (
+	constraints: Constraints,
+	label: string,
+	actual: string | null,
+	expected: string,
+	relation: IClue['relation'],
+	what: string,
+): void {
+	const agrees = actual !== null && actual === expected
+	if (relation === 'EQUAL' && !agrees) {
+		constraints.issues.push(`${label} disagrees with ${what}.`)
+		return
+	}
+	if (relation === 'NOT_EQUAL' && agrees) {
+		constraints.issues.push(`${label} disagrees with ${what}.`)
+	}
+}
+
+function banAnchor (
+	constraints: Constraints,
+	attribute: string,
+	value: string,
+): void {
+	const drop = (positive: Set<string> | null, ban: Set<string>) => {
+		if (positive) {
+			positive.delete(value)
+			return
+		}
+		ban.add(value)
+	}
+	switch (attribute) {
+		case 'handedness':
+			drop(constraints.anchorHandedness, constraints.banHandedness)
+			return
+		case 'hairColor':
+			drop(constraints.anchorHair, constraints.banHair)
+			return
+		case 'height':
+			drop(constraints.anchorHeight, constraints.banHeight)
+			return
+		case 'gender':
+			drop(constraints.anchorGender, constraints.banGender)
+			return
+		case 'birthday':
+			drop(constraints.anchorBirthday, constraints.banBirthday)
+			return
+		case 'weight':
+			drop(constraints.anchorWeight, constraints.banWeight)
+			return
+		case 'material':
+			drop(constraints.anchorMaterial, constraints.banMaterial)
+			return
+		case 'type':
+			drop(constraints.anchorType, constraints.banType)
+			return
+		default:
+			return
+	}
+}
+
+function applyAttributeVeil (
+	constraints: Constraints,
+	clue: IClue,
+	label: string,
+	metadata: IGameMetadata,
+	weaponIds: Set<string>,
+	locationIds: Set<string>,
+): boolean {
+	if (!clue.value.startsWith('{"v":1')) return false
+	const body = parseVeil(clue.value)
+	if (!body) {
+		constraints.issues.push(
+			`${label} is not a supported deduction rule.`,
+		)
+		return true
+	}
+	const ids = matchingIds(metadata, body.kind, body.filters)
+	if (!filtersAreVisible(body) || ids.length !== 1) {
+		constraints.issues.push(
+			`${label} does not uniquely identify its subject.`,
+		)
+		return true
+	}
+	if (body.role === 'fact') {
+		const subject = ids.length === 1 ? ids[0] : null
+		if (!subject || !body.fact) {
+			constraints.issues.push(
+				`${label} does not uniquely identify its subject.`,
+			)
+			return true
+		}
+		const actual = readVeilAttribute(
+			metadata,
+			body.kind,
+			subject,
+			body.fact.a,
+		)
+		if (actual !== body.fact.v) {
+			constraints.issues.push(`${label} disagrees with the card.`)
+		}
+		return true
+	}
+	if (body.role === 'at-location' || body.role === 'ban-location') {
+		const locationId = knownId(
+			constraints,
+			label,
+			clue.location_id,
+			locationIds,
+			'location',
+		)
+		if (!locationId) return true
+		const targets =
+			body.role === 'at-location'
+				? metadata.suspects
+					.filter((item) => !ids.includes(item.id))
+					.map((item) => item.id)
+				: ids
+		for (const id of targets) {
+			addPair(constraints.locNeq, id, locationId)
+		}
+		return true
+	}
+	if (body.role === 'ban-weapon') {
+		const weaponId = knownId(
+			constraints,
+			label,
+			clue.weapon_id,
+			weaponIds,
+			'weapon',
+		)
+		if (!weaponId) return true
+		for (const id of ids) addPair(constraints.wpnNeq, id, weaponId)
+		return true
+	}
+	if (body.role === 'ban-motive') {
+		const motiveIds = idsNamed(metadata.motives, body.motive ?? '')
+		if (motiveIds.length === 0) {
+			constraints.issues.push(
+				`${label} names a motive that is not in this case.`,
+			)
+			return true
+		}
+		for (const id of ids) {
+			for (const motiveId of motiveIds) {
+				addPair(constraints.motNeq, id, motiveId)
+			}
+		}
+		return true
+	}
+	if (body.role === 'weapon-at' || body.role === 'weapon-not-at') {
+		const locationId = knownId(
+			constraints,
+			label,
+			clue.location_id,
+			locationIds,
+			'location',
+		)
+		if (!locationId) return true
+		const targets =
+			body.role === 'weapon-at'
+				? metadata.weapons
+					.filter((item) => !ids.includes(item.id))
+					.map((item) => item.id)
+				: ids
+		for (const id of targets) {
+			addPair(constraints.weaponNotAt, id, locationId)
+		}
+		return true
+	}
+	if (body.role === 'anchor-location') {
+		constraints.anchorLocations = tighten(
+			constraints.anchorLocations,
+			ids,
+		)
+		return true
+	}
+	constraints.issues.push(`${label} is not a supported deduction rule.`)
+	return true
+}
+
 function applyClue (
 	constraints: Constraints,
 	clue: IClue,
@@ -299,6 +654,21 @@ function applyClue (
 	locationIds: Set<string>,
 ): void {
 	const label = `Clue ${index + 1}`
+	if (
+		applyAttributeVeil(
+			constraints,
+			clue,
+			label,
+			metadata,
+			weaponIds,
+			locationIds,
+		)
+	) {
+		return
+	}
+	if (applyAttributeRule(constraints, clue, label, metadata, weaponIds)) {
+		return
+	}
 	const template = detectTemplate(clue)
 	const suspect = () =>
 		knownId(constraints, label, clue.suspect_id, suspectIds, 'suspect')
@@ -450,14 +820,8 @@ function applyAnchor (
 			])
 			return
 		case 'weight':
-			if (
-				clue.value !== 'LIGHT' &&
-				clue.value !== 'MEDIUM' &&
-				clue.value !== 'HEAVY'
-			) {
-				constraints.issues.push(
-					`${label} must use weight LIGHT, MEDIUM, or HEAVY.`,
-				)
+			if (!clue.value.trim()) {
+				constraints.issues.push(`${label} must use a weapon weight.`)
 				return
 			}
 			constraints.anchorWeight = tighten(constraints.anchorWeight, [
@@ -466,6 +830,26 @@ function applyAnchor (
 			return
 		case 'material':
 			constraints.anchorMaterial = tighten(constraints.anchorMaterial, [
+				clue.value,
+			])
+			return
+		case 'height':
+			constraints.anchorHeight = tighten(constraints.anchorHeight, [
+				clue.value,
+			])
+			return
+		case 'gender':
+			constraints.anchorGender = tighten(constraints.anchorGender, [
+				clue.value,
+			])
+			return
+		case 'birthday':
+			constraints.anchorBirthday = tighten(constraints.anchorBirthday, [
+				clue.value,
+			])
+			return
+		case 'type':
+			constraints.anchorType = tighten(constraints.anchorType, [
 				clue.value,
 			])
 			return
@@ -559,8 +943,12 @@ function anchorCoverageIssues (
 	disagree(issues, constraints.anchorMotives, 'motive')
 	disagree(issues, constraints.anchorHandedness, 'handedness')
 	disagree(issues, constraints.anchorHair, 'hair color')
+	disagree(issues, constraints.anchorHeight, 'height')
+	disagree(issues, constraints.anchorGender, 'gender')
+	disagree(issues, constraints.anchorBirthday, 'birthday')
 	disagree(issues, constraints.anchorWeight, 'weight')
 	disagree(issues, constraints.anchorMaterial, 'material')
+	disagree(issues, constraints.anchorType, 'type')
 	if (issues.length > 0) {
 		return issues
 	}
@@ -604,7 +992,148 @@ function anchorCoverageIssues (
 	) {
 		issues.push(`No weapon is made of ${material}.`)
 	}
+
+	const height = only(constraints.anchorHeight)
+	if (
+		height &&
+		!metadata.suspects.some(
+			(suspect) =>
+				readSuspectAttribute(suspect, 'height') === height,
+		)
+	) {
+		issues.push(`No suspect has height ${height}.`)
+	}
+
+	const gender = only(constraints.anchorGender)
+	if (
+		gender &&
+		!metadata.suspects.some(
+			(suspect) =>
+				readSuspectAttribute(suspect, 'gender') === gender,
+		)
+	) {
+		issues.push(`No suspect has gender ${gender}.`)
+	}
+
+	const birthday = only(constraints.anchorBirthday)
+	if (
+		birthday &&
+		!metadata.suspects.some(
+			(suspect) =>
+				readSuspectAttribute(suspect, 'birthday') === birthday,
+		)
+	) {
+		issues.push(`No suspect has birthday ${birthday}.`)
+	}
+
+	const type = only(constraints.anchorType)
+	if (
+		type &&
+		!metadata.weapons.some(
+			(weapon) => readWeaponAttribute(weapon, 'type') === type,
+		)
+	) {
+		issues.push(`No weapon has type ${type}.`)
+	}
+
+	if (
+		hasSuspectBan(constraints) &&
+		!metadata.suspects.some((suspect) =>
+			suspectAnchorOk(suspect, constraints),
+		)
+	) {
+		issues.push('No suspect matches the attribute rules.')
+	}
+	if (
+		hasWeaponBan(constraints) &&
+		!metadata.weapons.some((weapon) =>
+			weaponAnchorOk(weapon, constraints),
+		)
+	) {
+		issues.push('No weapon matches the attribute rules.')
+	}
 	return issues
+}
+
+function hasSuspectBan (constraints: Constraints): boolean {
+	return (
+		constraints.banHandedness.size +
+			constraints.banHair.size +
+			constraints.banHeight.size +
+			constraints.banGender.size +
+			constraints.banBirthday.size >
+		0
+	)
+}
+
+function hasWeaponBan (constraints: Constraints): boolean {
+	return (
+		constraints.banWeight.size +
+			constraints.banMaterial.size +
+			constraints.banType.size >
+		0
+	)
+}
+
+function anchorOk (
+	positive: Set<string> | null,
+	ban: Set<string>,
+	value: string,
+): boolean {
+	if (positive && !positive.has(value)) return false
+	if (ban.has(value)) return false
+	return true
+}
+
+function suspectAnchorOk (
+	suspect: ISuspect,
+	constraints: Constraints,
+): boolean {
+	const height = readSuspectAttribute(suspect, 'height') ?? ''
+	const gender = readSuspectAttribute(suspect, 'gender') ?? ''
+	const birthday = readSuspectAttribute(suspect, 'birthday') ?? ''
+	return (
+		anchorOk(
+			constraints.anchorHandedness,
+			constraints.banHandedness,
+			suspect.attributes?.handedness ?? '',
+		) &&
+		anchorOk(
+			constraints.anchorHair,
+			constraints.banHair,
+			suspect.attributes?.hairColor ?? '',
+		) &&
+		anchorOk(constraints.anchorHeight, constraints.banHeight, height) &&
+		anchorOk(constraints.anchorGender, constraints.banGender, gender) &&
+		anchorOk(
+			constraints.anchorBirthday,
+			constraints.banBirthday,
+			birthday,
+		)
+	)
+}
+
+function weaponAnchorOk (
+	weapon: IWeapon,
+	constraints: Constraints,
+): boolean {
+	return (
+		anchorOk(
+			constraints.anchorWeight,
+			constraints.banWeight,
+			readAttr(weapon.attributes?.weight),
+		) &&
+		anchorOk(
+			constraints.anchorMaterial,
+			constraints.banMaterial,
+			readAttr(weapon.attributes?.material),
+		) &&
+		anchorOk(
+			constraints.anchorType,
+			constraints.banType,
+			readWeaponAttribute(weapon, 'type') ?? '',
+		)
+	)
 }
 
 function disagree (
@@ -627,6 +1156,7 @@ function only (values: Set<string> | null): string | null {
 function searchTuples (
 	metadata: IGameMetadata,
 	constraints: Constraints,
+	limit: number,
 ): SolutionTuple[] {
 	const suspectIds = metadata.suspects.map((item) => item.id)
 	const weaponIds = metadata.weapons.map((item) => item.id)
@@ -678,41 +1208,17 @@ function searchTuples (
 		}
 		const suspect = suspectById.get(suspectId)
 		const weapon = weaponById.get(weaponId)
-		if (
-			constraints.anchorHandedness &&
-			!constraints.anchorHandedness.has(
-				suspect?.attributes?.handedness ?? '',
-			)
-		) {
+		if (!suspect || !suspectAnchorOk(suspect, constraints)) {
 			return false
 		}
-		if (
-			constraints.anchorHair &&
-			!constraints.anchorHair.has(suspect?.attributes?.hairColor ?? '')
-		) {
-			return false
-		}
-		if (
-			constraints.anchorWeight &&
-			!constraints.anchorWeight.has(
-				readAttr(weapon?.attributes?.weight),
-			)
-		) {
-			return false
-		}
-		if (
-			constraints.anchorMaterial &&
-			!constraints.anchorMaterial.has(
-				readAttr(weapon?.attributes?.material),
-			)
-		) {
+		if (!weapon || !weaponAnchorOk(weapon, constraints)) {
 			return false
 		}
 		return true
 	}
 
 	const considerWorld = () => {
-		if (seen.size >= 2) {
+		if (seen.size >= limit) {
 			return
 		}
 		for (let index = 0; index < suspectIds.length; index++) {
@@ -736,7 +1242,7 @@ function searchTuples (
 					locationId,
 					motiveId,
 				})
-				if (seen.size >= 2) {
+				if (seen.size >= limit) {
 					return
 				}
 			}
@@ -744,7 +1250,7 @@ function searchTuples (
 	}
 
 	const assignWeapons = (index: number) => {
-		if (seen.size >= 2) {
+		if (seen.size >= limit) {
 			return
 		}
 		if (index === suspectIds.length) {
@@ -769,14 +1275,14 @@ function searchTuples (
 			usedWpn.add(weaponId)
 			assignWeapons(index + 1)
 			usedWpn.delete(weaponId)
-			if (seen.size >= 2) {
+			if (seen.size >= limit) {
 				return
 			}
 		}
 	}
 
 	const assignLocations = (index: number) => {
-		if (seen.size >= 2) {
+		if (seen.size >= limit) {
 			return
 		}
 		if (index === suspectIds.length) {
@@ -800,7 +1306,7 @@ function searchTuples (
 			usedLoc.add(locationId)
 			assignLocations(index + 1)
 			usedLoc.delete(locationId)
-			if (seen.size >= 2) {
+			if (seen.size >= limit) {
 				return
 			}
 		}

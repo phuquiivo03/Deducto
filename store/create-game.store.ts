@@ -10,6 +10,11 @@ import type {
 import { prepareMetadataForSolver } from '@/features/game/prepare-metadata-for-solver'
 import type { PuzzleLockDraft } from '@/features/puzzles/lock-request'
 import { suggestPuzzleLock } from '@/features/puzzles/suggest-lock'
+import {
+	expandAttributeVeils,
+	veilClueId,
+	type AttributeVeilDraft,
+} from '@/lib/attribute-veil'
 export type CreatePhase = 'prompt' | 'generating' | 'editing' | 'submitting'
 
 export interface CreateGameDraft {
@@ -29,6 +34,7 @@ export interface CreateGameStore {
 	originalResult: IAnswerAnswer | null
 	issues: ZodIssue[]
 	locks: PuzzleLockDraft[]
+	veils: AttributeVeilDraft[]
 	setPrompt: (prompt: string) => void
 	setLevel: (level: GameLevelStrict) => void
 	setPhase: (phase: CreatePhase) => void
@@ -54,6 +60,7 @@ export interface CreateGameStore {
 		hint?: string,
 	) => void
 	suggestLock: () => string | null
+	setVeil: (clueId: string, attributes: string[] | null) => void
 	setResult: (key: keyof IAnswerAnswer, id: string) => void
 	restoreOriginalResult: () => void
 	setIssues: (issues: ZodIssue[]) => void
@@ -69,6 +76,7 @@ const initialState = {
 	originalResult: null,
 	issues: [] as ZodIssue[],
 	locks: [] as PuzzleLockDraft[],
+	veils: [] as AttributeVeilDraft[],
 }
 
 export const useCreateGameStore = create<CreateGameStore>((set, get) => ({
@@ -97,6 +105,7 @@ export const useCreateGameStore = create<CreateGameStore>((set, get) => ({
 			originalResult: { ...result },
 			issues: [],
 			locks: [],
+			veils: [],
 		})
 	},
 	updateInfo: (patch) => {
@@ -189,7 +198,10 @@ export const useCreateGameStore = create<CreateGameStore>((set, get) => ({
 					clues: draft.gameMetadata.clues.filter((c) => c.id !== id),
 				},
 			},
-			locks: get().locks.filter((lock) => lock.clueId !== id),
+			locks: get().locks.filter(
+				(lock) => !isClueLock(lock.clueId, id),
+			),
+			veils: get().veils.filter((veil) => veil.clueId !== id),
 			issues: [],
 		})
 	},
@@ -229,10 +241,27 @@ export const useCreateGameStore = create<CreateGameStore>((set, get) => ({
 		}
 		set({ locks, issues: [] })
 	},
+	setVeil: (clueId, attributes) => {
+		const veils = get().veils.filter((veil) => veil.clueId !== clueId)
+		let locks = get().locks
+		if (attributes === null) {
+			locks = locks.filter((lock) => !isVeilLock(lock.clueId, clueId))
+			set({ veils, locks, issues: [] })
+			return
+		}
+		const turningOn = !get().veils.some((veil) => veil.clueId === clueId)
+		if (turningOn) {
+			locks = locks.filter((lock) => lock.clueId !== clueId)
+		}
+		veils.push({ clueId, attributes })
+		set({ veils, locks, issues: [] })
+	},
 	suggestLock: () => {
-		const { draft, result, locks } = get()
+		const { draft, result, locks, veils } = get()
 		if (!draft || !result) return null
-		const metadata = prepareMetadataForSolver(draft.gameMetadata)
+		const prepared = prepareMetadataForSolver(draft.gameMetadata)
+		const expanded = expandAttributeVeils(prepared, veils)
+		const metadata = expanded.ok ? expanded.metadata : prepared
 		const suggestion = suggestPuzzleLock(
 			metadata,
 			result,
@@ -262,4 +291,12 @@ export const useCreateGameStore = create<CreateGameStore>((set, get) => ({
 
 export function newClueId(): string {
 	return globalThis.crypto.randomUUID()
+}
+
+function isVeilLock (lockId: string, clueId: string): boolean {
+	return lockId === veilClueId(clueId)
+}
+
+function isClueLock (lockId: string, clueId: string): boolean {
+	return lockId === clueId || isVeilLock(lockId, clueId)
 }

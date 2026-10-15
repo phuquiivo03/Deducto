@@ -1,4 +1,3 @@
-import { formatAttributeValue } from "@/lib/attribute-format";
 import {
   IGame,
   IGameMetadata,
@@ -7,6 +6,7 @@ import {
   ISuspect,
   IWeapon,
 } from "@/features/game/game.schemas";
+import { attributeLabel, traitPhrases } from "@/lib/attribute-rules";
 import { Entities, Entity, Fact } from "@/types/detective";
 
 const BOARD_MIN = 50;
@@ -32,32 +32,54 @@ function randomBoardPosition(): { x: number; y: number } {
   };
 }
 
-function factsFromDescriptionAndAttributes(
-  description: string | undefined,
-  attributes: Record<string, unknown> | undefined,
-): Fact[] {
-  const facts: Fact[] = [];
+const FACT_ORDER = [
+  "handedness",
+  "height",
+  "gender",
+  "hairColor",
+  "birthday",
+  "weight",
+  "type",
+  "material",
+  "characteristic",
+];
 
-  // if (description?.trim()) {
-  //   facts.push({ ok: true, text: description.trim() });
-  // }
-
-  if (attributes) {
-    for (const [key, raw] of Object.entries(attributes)) {
-      if (raw === undefined || raw === null || raw === "") continue;
-      const value = String(raw);
-      facts.push({
-        ok: true,
-        text: formatAttributeValue(key, value),
-      });
-    }
-  }
-
-  return facts;
+function attributeFact(key: string, raw: unknown): Fact | null {
+  const value =
+    typeof raw === "number" && Number.isFinite(raw)
+      ? String(raw)
+      : typeof raw === "string"
+        ? raw.trim()
+        : "";
+  if (!value) return null;
+  return {
+    ok: true,
+    text: `${attributeLabel(key)}: ${traitPhrases(key, value).yes}`,
+  };
 }
 
-function handednessLabel(value: string): string {
-  return formatAttributeValue("handedness", value);
+function factsFromAttributes(
+  attributes: Record<string, unknown> | undefined,
+  extra: { key: string; value: unknown }[] = [],
+): Fact[] {
+  const bag: Record<string, unknown> = { ...(attributes ?? {}) };
+  for (const item of extra) {
+    if (bag[item.key] == null || bag[item.key] === "") {
+      bag[item.key] = item.value;
+    }
+  }
+  const keys = [
+    ...FACT_ORDER.filter((key) => key in bag),
+    ...Object.keys(bag).filter((key) => !FACT_ORDER.includes(key)),
+  ];
+  return keys.flatMap((key) => {
+    const fact = attributeFact(key, bag[key]);
+    return fact ? [fact] : [];
+  });
+}
+
+function phrase(attribute: string, value: string): string {
+  return traitPhrases(attribute, value).yes;
 }
 
 function buildSuspectMeta(suspect: ISuspect): string {
@@ -68,8 +90,8 @@ function buildSuspectMeta(suspect: ISuspect): string {
   }
 
   const handedness = suspect.attributes?.handedness;
-  if (typeof handedness === "string") {
-    parts.push(handednessLabel(handedness));
+  if (typeof handedness === "string" && handedness.trim()) {
+    parts.push(phrase("handedness", handedness));
   }
 
   return parts.join(" · ") || suspect.name;
@@ -82,13 +104,13 @@ function buildWeaponMeta(weapon: IWeapon): string {
   const parts: string[] = [];
 
   if (typeof attrs.material === "string" && attrs.material) {
-    parts.push(attrs.material);
+    parts.push(phrase("material", attrs.material));
   }
   if (typeof attrs.type === "string" && attrs.type) {
-    parts.push(attrs.type);
+    parts.push(phrase("type", attrs.type));
   }
   if (typeof attrs.weight === "string" && attrs.weight) {
-    parts.push(attrs.weight.toLowerCase());
+    parts.push(phrase("weight", attrs.weight));
   }
 
   return parts.join(" · ") || weapon.description?.trim() || weapon.name;
@@ -98,11 +120,11 @@ function buildLocationMeta(location: ILocation): string {
   const attrs = location.attributes;
   const characteristic = attrs?.characteristic;
   if (typeof characteristic === "string" && characteristic) {
-    return characteristic;
+    return phrase("characteristic", characteristic);
   }
   const type = attrs?.type;
   if (typeof type === "string" && type) {
-    return type;
+    return phrase("type", type);
   }
   return location.description?.trim() || location.name;
 }
@@ -121,9 +143,9 @@ function mapSuspect(suspect: ISuspect): Entity {
     icon: suspect.avatar ?? "🧑",
     x,
     y,
-    facts: factsFromDescriptionAndAttributes(
-      suspect.description,
+    facts: factsFromAttributes(
       suspect.attributes as Record<string, unknown> | undefined,
+      [{ key: "gender", value: suspect.gender }],
     ),
   };
 }
@@ -138,8 +160,7 @@ function mapWeapon(weapon: IWeapon): Entity {
     icon: weapon.icon ?? "🔪",
     x,
     y,
-    facts: factsFromDescriptionAndAttributes(
-      weapon.description,
+    facts: factsFromAttributes(
       weapon.attributes as Record<string, unknown> | undefined,
     ),
   };
@@ -155,8 +176,7 @@ function mapLocation(location: ILocation): Entity {
     icon: location.icon ?? "🌳",
     x,
     y,
-    facts: factsFromDescriptionAndAttributes(
-      location.description,
+    facts: factsFromAttributes(
       location.attributes as Record<string, unknown> | undefined,
     ),
   };
@@ -172,7 +192,7 @@ function mapMotive(motive: IMotive): Entity {
     icon: motive.icon ?? "🔪",
     x,
     y,
-    facts: factsFromDescriptionAndAttributes(motive.description, undefined),
+    facts: factsFromAttributes(undefined),
   };
 }
 

@@ -1,5 +1,7 @@
 import type { IGameMetadata } from '@/features/game/game.schemas'
 import { assertUniquelySolvable } from '@/features/game/case-solver'
+import { CaseNotSolvableError } from '@/features/game/game-errors'
+import { expandAttributeVeils } from '@/lib/attribute-veil'
 import { assertPuzzlesValid } from '@/features/puzzles/validate-case-puzzles'
 import { buildCasePuzzles } from '@/features/puzzles/build-case-puzzles'
 import type {
@@ -27,9 +29,16 @@ export interface IPersistGameInput {
  * Nothing is written here.
  */
 export function publishCase (input: ICreateGameInput): IPersistGameInput {
-	assertUniquelySolvable(input.gameMetadata, input.result)
-	const gameMetadata = buildCasePuzzles(
+	const expanded = expandAttributeVeils(
 		input.gameMetadata,
+		input.veils ?? [],
+	)
+	if (!expanded.ok) {
+		throw new CaseNotSolvableError(expanded.message)
+	}
+	assertUniquelySolvable(expanded.metadata, input.result)
+	const gameMetadata = buildCasePuzzles(
+		expanded.metadata,
 		input.result,
 		input.locks ?? [],
 	)

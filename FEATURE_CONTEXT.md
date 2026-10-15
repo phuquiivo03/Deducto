@@ -397,7 +397,7 @@ Shows selected entity information.
 Displays:
 
 - Entity metadata
-- Facts
+- Facts. Attribute labels and values use `attributeLabel` and `traitPhrases` in `lib/attribute-rules.ts`, the same wording as generated clue sentences. Gender is included from the suspect card.
 - Relationships
 
 Actions:
@@ -788,8 +788,11 @@ Schemas: `features/game/game.schemas.ts` (`generateRequestSchema`, `aiCaseDraftS
 
 - Place, weapon, and motive are bijections from suspects. A weapon is found in the location of the suspect who holds it.
 - Pair clues use the entity ids (the same ids the sentence renderer uses). Motive clues and crime-level anchors use `value`.
-- Anchors are `ATTRIBUTE` + `REQUIRED` with no suspect, weapon, or location id. They constrain the murderer (`location`, `motive`, `handedness`, `hairColor`) or the murder weapon (`weight`, `material`).
-- An entity fact (`ATTRIBUTE` + `EQUAL` on one card) does not narrow the grid. A fact that disagrees with that card is rejected.
+- Anchors are `ATTRIBUTE` + `REQUIRED` with no suspect, weapon, or location id. They constrain the murderer (`location`, `motive`, `handedness`, `hairColor`, `height`, `gender`, `birthday`) or the murder weapon (`weight`, `material`, `type`). `NOT_EQUAL` with no id excludes that value.
+- An entity fact (`ATTRIBUTE` + `EQUAL` or `NOT_EQUAL` on one card) does not narrow the grid. A fact that disagrees with that card is rejected.
+- A class ban is `EXCLUSION` + `NOT_EQUAL` with a suspect attribute (`handedness`, `height`, `gender`, `hairColor`, `birthday`), a `weapon_id`, and no `suspect_id`. Every suspect who has that value is forbidden that weapon. The value must occur on at least one suspect. It does not have to name a single person.
+- An attribute veil is not a stored column. `createGameInputSchema` accepts `veils: { clueId, attributes }[]`, like locks. `publishCase` replaces each veiled clue with one self-describing clue (`value` JSON `{"v":1,...}`) before `assertUniquelySolvable` and `buildCasePuzzles`. The sentence keeps the original relation and hides the name. The attribute set must match exactly one card of that kind, using attributes printed on the card, which is what makes the sentence imply the original clue. Cipher locks may target the generated id.
+- Create requires the structured attributes those rules read: suspect gender, height, hair color, handedness, and birthday; weapon weight, type, and material; location type and characteristic. Descriptions stay optional.
 - The solution is the tuple (murderer, their weapon, their location, their motive). Other guests may stay partly ambiguous.
 
 `gameServices.generate` and `publishCase` (used by `gameServices.create`) call `assertUniquelySolvable`. A draft with no solution, more than one tuple, a clue the solver cannot read, or a saved answer that is not that tuple throws `CaseNotSolvableError`. The create wizard blocks **Tạo vụ án** until the live check is valid. `POST /api/game` still rejects that draft and stores nothing.
@@ -803,8 +806,11 @@ Groups larger than 6 are rejected instead of searching. Difficulty cases are siz
 ## Clue templates
 
 - `lib/clue-templates.ts` mirrors system prompt section 6.6 (E1–E4, L1–L4, R1–R4, A1, A2).
+- `lib/attribute-rules.ts` still reads structured-attribute clues already on a case: named suspect or weapon `=` / `≠`, culprit or murder-weapon `=` / `≠`, and “suspects with attribute = value cannot use weapon”. Sentences are Vietnamese via `attributeRuleText`, used by `clueToText`.
+- `lib/attribute-veil.ts` turns one existing template clue into one attribute sentence. Suspect, weapon, and location clues can hide the named card. The wizard suggests the smallest set of card-visible attributes that matches only that card; the creator can edit it. A set that matches more than one card is rejected. “Anh Minh không dùng Thước gỗ” becomes “Người không sử dụng Thước gỗ thuận tay trái và có tóc đen.”
 - `detectTemplate`, `buildClue`, and `resolveClueValueForSubmit` keep clue sentences aligned with entity names before save.
-- UI: `components/create-game/ClueList.tsx`, `ClueEditor.tsx`; preview uses `clueToText` from `lib/clues.helper.ts`.
+- UI: `components/create-game/ClueList.tsx` and `ClueEditor.tsx`. Each clue has **Che bằng thuộc tính** beside the cipher lock. Replacement sentences can still be locked (unlocked text, or Caesar/Scytale plus a required hint).
+- `features/game/possibility-report.ts` powers the wizard panel **Còn N khả năng**: a short list when few remain, a distinguishing attribute (“Chỉ có Ann thuận tay trái.”), and the contradicting clues when none remain. The count uses the expanded clues. **Tạo vụ án** stays disabled unless that count is 1, the saved answer matches, attributes are filled, and every veil still implies its clue. `POST /api/game` re-checks the schema, the veil expansion, and `assertUniquelySolvable`.
 
 ## UI components
 

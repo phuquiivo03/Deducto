@@ -9,9 +9,27 @@ import type {
   ILocation,
   IMotive,
 } from "@/features/game/game.schemas";
+import { attributeGaps } from "@/lib/attribute-rules";
 import { useCreateGameStore } from "@/store/create-game.store";
 
 import { FieldShell, inputClass } from "./field-shell";
+
+function withCurrent(preset: string[], current: string | undefined): string[] {
+  if (current && !preset.includes(current)) {
+    return [current, ...preset];
+  }
+  return preset;
+}
+
+function entityIncomplete(
+  metadata: IGameMetadata,
+  group: "suspects" | "weapons" | "locations",
+  index: number,
+): boolean {
+  return attributeGaps(metadata).some(
+    (gap) => gap.path[1] === group && gap.path[2] === index,
+  );
+}
 
 function CollapsibleCard({
   title,
@@ -121,73 +139,113 @@ function SuspectFields({
           issues={issues}
         >
           <select
-            value={suspect.gender ?? "female"}
+            value={suspect.gender ?? ""}
             onChange={(e) =>
-              updateEntity("suspects", suspect.id, { gender: e.target.value })
+              updateEntity("suspects", suspect.id, {
+                gender: e.target.value || undefined,
+              })
             }
-            className={inputClass(false)}
+            className={inputClass(!suspect.gender?.trim())}
+            required
           >
-            <option value="female">female</option>
-            <option value="male">male</option>
-            <option value="nonbinary">nonbinary</option>
+            <option value="">Chọn…</option>
+            {withCurrent(
+              ["female", "male", "nonbinary"],
+              suspect.gender,
+            ).map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
           </select>
         </FieldShell>
       </div>
-      <FieldShell label="Chiều cao (cm)" path={base} issues={issues}>
+      <FieldShell
+        label="Chiều cao (cm)"
+        path={[...base, "attributes", "height"]}
+        issues={issues}
+      >
         <input
           type="number"
+          required
           value={suspect.attributes?.height ?? ""}
           onChange={(e) =>
             updateAttributes("suspects", suspect.id, {
-              height: Number(e.target.value),
+              height: e.target.value === "" ? undefined : Number(e.target.value),
             })
           }
-          className={inputClass(false)}
+          className={inputClass(
+            typeof suspect.attributes?.height !== "number",
+          )}
         />
       </FieldShell>
-      <FieldShell label="Màu tóc" path={base} issues={issues}>
+      <FieldShell
+        label="Màu tóc"
+        path={[...base, "attributes", "hairColor"]}
+        issues={issues}
+      >
         <select
-          value={suspect.attributes?.hairColor ?? "brown"}
+          required
+          value={suspect.attributes?.hairColor ?? ""}
           onChange={(e) =>
             updateAttributes("suspects", suspect.id, {
               hairColor: e.target.value,
             })
           }
-          className={inputClass(false)}
+          className={inputClass(!suspect.attributes?.hairColor)}
         >
-          {["black", "brown", "blonde", "red", "gray", "white", "auburn"].map(
-            (c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ),
-          )}
+          <option value="">Chọn…</option>
+          {withCurrent(
+            ["black", "brown", "blonde", "red", "gray", "white", "auburn"],
+            suspect.attributes?.hairColor,
+          ).map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
       </FieldShell>
-      <FieldShell label="Tay thuận" path={base} issues={issues}>
+      <FieldShell
+        label="Tay thuận"
+        path={[...base, "attributes", "handedness"]}
+        issues={issues}
+      >
         <select
-          value={suspect.attributes?.handedness ?? "RIGHT"}
+          required
+          value={suspect.attributes?.handedness ?? ""}
           onChange={(e) =>
             updateAttributes("suspects", suspect.id, {
               handedness: e.target.value,
             })
           }
-          className={inputClass(false)}
+          className={inputClass(!suspect.attributes?.handedness)}
         >
-          <option value="LEFT">LEFT</option>
-          <option value="RIGHT">RIGHT</option>
+          <option value="">Chọn…</option>
+          {withCurrent(
+            ["LEFT", "RIGHT"],
+            suspect.attributes?.handedness,
+          ).map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
         </select>
       </FieldShell>
-      <FieldShell label="Ngày sinh" path={base} issues={issues}>
+      <FieldShell
+        label="Ngày sinh"
+        path={[...base, "attributes", "birthday"]}
+        issues={issues}
+      >
         <input
           type="date"
+          required
           value={suspect.attributes?.birthday ?? ""}
           onChange={(e) =>
             updateAttributes("suspects", suspect.id, {
               birthday: e.target.value,
             })
           }
-          className={inputClass(false)}
+          className={inputClass(!suspect.attributes?.birthday)}
         />
       </FieldShell>
     </>
@@ -232,37 +290,67 @@ function WeaponFields({ weapon, index }: { weapon: IWeapon; index: number }) {
           className={inputClass(false)}
         />
       </FieldShell>
-      <FieldShell label="Cân nặng" path={base} issues={issues}>
+      <FieldShell
+        label="Cân nặng"
+        path={[...base, "attributes", "weight"]}
+        issues={issues}
+      >
         <select
-          value={weapon.attributes?.weight ?? "MEDIUM"}
+          required
+          value={
+            typeof weapon.attributes?.weight === "string"
+              ? weapon.attributes.weight
+              : ""
+          }
           onChange={(e) =>
             updateAttributes("weapons", weapon.id, { weight: e.target.value })
           }
-          className={inputClass(false)}
+          className={inputClass(
+            typeof weapon.attributes?.weight !== "string" ||
+              !weapon.attributes.weight.trim(),
+          )}
         >
-          <option value="LIGHT">LIGHT</option>
-          <option value="MEDIUM">MEDIUM</option>
-          <option value="HEAVY">HEAVY</option>
+          <option value="">Chọn…</option>
+          {withCurrent(
+            ["LIGHT", "MEDIUM", "HEAVY"],
+            typeof weapon.attributes?.weight === "string"
+              ? weapon.attributes.weight
+              : undefined,
+          ).map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
         </select>
       </FieldShell>
-      <FieldShell label="Vật liệu" path={base} issues={issues}>
+      <FieldShell
+        label="Vật liệu"
+        path={[...base, "attributes", "material"]}
+        issues={issues}
+      >
         <input
+          required
           value={weapon.attributes?.material ?? ""}
           onChange={(e) =>
             updateAttributes("weapons", weapon.id, {
               material: e.target.value,
             })
           }
-          className={inputClass(false)}
+          className={inputClass(!weapon.attributes?.material?.trim())}
         />
       </FieldShell>
-      <FieldShell label="Loại" path={base} issues={issues}>
+      <FieldShell
+        label="Loại"
+        path={[...base, "attributes", "type"]}
+        issues={issues}
+      >
         <input
+          required
           value={weapon.attributes?.type ?? ""}
           onChange={(e) =>
             updateAttributes("weapons", weapon.id, { type: e.target.value })
           }
-          className={inputClass(false)}
+          className={inputClass(!weapon.attributes?.type?.trim())}
         />
       </FieldShell>
     </>
@@ -313,29 +401,48 @@ function LocationFields({
           className={inputClass(false)}
         />
       </FieldShell>
-      <FieldShell label="Loại" path={base} issues={issues}>
+      <FieldShell
+        label="Loại"
+        path={[...base, "attributes", "type"]}
+        issues={issues}
+      >
         <select
-          value={location.attributes?.type ?? "indoor"}
+          required
+          value={location.attributes?.type ?? ""}
           onChange={(e) =>
             updateAttributes("locations", location.id, {
               type: e.target.value,
             })
           }
-          className={inputClass(false)}
+          className={inputClass(!location.attributes?.type?.trim())}
         >
-          <option value="indoor">indoor</option>
-          <option value="outdoor">outdoor</option>
+          <option value="">Chọn…</option>
+          {withCurrent(
+            ["indoor", "outdoor"],
+            location.attributes?.type,
+          ).map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
         </select>
       </FieldShell>
-      <FieldShell label="Đặc điểm" path={base} issues={issues}>
+      <FieldShell
+        label="Đặc điểm"
+        path={[...base, "attributes", "characteristic"]}
+        issues={issues}
+      >
         <input
+          required
           value={location.attributes?.characteristic ?? ""}
           onChange={(e) =>
             updateAttributes("locations", location.id, {
               characteristic: e.target.value,
             })
           }
-          className={inputClass(false)}
+          className={inputClass(
+            !location.attributes?.characteristic?.trim(),
+          )}
         />
       </FieldShell>
     </>
@@ -411,11 +518,19 @@ export default function EntityEditors({
   return (
     <>
       <EntitySection id="section-suspects" title="Nghi phạm">
+        <p className="text-sm text-pencil/70">
+          Điền đủ thuộc tính. Che bằng thuộc tính chỉ đọc các ô này,
+          không đọc mô tả.
+        </p>
         {metadata.suspects.map((s, i) => (
           <CollapsibleCard
             key={s.id}
             title={`${s.avatar ?? "🧑"} ${s.name}`}
-            subtitle={s.description?.slice(0, 60)}
+            subtitle={
+              entityIncomplete(metadata, "suspects", i)
+                ? "Thiếu thuộc tính"
+                : s.description?.slice(0, 60)
+            }
             fieldPath={`gameMetadata.suspects.${i}.name`}
           >
             <SuspectFields suspect={s} index={i} />
@@ -427,6 +542,11 @@ export default function EntityEditors({
           <CollapsibleCard
             key={w.id}
             title={`${w.icon} ${w.name}`}
+            subtitle={
+              entityIncomplete(metadata, "weapons", i)
+                ? "Thiếu thuộc tính"
+                : undefined
+            }
             fieldPath={`gameMetadata.weapons.${i}.name`}
           >
             <WeaponFields weapon={w} index={i} />
@@ -438,6 +558,11 @@ export default function EntityEditors({
           <CollapsibleCard
             key={l.id}
             title={`${l.icon} ${l.name}`}
+            subtitle={
+              entityIncomplete(metadata, "locations", i)
+                ? "Thiếu thuộc tính"
+                : undefined
+            }
             fieldPath={`gameMetadata.locations.${i}.name`}
           >
             <LocationFields location={l} index={i} />

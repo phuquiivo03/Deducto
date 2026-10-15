@@ -29,6 +29,7 @@ enum ClueAttribute {
 	hairColor
 	height
 	birthday
+	gender
 	weight
 	material
 	type

@@ -33,6 +33,7 @@ export default function CreateGameWizard() {
   const setPhase = useCreateGameStore((s) => s.setPhase);
   const setCase = useCreateGameStore((s) => s.setCase);
   const locks = useCreateGameStore((s) => s.locks);
+  const veils = useCreateGameStore((s) => s.veils);
   const setIssues = useCreateGameStore((s) => s.setIssues);
   const reset = useCreateGameStore((s) => s.reset);
 
@@ -97,6 +98,7 @@ export default function CreateGameWizard() {
       gameMetadata,
       result,
       locks,
+      veils,
     };
 
     const parsed = createGameInputSchema.safeParse(payload);

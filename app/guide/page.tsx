@@ -106,23 +106,60 @@ const CREATE_STEPS: Step[] = [
 		),
 	},
 	{
-		title: 'Mật thư',
+		title: 'Thuộc tính',
 		body: (
 			<>
-				Bật <Ui>Khóa mật thư</Ui>, chọn <Ui>Scytale</Ui> hoặc{' '}
-				<Ui>Caesar</Ui>. <Ui>Gợi ý</Ui> là bắt buộc nhập. Hệ
-				thống tự gắn khóa là bắt buộc hay tuỳ chọn khi bạn tạo
-				vụ án.
+				Điền đủ thuộc tính có cấu trúc: nghi phạm (tay thuận,
+				chiều cao, giới tính, màu tóc, ngày sinh), hung khí
+				(cân nặng, loại, vật liệu), địa điểm (loại, đặc điểm).
+				Mô tả tự do không dùng khi che manh mối.
 			</>
 		),
 	},
 	{
-		title: 'Một lời giải',
+		title: 'Che bằng thuộc tính',
 		body: (
 			<>
-				Hệ thống kiểm tra để case có đúng một lời giải. Nếu báo{' '}
-				<Ui>Chưa thể tạo vụ án</Ui> thì thêm hoặc sửa manh mối.
-				Khi thấy <Ui>Logic hợp lệ</Ui>, bấm <Ui>Tạo vụ án</Ui>.
+				Mỗi manh mối có <Ui>Che bằng thuộc tính</Ui>, cạnh{' '}
+				<Ui>Khóa mật thư</Ui>. Bật lên thì câu gốc bị giấu, thay
+				bằng một câu. Ví dụ{' '}
+				<Ui>Anh Minh không dùng Thước gỗ</Ui> thành{' '}
+				<Ui>
+					Người không sử dụng Thước gỗ thuận tay trái và có
+					tóc đen.
+				</Ui>{' '}
+				Hung khí và địa điểm cũng một câu, lấy thuộc tính đang
+				in trên thẻ. Người chơi tự nhận ra thẻ nào. Hệ thống
+				chọn bộ nhỏ nhất mà chỉ một thẻ khớp; bạn được sửa. Bộ
+				đó phải chỉ đúng một thẻ, và vụ án vẫn còn một đáp án,
+				thì mới lưu được. Máy chủ kiểm tra lại. Câu đó vẫn khóa
+				mật thư được.
+			</>
+		),
+	},
+	{
+		title: 'Mật thư',
+		body: (
+			<>
+				Mỗi câu người chơi thấy có <Ui>Khóa mật thư</Ui>, kể cả
+				câu che bằng thuộc tính. Tắt khóa thì câu hiện thẳng.
+				Bật khóa thì chọn <Ui>Scytale</Ui> hoặc <Ui>Caesar</Ui>.{' '}
+				<Ui>Gợi ý</Ui> là bắt buộc nhập. Hệ thống tự gắn khóa là
+				bắt buộc hay tuỳ chọn khi bạn tạo vụ án.
+			</>
+		),
+	},
+	{
+		title: 'Còn N khả năng',
+		body: (
+			<>
+				Bảng <Ui>Còn N khả năng</Ui> đếm lời giải còn lại. Khi
+				còn ít, danh sách hiện ra và gợi ý một thuộc tính phân
+				biệt (ví dụ chỉ một người thuận tay trái). Nếu còn 0,
+				dòng đỏ nêu các manh mối đang mâu thuẫn. <Ui>Tạo vụ án</Ui>{' '}
+				chỉ bấm được khi còn đúng 1 khả năng, thuộc tính đã đủ,
+				và câu che (nếu có) suy ra đúng manh mối gốc. Máy chủ
+				kiểm tra lại lúc lưu.
 			</>
 		),
 	},
