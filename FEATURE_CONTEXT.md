@@ -791,6 +791,7 @@ Schemas: `features/game/game.schemas.ts` (`generateRequestSchema`, `aiCaseDraftS
 - Anchors are `ATTRIBUTE` + `REQUIRED` with no suspect, weapon, or location id. They constrain the murderer (`location`, `motive`, `handedness`, `hairColor`, `height`, `gender`, `birthday`) or the murder weapon (`weight`, `material`, `type`). `NOT_EQUAL` with no id excludes that value.
 - An entity fact (`ATTRIBUTE` + `EQUAL` or `NOT_EQUAL` on one card) does not narrow the grid. A fact that disagrees with that card is rejected.
 - A class ban is `EXCLUSION` + `NOT_EQUAL` with a suspect attribute (`handedness`, `height`, `gender`, `hairColor`, `birthday`), a `weapon_id`, and no `suspect_id`. Every suspect who has that value is forbidden that weapon. The value must occur on at least one suspect. It does not have to name a single person.
+- An attribute veil is not a stored column. `createGameInputSchema` accepts `veils: { clueId, attributes }[]`, like locks. `publishCase` expands each veiled clue into two self-describing clues (`value` JSON `{"v":1,...}`) before `assertUniquelySolvable` and `buildCasePuzzles`. The role clue keeps the original relation and hides the named card; the other says that card is the only one with those attributes. The attribute set must match exactly one card of that kind, which is what makes the pair imply the original clue. Cipher locks may target the generated ids.
 - Create requires the structured attributes those rules read: suspect gender, height, hair color, handedness, and birthday; weapon weight, type, and material; location type and characteristic. Descriptions stay optional.
 - The solution is the tuple (murderer, their weapon, their location, their motive). Other guests may stay partly ambiguous.
 
@@ -805,10 +806,11 @@ Groups larger than 6 are rejected instead of searching. Difficulty cases are siz
 ## Clue templates
 
 - `lib/clue-templates.ts` mirrors system prompt section 6.6 (E1–E4, L1–L4, R1–R4, A1, A2).
-- `lib/attribute-rules.ts` adds template clues over structured attributes: named suspect or weapon `=` / `≠`, culprit or murder-weapon `=` / `≠`, and “suspects with attribute = value cannot use weapon”. Sentences are Vietnamese via `attributeRuleText`, used by `clueToText`.
+- `lib/attribute-rules.ts` still reads structured-attribute clues already on a case: named suspect or weapon `=` / `≠`, culprit or murder-weapon `=` / `≠`, and “suspects with attribute = value cannot use weapon”. Sentences are Vietnamese via `attributeRuleText`, used by `clueToText`.
+- `lib/attribute-veil.ts` turns an existing template clue into those attribute sentences. Suspect clues can hide the person (placement, exclusion, motive ban, or a card fact). Weapon clues can hide the weapon. A location anchor can hide the room. The wizard suggests the smallest unique attribute set; the creator can edit it. A set that matches more than one card is rejected. A hidden “Ann không sử dụng Dao lam” is shown as “Người không sử dụng Dao lam thuận tay trái” plus “Ann là người duy nhất thuận tay trái”.
 - `detectTemplate`, `buildClue`, and `resolveClueValueForSubmit` keep clue sentences aligned with entity names before save.
-- UI: `components/create-game/ClueList.tsx`, `ClueEditor.tsx`, `attribute-rule-form.tsx`. Each clue still has the cipher lock toggle (unlocked text, or Caesar/Scytale plus a required hint).
-- `features/game/possibility-report.ts` powers the wizard panel **Còn N khả năng**: a short list when few remain, a distinguishing attribute (“Chỉ có Ann thuận tay trái.”), and the contradicting clues when none remain. **Tạo vụ án** stays disabled unless that count is 1, the saved answer matches, and attributes are filled. `POST /api/game` re-checks both the schema and `assertUniquelySolvable`.
+- UI: `components/create-game/ClueList.tsx` and `ClueEditor.tsx`. Each clue has **Che bằng thuộc tính** beside the cipher lock. Replacement sentences can still be locked (unlocked text, or Caesar/Scytale plus a required hint).
+- `features/game/possibility-report.ts` powers the wizard panel **Còn N khả năng**: a short list when few remain, a distinguishing attribute (“Chỉ có Ann thuận tay trái.”), and the contradicting clues when none remain. The count uses the expanded clues. **Tạo vụ án** stays disabled unless that count is 1, the saved answer matches, attributes are filled, and every veil still implies its clue. `POST /api/game` re-checks the schema, the veil expansion, and `assertUniquelySolvable`.
 
 ## UI components
 

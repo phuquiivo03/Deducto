@@ -9,6 +9,7 @@ import { prepareMetadataForSolver } from '@/features/game/prepare-metadata-for-s
 import type { IGameMetadata } from '@/features/game/game.schemas'
 import type { SolutionTuple } from '@/features/game/case-solver'
 import { attributeGaps } from '@/lib/attribute-rules'
+import { expandAttributeVeils } from '@/lib/attribute-veil'
 import { clueToText } from '@/lib/clues.helper'
 import { useCreateGameStore } from '@/store/create-game.store'
 
@@ -27,6 +28,7 @@ interface DebouncedInput {
 	result: NonNullable<
 		ReturnType<typeof useCreateGameStore.getState>['result']
 	>
+	veilMessage: string | null
 }
 
 export interface DraftSolvabilityView {
@@ -44,14 +46,21 @@ export interface DraftSolvabilityView {
 export function useDraftSolvability (): DraftSolvabilityView {
 	const draft = useCreateGameStore((s) => s.draft)
 	const result = useCreateGameStore((s) => s.result)
+	const veils = useCreateGameStore((s) => s.veils)
 
 	const input = useMemo((): DebouncedInput | null => {
 		if (!draft || !result) return null
-		return {
-			metadata: prepareMetadataForSolver(draft.gameMetadata),
-			result,
+		const prepared = prepareMetadataForSolver(draft.gameMetadata)
+		const expanded = expandAttributeVeils(prepared, veils)
+		if (!expanded.ok) {
+			return {
+				metadata: prepared,
+				result,
+				veilMessage: expanded.message,
+			}
 		}
-	}, [draft, result])
+		return { metadata: expanded.metadata, result, veilMessage: null }
+	}, [draft, result, veils])
 
 	const [debounced, setDebounced] = useState<DebouncedInput | null>(
 		input,
@@ -75,12 +84,12 @@ export function useDraftSolvability (): DraftSolvabilityView {
 	}, [input])
 
 	const check = useMemo(() => {
-		if (!debounced) return null
+		if (!debounced || debounced.veilMessage) return null
 		return checkUniquelySolvable(debounced.metadata, debounced.result)
 	}, [debounced])
 
 	const report = useMemo(() => {
-		if (!debounced) return null
+		if (!debounced || debounced.veilMessage) return null
 		return reportPossibilities(debounced.metadata)
 	}, [debounced])
 
@@ -91,6 +100,20 @@ export function useDraftSolvability (): DraftSolvabilityView {
 
 	if (!draft || !result) {
 		return emptyView(false)
+	}
+
+	if (debounced?.veilMessage && !isChecking) {
+		return {
+			status: 'invalid',
+			messageVi: debounced.veilMessage,
+			isChecking: false,
+			canCreate: false,
+			countLabel: null,
+			possibilities: [],
+			suggestion: null,
+			conflicts: [],
+			attributeGaps: gaps,
+		}
 	}
 
 	if (isChecking || !check || !report || !debounced) {

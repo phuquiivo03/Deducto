@@ -14,6 +14,12 @@ import {
 	readWeaponAttribute,
 } from '@/lib/attribute-rules'
 import { detectTemplate } from '@/lib/clue-templates'
+import {
+	matchingIds,
+	parseVeil,
+	readVeilAttribute,
+	type VeilKind,
+} from '@/lib/attribute-veil'
 
 import { CaseNotSolvableError } from './game-errors'
 
@@ -518,6 +524,139 @@ function banAnchor (
 	}
 }
 
+function applyAttributeVeil (
+	constraints: Constraints,
+	clue: IClue,
+	label: string,
+	metadata: IGameMetadata,
+	weaponIds: Set<string>,
+	locationIds: Set<string>,
+): boolean {
+	if (!clue.value.startsWith('{"v":1')) return false
+	const body = parseVeil(clue.value)
+	if (!body) {
+		constraints.issues.push(
+			`${label} is not a supported deduction rule.`,
+		)
+		return true
+	}
+	const ids = matchingIds(metadata, body.kind, body.filters)
+	if (body.role === 'only') {
+		const linked = veilEntityId(clue, body.kind)
+		if (!linked || ids.length !== 1 || ids[0] !== linked) {
+			constraints.issues.push(
+				`${label} does not uniquely identify its subject.`,
+			)
+		}
+		return true
+	}
+	if (body.role === 'fact') {
+		const subject = ids.length === 1 ? ids[0] : null
+		if (!subject || !body.fact) {
+			constraints.issues.push(
+				`${label} does not uniquely identify its subject.`,
+			)
+			return true
+		}
+		const actual = readVeilAttribute(
+			metadata,
+			body.kind,
+			subject,
+			body.fact.a,
+		)
+		if (actual !== body.fact.v) {
+			constraints.issues.push(`${label} disagrees with the card.`)
+		}
+		return true
+	}
+	if (ids.length === 0) {
+		constraints.issues.push(`${label} matches nobody in this case.`)
+		return true
+	}
+	if (body.role === 'at-location' || body.role === 'ban-location') {
+		const locationId = knownId(
+			constraints,
+			label,
+			clue.location_id,
+			locationIds,
+			'location',
+		)
+		if (!locationId) return true
+		const targets =
+			body.role === 'at-location'
+				? metadata.suspects
+					.filter((item) => !ids.includes(item.id))
+					.map((item) => item.id)
+				: ids
+		for (const id of targets) {
+			addPair(constraints.locNeq, id, locationId)
+		}
+		return true
+	}
+	if (body.role === 'ban-weapon') {
+		const weaponId = knownId(
+			constraints,
+			label,
+			clue.weapon_id,
+			weaponIds,
+			'weapon',
+		)
+		if (!weaponId) return true
+		for (const id of ids) addPair(constraints.wpnNeq, id, weaponId)
+		return true
+	}
+	if (body.role === 'ban-motive') {
+		const motiveIds = idsNamed(metadata.motives, body.motive ?? '')
+		if (motiveIds.length === 0) {
+			constraints.issues.push(
+				`${label} names a motive that is not in this case.`,
+			)
+			return true
+		}
+		for (const id of ids) {
+			for (const motiveId of motiveIds) {
+				addPair(constraints.motNeq, id, motiveId)
+			}
+		}
+		return true
+	}
+	if (body.role === 'weapon-at' || body.role === 'weapon-not-at') {
+		const locationId = knownId(
+			constraints,
+			label,
+			clue.location_id,
+			locationIds,
+			'location',
+		)
+		if (!locationId) return true
+		const targets =
+			body.role === 'weapon-at'
+				? metadata.weapons
+					.filter((item) => !ids.includes(item.id))
+					.map((item) => item.id)
+				: ids
+		for (const id of targets) {
+			addPair(constraints.weaponNotAt, id, locationId)
+		}
+		return true
+	}
+	if (body.role === 'anchor-location') {
+		constraints.anchorLocations = tighten(
+			constraints.anchorLocations,
+			ids,
+		)
+		return true
+	}
+	constraints.issues.push(`${label} is not a supported deduction rule.`)
+	return true
+}
+
+function veilEntityId (clue: IClue, kind: VeilKind): string | undefined {
+	if (kind === 'suspect') return clue.suspect_id
+	if (kind === 'weapon') return clue.weapon_id
+	return clue.location_id
+}
+
 function applyClue (
 	constraints: Constraints,
 	clue: IClue,
@@ -528,6 +667,18 @@ function applyClue (
 	locationIds: Set<string>,
 ): void {
 	const label = `Clue ${index + 1}`
+	if (
+		applyAttributeVeil(
+			constraints,
+			clue,
+			label,
+			metadata,
+			weaponIds,
+			locationIds,
+		)
+	) {
+		return
+	}
 	if (applyAttributeRule(constraints, clue, label, metadata, weaponIds)) {
 		return
 	}

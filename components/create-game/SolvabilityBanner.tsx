@@ -18,7 +18,13 @@ export default function SolvabilityBanner ({
 	}
 
 	const isZero = view.countLabel === 'Còn 0 khả năng'
-	const tone = isZero || view.conflicts.length > 0 ? 'bad' : 'ok'
+	const tone =
+		isZero ||
+		view.conflicts.length > 0 ||
+		view.status === 'invalid' ||
+		view.status === 'none'
+			? 'bad'
+			: 'ok'
 
 	return (
 		<div
@@ -81,7 +87,15 @@ rounded-wobbly-md shadow-hard-sm space-y-2
 			) : null}
 
 			{view.messageVi && view.conflicts.length === 0 ? (
-				<p className="text-sm text-pencil">{view.messageVi}</p>
+				<p
+					className={
+						tone === 'bad'
+							? 'text-sm text-marker'
+							: 'text-sm text-pencil'
+					}
+				>
+					{view.messageVi}
+				</p>
 			) : null}
 		</div>
 	)

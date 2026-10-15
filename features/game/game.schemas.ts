@@ -4,6 +4,7 @@ import { gameVisibilitySchema } from "@/features/game/game-visibility";
 import { puzzleLockRequestSchema } from "@/features/puzzles/lock-request";
 import { cluePuzzleSchema } from "@/features/puzzles/schema";
 import { attributeGaps } from "@/lib/attribute-rules";
+import { expandAttributeVeils } from "@/lib/attribute-veil";
 
 export const gameLevelSchema = z
   .enum(["easy", "medium", "hard"])
@@ -311,6 +312,15 @@ export const createGameInputSchema = z
     gameMetadata: createGameMetadataSchema,
     result: resultAnswerSchema,
     locks: z.array(puzzleLockRequestSchema).max(64).optional(),
+    veils: z
+      .array(
+        z.object({
+          clueId: z.string().min(1).max(80),
+          attributes: z.array(z.string().min(1).max(40)).max(8),
+        }),
+      )
+      .max(64)
+      .optional(),
   })
   .superRefine((data, ctx) => {
     const meta = data.gameMetadata;
@@ -424,6 +434,15 @@ export const createGameInputSchema = z
         code: z.ZodIssueCode.custom,
         message: gap.message,
         path: gap.path,
+      });
+    }
+
+    const veiled = expandAttributeVeils(meta, data.veils ?? []);
+    if (!veiled.ok) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: veiled.message,
+        path: ["veils"],
       });
     }
   });

@@ -6,7 +6,7 @@ import type {
 } from '@/features/game/game.schemas'
 
 /**
- * Structured fields a creator can turn into a template clue.
+ * Structured fields read by attribute clues and attribute veils.
  * Free-text descriptions are intentionally absent.
  */
 export const SUSPECT_RULE_ATTRIBUTES = [
@@ -35,59 +35,11 @@ export type AttributeRuleKind =
 	| 'weapon-attr'
 	| 'murder-weapon-attr'
 
-export interface AttributeRuleDraft {
-	kind: AttributeRuleKind
-	op: 'eq' | 'neq'
-	attribute: string
-	value: string
-	suspectId: string
-	weaponId: string
-}
-
 export interface AttributeGap {
 	path: (string | number)[]
 	message: string
 	labelVi: string
 }
-
-const HANDEDNESS = ['LEFT', 'RIGHT']
-const GENDERS = ['female', 'male', 'nonbinary']
-const HAIR = [
-	'black',
-	'brown',
-	'blonde',
-	'red',
-	'gray',
-	'white',
-	'auburn',
-]
-const WEIGHTS = ['LIGHT', 'MEDIUM', 'HEAVY']
-
-export const RULE_KINDS: {
-	kind: AttributeRuleKind
-	label: string
-}[] = [
-	{
-		kind: 'suspect-attr',
-		label: 'Nghi phạm · thuộc tính · =/≠ · giá trị',
-	},
-	{
-		kind: 'ban-weapon',
-		label: 'Nghi phạm có thuộc tính = giá trị không dùng vũ khí',
-	},
-	{
-		kind: 'culprit-attr',
-		label: 'Hung thủ · thuộc tính · =/≠ · giá trị',
-	},
-	{
-		kind: 'weapon-attr',
-		label: 'Hung khí · thuộc tính · =/≠ · giá trị',
-	},
-	{
-		kind: 'murder-weapon-attr',
-		label: 'Hung khí gây án · thuộc tính · =/≠ · giá trị',
-	},
-]
 
 export function isSuspectRuleAttribute (
 	value: string,
@@ -132,6 +84,7 @@ export function readWeaponAttribute (
 export function attributeRuleKind (
 	clue: IClue,
 ): AttributeRuleKind | null {
+	if (clue.value.startsWith('{"v":1')) return null
 	const suspectAttr = isSuspectRuleAttribute(clue.attribute)
 	const weaponAttr = isWeaponRuleAttribute(clue.attribute)
 	const noSuspect = !clue.suspect_id
@@ -183,220 +136,6 @@ export function attributeRuleKind (
 	return null
 }
 
-export function attributeChoices (
-	kind: AttributeRuleKind,
-): readonly string[] {
-	if (kind === 'weapon-attr' || kind === 'murder-weapon-attr') {
-		return WEAPON_RULE_ATTRIBUTES
-	}
-	return SUSPECT_RULE_ATTRIBUTES
-}
-
-export function needsSuspect (kind: AttributeRuleKind): boolean {
-	return kind === 'suspect-attr'
-}
-
-export function needsWeapon (kind: AttributeRuleKind): boolean {
-	return kind === 'ban-weapon' || kind === 'weapon-attr'
-}
-
-export function needsOperator (kind: AttributeRuleKind): boolean {
-	return kind !== 'ban-weapon'
-}
-
-export function valueChoices (
-	metadata: IGameMetadata,
-	draft: AttributeRuleDraft,
-): string[] {
-	if (
-		draft.kind === 'suspect-attr' &&
-		isSuspectRuleAttribute(draft.attribute)
-	) {
-		const suspect = metadata.suspects.find(
-			(item) => item.id === draft.suspectId,
-		)
-		if (!suspect) return []
-		const actual = readSuspectAttribute(suspect, draft.attribute)
-		if (draft.op === 'eq') return actual ? [actual] : []
-		return suspectDomain(metadata, draft.attribute).filter(
-			(value) => value !== actual,
-		)
-	}
-
-	if (
-		(draft.kind === 'ban-weapon' || draft.kind === 'culprit-attr') &&
-		isSuspectRuleAttribute(draft.attribute)
-	) {
-		return presentSuspectValues(metadata, draft.attribute)
-	}
-
-	if (
-		draft.kind === 'weapon-attr' &&
-		isWeaponRuleAttribute(draft.attribute)
-	) {
-		const weapon = metadata.weapons.find(
-			(item) => item.id === draft.weaponId,
-		)
-		if (!weapon) return []
-		const actual = readWeaponAttribute(weapon, draft.attribute)
-		if (draft.op === 'eq') return actual ? [actual] : []
-		return weaponDomain(metadata, draft.attribute).filter(
-			(value) => value !== actual,
-		)
-	}
-
-	if (
-		draft.kind === 'murder-weapon-attr' &&
-		isWeaponRuleAttribute(draft.attribute)
-	) {
-		return presentWeaponValues(metadata, draft.attribute)
-	}
-
-	return []
-}
-
-export function withRulePatch (
-	metadata: IGameMetadata,
-	draft: AttributeRuleDraft,
-	patch: Partial<AttributeRuleDraft>,
-): AttributeRuleDraft {
-	const next: AttributeRuleDraft = { ...draft, ...patch }
-	const attributes = attributeChoices(next.kind)
-	if (!attributes.includes(next.attribute)) {
-		next.attribute = attributes[0] ?? ''
-	}
-	if (!needsOperator(next.kind)) {
-		next.op = 'eq'
-	}
-	if (
-		needsSuspect(next.kind) &&
-		!metadata.suspects.some((item) => item.id === next.suspectId)
-	) {
-		next.suspectId = metadata.suspects[0]?.id ?? ''
-	}
-	if (
-		needsWeapon(next.kind) &&
-		!metadata.weapons.some((item) => item.id === next.weaponId)
-	) {
-		next.weaponId = metadata.weapons[0]?.id ?? ''
-	}
-	const values = valueChoices(metadata, next)
-	if (!values.includes(next.value)) {
-		next.value = values[0] ?? ''
-	}
-	return next
-}
-
-export function defaultRule (
-	metadata: IGameMetadata,
-): AttributeRuleDraft {
-	return withRulePatch(
-		metadata,
-		{
-			kind: 'suspect-attr',
-			op: 'eq',
-			attribute: 'handedness',
-			value: '',
-			suspectId: metadata.suspects[0]?.id ?? '',
-			weaponId: metadata.weapons[0]?.id ?? '',
-		},
-		{},
-	)
-}
-
-export function clueFromRule (
-	id: string,
-	draft: AttributeRuleDraft,
-): IClue | null {
-	if (!draft.value.trim()) return null
-
-	if (
-		draft.kind === 'suspect-attr' &&
-		draft.suspectId &&
-		isSuspectRuleAttribute(draft.attribute)
-	) {
-		return {
-			id,
-			type: 'ATTRIBUTE',
-			attribute: draft.attribute,
-			relation: draft.op === 'eq' ? 'EQUAL' : 'NOT_EQUAL',
-			value: draft.value,
-			suspect_id: draft.suspectId,
-		}
-	}
-
-	if (
-		draft.kind === 'ban-weapon' &&
-		draft.weaponId &&
-		isSuspectRuleAttribute(draft.attribute)
-	) {
-		return {
-			id,
-			type: 'EXCLUSION',
-			attribute: draft.attribute,
-			relation: 'NOT_EQUAL',
-			value: draft.value,
-			weapon_id: draft.weaponId,
-		}
-	}
-
-	if (
-		draft.kind === 'culprit-attr' &&
-		isSuspectRuleAttribute(draft.attribute)
-	) {
-		return {
-			id,
-			type: 'ATTRIBUTE',
-			attribute: draft.attribute,
-			relation: draft.op === 'eq' ? 'REQUIRED' : 'NOT_EQUAL',
-			value: draft.value,
-		}
-	}
-
-	if (
-		draft.kind === 'weapon-attr' &&
-		draft.weaponId &&
-		isWeaponRuleAttribute(draft.attribute)
-	) {
-		return {
-			id,
-			type: 'ATTRIBUTE',
-			attribute: draft.attribute,
-			relation: draft.op === 'eq' ? 'EQUAL' : 'NOT_EQUAL',
-			value: draft.value,
-			weapon_id: draft.weaponId,
-		}
-	}
-
-	if (
-		draft.kind === 'murder-weapon-attr' &&
-		isWeaponRuleAttribute(draft.attribute)
-	) {
-		return {
-			id,
-			type: 'ATTRIBUTE',
-			attribute: draft.attribute,
-			relation: draft.op === 'eq' ? 'REQUIRED' : 'NOT_EQUAL',
-			value: draft.value,
-		}
-	}
-
-	return null
-}
-
-export function ruleFromClue (clue: IClue): AttributeRuleDraft | null {
-	const kind = attributeRuleKind(clue)
-	if (!kind) return null
-	return {
-		kind,
-		op: clue.relation === 'NOT_EQUAL' ? 'neq' : 'eq',
-		attribute: clue.attribute,
-		value: clue.value,
-		suspectId: clue.suspect_id ?? '',
-		weaponId: clue.weapon_id ?? '',
-	}
-}
-
 export function attributeLabel (attribute: string): string {
 	switch (attribute) {
 		case 'handedness':
@@ -413,15 +152,13 @@ export function attributeLabel (attribute: string): string {
 			return 'Cân nặng'
 		case 'type':
 			return 'Loại'
+		case 'characteristic':
+			return 'Đặc điểm'
 		case 'material':
 			return 'Vật liệu'
 		default:
 			return attribute
 	}
-}
-
-export function valueLabel (attribute: string, value: string): string {
-	return traitPhrases(attribute, value).yes
 }
 
 export function traitPhrases (
@@ -691,54 +428,6 @@ function uniqueTrait (
 		}
 	}
 	return null
-}
-
-function presentSuspectValues (
-	metadata: IGameMetadata,
-	attribute: SuspectRuleAttribute,
-): string[] {
-	const values = new Set<string>()
-	for (const suspect of metadata.suspects) {
-		const value = readSuspectAttribute(suspect, attribute)
-		if (value) values.add(value)
-	}
-	return [...values]
-}
-
-function presentWeaponValues (
-	metadata: IGameMetadata,
-	attribute: WeaponRuleAttribute,
-): string[] {
-	const values = new Set<string>()
-	for (const weapon of metadata.weapons) {
-		const value = readWeaponAttribute(weapon, attribute)
-		if (value) values.add(value)
-	}
-	return [...values]
-}
-
-function suspectDomain (
-	metadata: IGameMetadata,
-	attribute: SuspectRuleAttribute,
-): string[] {
-	const present = presentSuspectValues(metadata, attribute)
-	if (attribute === 'handedness') return merge(HANDEDNESS, present)
-	if (attribute === 'gender') return merge(GENDERS, present)
-	if (attribute === 'hairColor') return merge(HAIR, present)
-	return present
-}
-
-function weaponDomain (
-	metadata: IGameMetadata,
-	attribute: WeaponRuleAttribute,
-): string[] {
-	const present = presentWeaponValues(metadata, attribute)
-	if (attribute === 'weight') return merge(WEIGHTS, present)
-	return present
-}
-
-function merge (base: readonly string[], extra: string[]): string[] {
-	return [...new Set([...base, ...extra])]
 }
 
 function pushGap (

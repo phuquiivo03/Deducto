@@ -519,8 +519,8 @@ export default function EntityEditors({
     <>
       <EntitySection id="section-suspects" title="Nghi phạm">
         <p className="text-sm text-pencil/70">
-          Điền đủ thuộc tính. Luật manh mối chỉ đọc các ô này, không
-          đọc mô tả.
+          Điền đủ thuộc tính. Che bằng thuộc tính chỉ đọc các ô này,
+          không đọc mô tả.
         </p>
         {metadata.suspects.map((s, i) => (
           <CollapsibleCard

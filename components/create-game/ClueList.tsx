@@ -8,11 +8,19 @@ import type { IGameMetadata } from "@/features/game/game.schemas";
 import { listPuzzleKinds, type PuzzleKind } from "@/features/puzzles/registry";
 import { buildClue } from "@/lib/clue-templates";
 import { clueToText } from "@/lib/clues.helper";
+import {
+  suggestVeilAttributes,
+  veilAttributeOptions,
+  veilBlockReason,
+  veilOnlyId,
+  veilPreview,
+  veilRoleId,
+} from "@/lib/attribute-veil";
 import { newClueId, useCreateGameStore } from "@/store/create-game.store";
+import type { PuzzleLockDraft } from "@/features/puzzles/lock-request";
 import Card from "@/components/ui/Card";
 import { buttonClassName } from "@/components/ui/button";
 
-import AttributeRuleForm from "./attribute-rule-form";
 import ClueEditor from "./ClueEditor";
 
 export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
@@ -23,6 +31,8 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
   const locks = useCreateGameStore((s) => s.locks);
   const setLock = useCreateGameStore((s) => s.setLock);
   const suggestLock = useCreateGameStore((s) => s.suggestLock);
+  const veils = useCreateGameStore((s) => s.veils);
+  const setVeil = useCreateGameStore((s) => s.setVeil);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [suggestNote, setSuggestNote] = useState<string | null>(null);
   const kinds = listPuzzleKinds();
@@ -55,7 +65,7 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
     setSuggestNote(
       index >= 0
         ? `Đã khóa manh mối #${index + 1}. Hãy thêm gợi ý.`
-        : "Đã khóa một manh mối. Hãy thêm gợi ý.",
+        : "Đã khóa một câu người chơi thấy. Hãy thêm gợi ý.",
     );
   };
 
@@ -98,11 +108,10 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
         </div>
       </div>
       <p className="text-sm text-pencil/70">
-        Thêm luật thuộc tính từ mẫu. Bật Khóa mật thư để giấu câu bằng
-        Caesar hoặc Scytale (gợi ý là bắt buộc); tắt khóa thì câu hiện
-        thẳng. Máy chủ tạo mật mã khi bạn tạo vụ án.
+        Che bằng thuộc tính giấu câu gốc và thay bằng câu thuộc tính
+        nói vòng. Khóa mật thư giấu câu bằng Caesar hoặc Scytale (gợi
+        ý là bắt buộc). Máy chủ tạo mật mã khi bạn tạo vụ án.
       </p>
-      <AttributeRuleForm metadata={metadata} />
       {suggestNote ? (
         <p className="text-sm text-pen" role="status">
           {suggestNote}
@@ -112,7 +121,12 @@ export default function ClueList({ metadata }: { metadata: IGameMetadata }) {
         {clues.map((clue, index) => {
           const open = expandedId === clue.id;
           const preview = clueToText(clue, metadata);
-          const lock = locks.find((item) => item.clueId === clue.id);
+          const veil = veils.find((item) => item.clueId === clue.id);
+          const block = veilBlockReason(metadata, clue);
+          const options = veilAttributeOptions(metadata, clue);
+          const shown = veil
+            ? veilPreview(metadata, clue, veil.attributes)
+            : null;
           return (
             <li
               key={clue.id}
@@ -128,7 +142,11 @@ shadow-paper -rotate-1
                 <button
                   type="button"
                   onClick={() => setExpandedId(open ? null : clue.id)}
-                  className="flex-1 text-left text-base text-pencil"
+                  className={
+                    veil
+                      ? "flex-1 text-left text-base text-pencil/50 line-through"
+                      : "flex-1 text-left text-base text-pencil"
+                  }
                 >
                   {preview}
                 </button>
@@ -161,84 +179,96 @@ shadow-paper -rotate-1
                   ×
                 </button>
               </div>
-              {defaultKind ? (
-                <div className="flex flex-wrap items-center gap-3 px-4 pb-3">
-                  <label className="inline-flex items-center gap-2 text-sm text-pencil">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(lock)}
-                      onChange={(event) => {
-                        handleSetLock(
-                          clue.id,
-                          event.target.checked ? defaultKind : null,
-                        );
-                      }}
+              <div className="flex flex-wrap items-center gap-3 px-4 pb-3">
+                <label
+                  className="inline-flex items-center gap-2 text-sm text-pencil"
+                  title={block && !veil ? block : undefined}
+                >
+                  <input
+                    type="checkbox"
+                    checked={Boolean(veil)}
+                    disabled={Boolean(block) && !veil}
+                    onChange={(event) => {
+                      if (!event.target.checked) {
+                        setVeil(clue.id, null);
+                        return;
+                      }
+                      const suggested = suggestVeilAttributes(
+                        metadata,
+                        clue,
+                      );
+                      if (suggested) setVeil(clue.id, suggested);
+                    }}
+                  />
+                  Che bằng thuộc tính
+                </label>
+                {block && !veil ? (
+                  <span className="text-sm text-pencil/70">{block}</span>
+                ) : null}
+                {defaultKind && !veil ? (
+                  <CipherLock
+                    clueId={clue.id}
+                    index={index}
+                    lock={locks.find((item) => item.clueId === clue.id)}
+                    kinds={kinds}
+                    defaultKind={defaultKind}
+                    onLock={handleSetLock}
+                  />
+                ) : null}
+              </div>
+              {veil && shown ? (
+                <div className="space-y-3 px-4 pb-3">
+                  <p className="text-sm text-pencil/70">Người chơi thấy:</p>
+                  {shown.role ? (
+                    <PlayerLine
+                      text={shown.role}
+                      clueId={veilRoleId(clue.id)}
+                      index={index}
+                      which="vai"
+                      locks={locks}
+                      kinds={kinds}
+                      defaultKind={defaultKind}
+                      onLock={handleSetLock}
                     />
-                    <Lock
-                      className="h-3.5 w-3.5"
-                      strokeWidth={2.5}
-                      aria-hidden
-                    />
-                    Khóa mật thư
-                  </label>
-                  {lock ? (
-                    <select
-                      value={lock.kind}
-                      aria-label={`Loại mật thư cho manh mối ${index + 1}`}
-                      onChange={(event) => {
-                        handleSetLock(
-                          clue.id,
-                          event.target.value as PuzzleKind,
-                          lock.hint,
-                        );
-                      }}
-                      className="
-border-2 border-pencil bg-card px-3 py-1
-rounded-wobbly-sm text-base text-pencil
-"
-                    >
-                      {kinds.map((kind) => (
-                        <option key={kind.kind} value={kind.kind}>
-                          {kind.label}
-                        </option>
-                      ))}
-                    </select>
                   ) : null}
-                  {lock ? (
-                    <div className="w-full min-w-[12rem] flex-1">
+                  {shown.only ? (
+                    <PlayerLine
+                      text={shown.only}
+                      clueId={veilOnlyId(clue.id)}
+                      index={index}
+                      which="duy nhất"
+                      locks={locks}
+                      kinds={kinds}
+                      defaultKind={defaultKind}
+                      onLock={handleSetLock}
+                    />
+                  ) : null}
+                  <div className="flex flex-wrap gap-3">
+                    {options.map((option) => (
                       <label
-                        htmlFor={`hint-${clue.id}`}
-                        className="text-sm text-pencil"
+                        key={option.key}
+                        className="inline-flex items-center gap-2 text-sm text-pencil"
                       >
-                        Gợi ý
+                        <input
+                          type="checkbox"
+                          checked={veil.attributes.includes(option.key)}
+                          onChange={() => {
+                            const next = options
+                              .map((item) => item.key)
+                              .filter((key) =>
+                                key === option.key
+                                  ? !veil.attributes.includes(option.key)
+                                  : veil.attributes.includes(key),
+                              );
+                            setVeil(clue.id, next);
+                          }}
+                        />
+                        {option.label}
                       </label>
-                      <input
-                        id={`hint-${clue.id}`}
-                        value={lock.hint}
-                        maxLength={200}
-                        required
-                        aria-invalid={lock.hint.trim().length === 0}
-                        aria-describedby={`hint-help-${clue.id}`}
-                        onChange={(event) => {
-                          handleSetLock(
-                            clue.id,
-                            lock.kind,
-                            event.target.value,
-                          );
-                        }}
-                        className="
-mt-1 w-full border-2 border-pencil bg-card px-3 py-1
-rounded-wobbly-sm text-base text-pencil
-"
-                      />
-                      <p
-                        id={`hint-help-${clue.id}`}
-                        className="mt-1 text-sm text-pencil/70"
-                      >
-                        Gợi ý chỉ mô tả ngữ cảnh. Không thêm sự kiện
-                        hay manh mối mới.
-                      </p>
-                    </div>
+                    ))}
+                  </div>
+                  {shown.message ? (
+                    <p className="text-sm text-marker">{shown.message}</p>
                   ) : null}
                 </div>
               ) : null}
@@ -252,5 +282,124 @@ rounded-wobbly-sm text-base text-pencil
         })}
       </ul>
     </Card>
+  );
+}
+
+function PlayerLine({
+  text,
+  clueId,
+  index,
+  which,
+  locks,
+  kinds,
+  defaultKind,
+  onLock,
+}: {
+  text: string;
+  clueId: string;
+  index: number;
+  which: string;
+  locks: PuzzleLockDraft[];
+  kinds: { kind: PuzzleKind; label: string }[];
+  defaultKind: PuzzleKind | undefined;
+  onLock: (clueId: string, kind: PuzzleKind | null, hint?: string) => void;
+}) {
+  return (
+    <div className="space-y-2 rounded-wobbly-sm border-2 border-dashed border-pencil px-3 py-2">
+      <p className="text-base text-pencil">{text}</p>
+      {defaultKind ? (
+        <CipherLock
+          clueId={clueId}
+          index={index}
+          label={`Khóa mật thư (${which})`}
+          lock={locks.find((item) => item.clueId === clueId)}
+          kinds={kinds}
+          defaultKind={defaultKind}
+          onLock={onLock}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function CipherLock({
+  clueId,
+  index,
+  lock,
+  kinds,
+  defaultKind,
+  onLock,
+  label = "Khóa mật thư",
+}: {
+  clueId: string;
+  index: number;
+  lock: PuzzleLockDraft | undefined;
+  kinds: { kind: PuzzleKind; label: string }[];
+  defaultKind: PuzzleKind;
+  onLock: (clueId: string, kind: PuzzleKind | null, hint?: string) => void;
+  label?: string;
+}) {
+  return (
+    <>
+      <label className="inline-flex items-center gap-2 text-sm text-pencil">
+        <input
+          type="checkbox"
+          checked={Boolean(lock)}
+          onChange={(event) => {
+            onLock(clueId, event.target.checked ? defaultKind : null);
+          }}
+        />
+        <Lock className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
+        {label}
+      </label>
+      {lock ? (
+        <select
+          value={lock.kind}
+          aria-label={`Loại mật thư cho manh mối ${index + 1}`}
+          onChange={(event) => {
+            onLock(clueId, event.target.value as PuzzleKind, lock.hint);
+          }}
+          className="
+border-2 border-pencil bg-card px-3 py-1
+rounded-wobbly-sm text-base text-pencil
+"
+        >
+          {kinds.map((kind) => (
+            <option key={kind.kind} value={kind.kind}>
+              {kind.label}
+            </option>
+          ))}
+        </select>
+      ) : null}
+      {lock ? (
+        <div className="w-full min-w-[12rem] flex-1">
+          <label htmlFor={`hint-${clueId}`} className="text-sm text-pencil">
+            Gợi ý
+          </label>
+          <input
+            id={`hint-${clueId}`}
+            value={lock.hint}
+            maxLength={200}
+            required
+            aria-invalid={lock.hint.trim().length === 0}
+            aria-describedby={`hint-help-${clueId}`}
+            onChange={(event) => {
+              onLock(clueId, lock.kind, event.target.value);
+            }}
+            className="
+mt-1 w-full border-2 border-pencil bg-card px-3 py-1
+rounded-wobbly-sm text-base text-pencil
+"
+          />
+          <p
+            id={`hint-help-${clueId}`}
+            className="mt-1 text-sm text-pencil/70"
+          >
+            Gợi ý chỉ mô tả ngữ cảnh. Không thêm sự kiện hay manh mối
+            mới.
+          </p>
+        </div>
+      ) : null}
+    </>
   );
 }

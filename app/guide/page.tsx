@@ -109,25 +109,28 @@ const CREATE_STEPS: Step[] = [
 		title: 'Thuộc tính',
 		body: (
 			<>
-				Điền đủ thuộc tính có cấu trúc trước khi viết luật: nghi
-				phạm (tay thuận, chiều cao, giới tính, màu tóc, ngày
-				sinh), hung khí (cân nặng, loại, vật liệu), địa điểm
-				(loại, đặc điểm). Mô tả tự do không dùng cho luật.
+				Điền đủ thuộc tính có cấu trúc: nghi phạm (tay thuận,
+				chiều cao, giới tính, màu tóc, ngày sinh), hung khí
+				(cân nặng, loại, vật liệu), địa điểm (loại, đặc điểm).
+				Mô tả tự do không dùng khi che manh mối.
 			</>
 		),
 	},
 	{
-		title: 'Luật thuộc tính',
+		title: 'Che bằng thuộc tính',
 		body: (
 			<>
-				Trong <Ui>Manh mối</Ui>, mở <Ui>Luật thuộc tính</Ui> và
-				chọn mẫu — không gõ câu tự do. Ví dụ{' '}
-				<Ui>Ann thuận tay trái</Ui>,{' '}
-				<Ui>Ann không cao 170 cm</Ui>,{' '}
-				<Ui>Nghi phạm thuận tay trái không sử dụng dao</Ui>,{' '}
-				<Ui>Hung thủ là nữ</Ui>, <Ui>Hung khí gây án nặng</Ui>.
-				Câu tiếng Việt hiện ngay bên dưới. Một luật chỉ thu hẹp,
-				không cần chỉ đúng một người.
+				Mỗi manh mối có <Ui>Che bằng thuộc tính</Ui>, cạnh{' '}
+				<Ui>Khóa mật thư</Ui>. Bật lên thì câu gốc bị giấu. Người
+				chơi thấy câu thuộc tính nói vòng — ví dụ{' '}
+				<Ui>Ann không sử dụng Dao lam</Ui> thành{' '}
+				<Ui>Người không sử dụng Dao lam thuận tay trái</Ui> và{' '}
+				<Ui>Ann là người duy nhất thuận tay trái</Ui>. Hệ thống
+				chọn bộ thuộc tính nhỏ nhất để nhận ra đúng thẻ; bạn được
+				thêm hoặc bớt. Bộ đó phải chỉ đúng một nghi phạm, hung khí
+				hoặc địa điểm, và cả vụ án vẫn còn đúng một đáp án thì
+				mới lưu được. Máy chủ kiểm tra lại. Từng câu thay thế
+				vẫn khóa mật thư được.
 			</>
 		),
 	},
@@ -135,11 +138,11 @@ const CREATE_STEPS: Step[] = [
 		title: 'Mật thư',
 		body: (
 			<>
-				Mỗi manh mối có <Ui>Khóa mật thư</Ui>. Tắt khóa thì câu
-				hiện thẳng. Bật khóa thì chọn <Ui>Scytale</Ui> hoặc{' '}
-				<Ui>Caesar</Ui>. <Ui>Gợi ý</Ui> là bắt buộc nhập. Hệ
-				thống tự gắn khóa là bắt buộc hay tuỳ chọn khi bạn tạo
-				vụ án.
+				Mỗi câu người chơi thấy có <Ui>Khóa mật thư</Ui>, kể cả
+				câu vừa che bằng thuộc tính. Tắt khóa thì câu hiện thẳng.
+				Bật khóa thì chọn <Ui>Scytale</Ui> hoặc <Ui>Caesar</Ui>.{' '}
+				<Ui>Gợi ý</Ui> là bắt buộc nhập. Hệ thống tự gắn khóa là
+				bắt buộc hay tuỳ chọn khi bạn tạo vụ án.
 			</>
 		),
 	},
@@ -151,8 +154,9 @@ const CREATE_STEPS: Step[] = [
 				còn ít, danh sách hiện ra và gợi ý một thuộc tính phân
 				biệt (ví dụ chỉ một người thuận tay trái). Nếu còn 0,
 				dòng đỏ nêu các manh mối đang mâu thuẫn. <Ui>Tạo vụ án</Ui>{' '}
-				chỉ bấm được khi còn đúng 1 khả năng và thuộc tính đã
-				đủ. Máy chủ kiểm tra lại lúc lưu.
+				chỉ bấm được khi còn đúng 1 khả năng, thuộc tính đã đủ,
+				và câu che (nếu có) suy ra đúng manh mối gốc. Máy chủ
+				kiểm tra lại lúc lưu.
 			</>
 		),
 	},
