@@ -10,6 +10,7 @@ import { Button, buttonClassName } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 
 import AccusationForm from "./AccusationForm";
+import BoardGuide from "./board-guide";
 
 interface Props {
   view: "board" | "grid";
@@ -30,6 +31,7 @@ rounded-wobbly-sm border-2 border-pencil bg-postit
 font-heading text-pencil tabular-nums
 "
       role="timer"
+      data-guide="timer"
       aria-live="off"
       aria-label={`Thời gian điều tra ${label}, ${status}`}
     >
@@ -55,11 +57,13 @@ flex justify-between items-center px-4 py-2
 border-b-2 border-dashed border-erased bg-paper
 "
       >
-        <div
-          className="
+        <div className="flex items-center gap-2">
+          <BoardGuide />
+          <div
+            className="
 flex bg-erased/50 rounded-wobbly-sm p-1 gap-1 border-2 border-pencil
 "
-        >
+          >
           {(["board", "grid"] as const).map((item) => (
             <button
               key={item}
@@ -81,6 +85,7 @@ flex bg-erased/50 rounded-wobbly-sm p-1 gap-1 border-2 border-pencil
               {item === "board" ? "Board" : "Grid"}
             </button>
           ))}
+          </div>
         </div>
 
         <div className="flex gap-2 items-center flex-wrap justify-end">
@@ -89,6 +94,7 @@ flex bg-erased/50 rounded-wobbly-sm p-1 gap-1 border-2 border-pencil
           <Button
             type="button"
             size="sm"
+            data-guide="accuse"
             onClick={() => setAccusationOpen(true)}
             disabled={isSolved}
           >

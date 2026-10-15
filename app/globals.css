@@ -94,6 +94,21 @@ button {
 	}
 }
 
+@keyframes guide-blink {
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.25;
+	}
+}
+
+.guide-blink {
+	animation: guide-blink 0.9s ease-in-out infinite;
+}
+
 @keyframes puzzle-stamp {
 	from {
 		opacity: 0;
