@@ -47,9 +47,9 @@ ${isDimmed ? "opacity-40" : "opacity-100"}
 `}
           >
             <line
-              x1={p1.x + 100}
+              x1={p1.x}
               y1={p1.y}
-              x2={p2.x + 100}
+              x2={p2.x}
               y2={p2.y}
               stroke={style.stroke}
               strokeWidth={isActive ? 3 : 2.5}
