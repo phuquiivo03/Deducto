@@ -675,7 +675,6 @@ function statedPhrase (
 
 function locationPhrase (attribute: string, value: string): string {
 	if (attribute === 'type') return `có loại ${value}`
-	if (attribute === 'characteristic') return `có đặc điểm ${value}`
 	return traitPhrases(attribute, value).yes
 }
 

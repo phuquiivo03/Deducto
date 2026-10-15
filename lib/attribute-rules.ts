@@ -201,6 +201,11 @@ export function traitPhrases (
 				yes: `thuộc loại ${value}`,
 				no: `không thuộc loại ${value}`,
 			}
+		case 'characteristic':
+			return {
+				yes: `có đặc điểm ${value}`,
+				no: `không có đặc điểm ${value}`,
+			}
 		default:
 			return {
 				yes: `${attribute} ${value}`,

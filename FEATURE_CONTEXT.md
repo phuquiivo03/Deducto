@@ -397,7 +397,7 @@ Shows selected entity information.
 Displays:
 
 - Entity metadata
-- Facts
+- Facts. Attribute labels and values use `attributeLabel` and `traitPhrases` in `lib/attribute-rules.ts`, the same wording as generated clue sentences. Gender is included from the suspect card.
 - Relationships
 
 Actions:
