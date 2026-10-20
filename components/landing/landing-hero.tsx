@@ -79,7 +79,7 @@ rotate-2 border border-pencil/20 bg-erased/90
         /> */}
         <video
           src={
-            "https://ayykrasuylzwljioovgz.supabase.co/storage/v1/object/public/storage/Screen%20Recording%202026-10-02%20at%2019.27.24.mp4"
+            "https://ayykrasuylzwljioovgz.supabase.co/storage/v1/object/public/storage/deducto-promo-v2.mp4"
           }
           autoPlay
           muted
