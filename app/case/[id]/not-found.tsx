@@ -6,8 +6,8 @@ export default function CaseNotFound() {
     <main className="h-screen overflow-hidden">
       <Container>
         <CaseUnavailable
-          title="Case not found"
-          message="This case is missing or is no longer available. Pick another mystery from the store."
+          title="Không tìm thấy case"
+          message="Case này không tồn tại hoặc đã bị gỡ. Chọn một vụ án khác trong cửa hàng nhé."
         />
       </Container>
     </main>

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
 import Header from '@/components/layout/Header'
@@ -5,10 +6,11 @@ import { SiteFooter } from '@/components/layout/site-footer'
 import Card from '@/components/ui/Card'
 import { DoodleSquiggle } from '@/components/ui/doodles'
 
-export const metadata = {
-	title: 'Deducto — Hướng dẫn',
+export const metadata: Metadata = {
+	title: 'Hướng dẫn chơi',
 	description:
-		'Cách chơi Deducto, cách tạo case, và mẹo khi điều tra.',
+		'Cách chơi Deducto, cách tạo case, và mẹo khi điều tra từng chứng cứ để tìm ra hung thủ.',
+	alternates: { canonical: '/guide' },
 }
 
 function Ui ({ children }: { children: ReactNode }) {

@@ -151,6 +151,8 @@ function GuideClip ({
 			src={src}
 			alt=""
 			aria-hidden
+			loading="lazy"
+			decoding="async"
 			onLoad={() => setIsReady(true)}
 			onError={() => setIsMissing(true)}
 		/>
