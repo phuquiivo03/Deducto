@@ -81,9 +81,12 @@ rotate-2 border border-pencil/20 bg-erased/90
           src={
             "https://ayykrasuylzwljioovgz.supabase.co/storage/v1/object/public/storage/deducto-promo-v2.mp4"
           }
+          poster="/images/landing/hero-desk.png"
           autoPlay
           muted
           loop
+          playsInline
+          preload="metadata"
           className="object-cover w-full h-full"
         />
       </div>

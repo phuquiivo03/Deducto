@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import Header from "@/components/layout/Header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { StoreShelf } from "@/components/store/store-shelf";
@@ -29,10 +31,11 @@ async function loadGames(
   return gameServices.findByUserId(userId);
 }
 
-export const metadata = {
-  title: "Case store | Deducto",
+export const metadata: Metadata = {
+  title: "Cửa hàng case trinh sát",
   description:
-    "Browse public detective cases, your solves, and cases you created.",
+    "Duyệt các case trinh sát công khai, case bạn đã phá và case bạn đã tạo. Chọn một case và bắt đầu điều tra trong Deducto.",
+  alternates: { canonical: "/store" },
 };
 
 export default async function StorePage({ searchParams }: StorePageProps) {

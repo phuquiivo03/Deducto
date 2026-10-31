@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */ images: {
+  poweredByHeader: false,
+  images: {
+    formats: ["image/webp"],
     remotePatterns: [
       {
         protocol: "https",

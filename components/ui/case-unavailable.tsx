@@ -25,7 +25,7 @@ export default function CaseUnavailable({
         <div className="flex flex-wrap gap-3">
           {onRetry ? (
             <button type="button" className={buttonClassName()} onClick={onRetry}>
-              Try again
+              Thử lại
             </button>
           ) : null}
           {showStoreLink ? (
@@ -33,7 +33,7 @@ export default function CaseUnavailable({
               href="/store"
               className={buttonClassName({ variant: "secondary" })}
             >
-              Back to the store
+              Về cửa hàng
             </Link>
           ) : null}
         </div>

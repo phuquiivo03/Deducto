@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
+import { cache } from "react";
+import { notFound, unstable_rethrow } from "next/navigation";
+
 import CaseSession from "@/components/case/case-session";
+import { SITE_NAME, siteUrl } from "@/config/site";
 import { isGameNotFound } from "@/features/game/game-errors";
 import type { IGame } from "@/features/game/game.schemas";
 import gameServices from "@/features/game/game.services";
@@ -10,7 +15,6 @@ import {
 import { getSessionUserId } from "@/features/user/user.auth";
 import { applySamplePuzzles } from "@/features/puzzles/apply-sample-puzzles";
 import { presentGameForPlayer } from "@/features/puzzles/present-game";
-import { notFound, unstable_rethrow } from "next/navigation";
 
 interface PageProps {
   params: Promise<{
@@ -18,19 +22,86 @@ interface PageProps {
   }>;
 }
 
-async function loadCase(
-  id: string,
-): Promise<{ game: IGame; leaderboard: LeaderboardRow[] } | null> {
+const loadGame = cache(async (id: string): Promise<IGame | null> => {
   try {
-    const game = await gameServices.getById(id);
-    const viewerId = await getSessionUserId();
-    const solves = await submissionRepositories.findByGame(game.id);
-    return { game, leaderboard: rankSubmissions(solves, viewerId) };
+    return await gameServices.getById(id);
   } catch (error) {
     unstable_rethrow(error);
     if (isGameNotFound(error)) return null;
     throw error;
   }
+});
+
+const loadCase = cache(
+  async (
+    id: string,
+  ): Promise<{ game: IGame; leaderboard: LeaderboardRow[] } | null> => {
+    const game = await loadGame(id);
+    if (!game) return null;
+    const viewerId = await getSessionUserId();
+    const solves = await submissionRepositories.findByGame(game.id);
+    return { game, leaderboard: rankSubmissions(solves, viewerId) };
+  },
+);
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const game = await loadGame(id);
+  if (!game) {
+    return { robots: { index: false, follow: false } };
+  }
+
+  const path = `/case/${game.id}`;
+  const banner = game.banner?.trim();
+  return {
+    title: game.title,
+    description: game.description,
+    alternates: { canonical: path },
+    robots: game.visibility === "private" ? { index: false, follow: false } : undefined,
+    openGraph: {
+      type: "website",
+      url: path,
+      locale: "vi_VN",
+      siteName: SITE_NAME,
+      title: game.title,
+      description: game.description,
+      images: banner ? [{ url: banner }] : undefined,
+    },
+    twitter: {
+      card: banner ? "summary_large_image" : "summary",
+      title: game.title,
+      description: game.description,
+    },
+  };
+}
+
+function breadcrumbJsonLd(game: IGame) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Trang chủ",
+        item: siteUrl("/"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Cửa hàng",
+        item: siteUrl("/store"),
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: game.title,
+        item: siteUrl(`/case/${game.id}`),
+      },
+    ],
+  };
 }
 
 export default async function CasePage({ params }: PageProps) {
@@ -41,10 +112,18 @@ export default async function CasePage({ params }: PageProps) {
   }
 
   return (
-    <CaseSession
-      key={loaded.game.id}
-      game={presentGameForPlayer(applySamplePuzzles(loaded.game))}
-      leaderboard={loaded.leaderboard}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd(loaded.game)),
+        }}
+      />
+      <CaseSession
+        key={loaded.game.id}
+        game={presentGameForPlayer(applySamplePuzzles(loaded.game))}
+        leaderboard={loaded.leaderboard}
+      />
+    </>
   );
 }

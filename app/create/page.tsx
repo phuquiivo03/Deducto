@@ -1,7 +1,16 @@
+import type { Metadata } from 'next'
+
 import CreateCaseGuide from '@/components/create-game/create-case-guide'
 import CreateGameWizard from '@/components/create-game/CreateGameWizard'
 import Header from '@/components/layout/Header'
 import { SiteFooter } from '@/components/layout/site-footer'
+
+export const metadata: Metadata = {
+  title: 'Tạo case trinh sát với AI',
+  description:
+    'Tạo case trinh sát của riêng bạn: mô tả vụ án, để AI sinh nghi phạm, hung khí, động cơ và chứng cứ, rồi xuất bản lên cửa hàng cho mọi người phá án.',
+  alternates: { canonical: '/create' },
+}
 
 export default function CreateGamePage() {
 	return (
