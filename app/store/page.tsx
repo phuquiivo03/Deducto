@@ -1,49 +1,50 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import Header from "@/components/layout/Header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { StoreBrowser } from "@/components/store/store-browser";
 import { StoreShelf } from "@/components/store/store-shelf";
-import { StoreSignInEmpty } from "@/components/store/store-sign-in-empty";
 import { StoreTabs } from "@/components/store/store-tabs";
 import type { IShortGame } from "@/features/game/game.schemas";
 import gameServices from "@/features/game/game.services";
-import { getSessionUserId } from "@/features/user/user.auth";
 import { withDisplayBanners } from "@/lib/case-banner-server";
-import { parseStoreTab, type StoreTab } from "@/lib/store-constants";
+import { pageMetadata } from "@/lib/page-metadata";
 
-interface StorePageProps {
-  searchParams: Promise<{ tab?: string; q?: string }>;
-}
+const STORE_DESCRIPTION =
+  "Duyệt các case trinh sát công khai, case bạn đã phá và case bạn đã tạo. Chọn một case và bắt đầu điều tra trong Deducto.";
 
-async function loadGames(
-  tab: StoreTab,
-  userId: string | null,
-): Promise<IShortGame[] | "sign-in"> {
-  if (tab === "public") {
-    return gameServices.findPublic();
-  }
-  if (!userId) {
-    return "sign-in";
-  }
-  if (tab === "solved") {
-    return gameServices.findSolved(userId);
-  }
-  return gameServices.findByUserId(userId);
-}
-
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Cửa hàng case trinh sát",
-  description:
-    "Duyệt các case trinh sát công khai, case bạn đã phá và case bạn đã tạo. Chọn một case và bắt đầu điều tra trong Deducto.",
-  alternates: { canonical: "/store" },
-};
+  description: STORE_DESCRIPTION,
+  path: "/store",
+});
 
-export default async function StorePage({ searchParams }: StorePageProps) {
-  const params = await searchParams;
-  const tab = parseStoreTab(params.tab);
-  const initialQuery = params.q ?? "";
-  const sessionUserId = await getSessionUserId();
-  const requireLogin = tab !== "public" && !sessionUserId;
+// Public catalog does not read cookies, so the HTML can be cached.
+export const revalidate = 60;
+
+async function loadPublicGames(): Promise<IShortGame[]> {
+  try {
+    return withDisplayBanners(await gameServices.listPublic());
+  } catch (error) {
+    console.error("store: public catalog", error);
+    return [];
+  }
+}
+
+function PublicCatalog({ games }: { games: IShortGame[] }) {
+  return (
+    <>
+      <div className="mb-10">
+        <StoreTabs activeTab="public" />
+      </div>
+      <StoreShelf initialQuery="" tab="public" publicGames={games} />
+    </>
+  );
+}
+
+export default async function StorePage() {
+  const games = await loadPublicGames();
 
   return (
     <div className="min-h-dvh bg-paper text-pencil">
@@ -59,15 +60,9 @@ export default async function StorePage({ searchParams }: StorePageProps) {
           </p>
         </header>
 
-        <div className="mb-10">
-          <StoreTabs activeTab={tab} query={initialQuery} />
-        </div>
-
-        {requireLogin ? (
-          <StoreSignInEmpty tab={tab as Exclude<StoreTab, "public">} />
-        ) : (
-          <StoreShelf initialQuery={initialQuery} tab={tab} />
-        )}
+        <Suspense fallback={<PublicCatalog games={games} />}>
+          <StoreBrowser games={games} />
+        </Suspense>
       </main>
       <SiteFooter />
     </div>

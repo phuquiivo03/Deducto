@@ -155,6 +155,10 @@ const findPublic = async (): Promise<IShortGame[]> => {
 	return publicCatalog(await gameRepositories.findPublic())
 }
 
+const listPublic = async (): Promise<IShortGame[]> => {
+	return publicCatalog(await gameRepositories.listPublic())
+}
+
 const findSolved = async (userId: string): Promise<IShortGame[]> => {
 	const res = await gameRepositories.findResolved(userId)
 	return res
@@ -180,6 +184,7 @@ const gameServices = {
 	generate,
 	create,
 	findPublic,
+	listPublic,
 	findSolved,
 	findByUserId,
 	updateVisibility,

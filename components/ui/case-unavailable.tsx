@@ -11,15 +11,20 @@ export default function CaseUnavailable({
   message,
   showStoreLink = true,
   onRetry,
+  heading = "h1",
 }: {
   title: string;
   message: string;
   showStoreLink?: boolean;
   onRetry?: () => void;
+  heading?: "h1" | "p";
 }) {
+  const TitleTag = heading;
   return (
     <Card decoration="tack" tone="postit" tilt="left" className="mb-0">
-      <h1 className="font-heading text-4xl mb-3 text-pencil">{title}</h1>
+      <TitleTag className="font-heading text-4xl mb-3 text-pencil">
+        {title}
+      </TitleTag>
       <p className="text-base leading-relaxed text-pencil/80 mb-6">{message}</p>
       {showStoreLink || onRetry ? (
         <div className="flex flex-wrap gap-3">

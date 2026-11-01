@@ -5,13 +5,15 @@ import LandingClose from '@/components/landing/landing-close'
 import LandingHero from '@/components/landing/landing-hero'
 import Header from '@/components/layout/Header'
 import { SiteFooter } from '@/components/layout/site-footer'
-import { SITE_DESCRIPTION, siteUrl } from '@/config/site'
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, siteUrl } from '@/config/site'
+import { pageMetadata } from '@/lib/page-metadata'
 
-export const metadata: Metadata = {
-  title: 'Trò chơi suy luận, phá án online',
+export const metadata: Metadata = pageMetadata({
+  title: `${SITE_NAME} — ${SITE_TAGLINE}`,
   description: SITE_DESCRIPTION,
-  alternates: { canonical: '/' },
-}
+  path: '/',
+  absoluteTitle: true,
+})
 
 const jsonLd = {
   '@context': 'https://schema.org',
