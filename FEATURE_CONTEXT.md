@@ -915,7 +915,9 @@ Relationship strokes and grid cells map gameplay state to design tokens (see [`r
 - Route: `app/store/page.tsx` (`/store`).
 - Catalog of detective cases with three collections via query `tab`: `public` (default), `solved`, `my`.
 - **Public** lists only cases with `visibility = public`. **Solved** lists every case the signed-in user has solved, including private ones. **My cases** lists cases that user created, private and public.
-- Data loads on the server through `gameServices.findPublic`, `findSolved`, and `findByUserId` (same sources as `GET /api/game?tab=…`). Public tab does not require sign-in; solved and my require a session or show a Google sign-in empty state.
+- The public tab is rendered on the server. `gameRepositories.listPublic` reads `visibility = public` through Prisma, which does not touch request cookies. `app/store/page.tsx` sets `revalidate` to 60. Each card is a real link to `/case/[id]` (`CaseCard`), so the list is in the HTML. Banners still pass through `withDisplayBanners`.
+- **Solved** and **My cases** stay on the client (`StoreBrowser`). They load with `GET /api/game?tab=…` after sign-in. A signed-out visitor sees the Google sign-in empty state. Those tabs are not part of the cached public HTML.
+- `GET /api/game?tab=public` still uses `gameServices.findPublic` (Supabase). The store page does not call it.
 
 ## UI
 
@@ -1074,3 +1076,13 @@ Button and step names follow the live UI:
 - Rank is `user_submissions.time_taken`, ascending. A row exists only after a player solves the case. The list is the top 10, plus the signed-in player when their rank is outside that page.
 - `submissionRepositories.findByGame` reads those rows. The page calls it only after `getById`, so a private case keeps the existing read rule. The Data API still lets a player select only their own submission, so this read uses the service role and returns the display name and time.
 - A signed-out player sees `GoogleLoginButton` (**Tiếp tục với Google**) in place of **Bắt đầu điều tra**. Sign-in uses the current case path as `next`, so the callback returns to that case.
+
+---
+
+# 24. Share metadata
+
+- `config/site.ts` sets `SITE_URL` from `SITE_URL`, then `NEXT_PUBLIC_SITE_URL`, then `https://deducto-gamma.vercel.app`. `app/layout.tsx` uses that as `metadataBase`.
+- `lib/page-metadata.ts` (`pageMetadata`) sets each page’s openGraph and twitter title, description, and canonical url, and keeps the default image (`/opengraph-image`, 1200×630). A page `openGraph` object replaces the layout’s, so home, `/store`, `/guide`, and `/create` all go through this helper.
+- Home `<title>` is absolute: `Deducto — Trò chơi suy luận, phá án online`.
+- A case page sets `og:type` to `article`. Its image is the banner when `bannerForDisplay` returns a real file or remote URL (width, height, and alt). A missing local path such as `/images/cases/<slug>.jpg` falls back to `/opengraph-image`.
+- `/create` renders an `<h1>` on the server above the sign-in gate. The case `loading.tsx` state is a paragraph, in Vietnamese, so the case file keeps a single `<h1>`.

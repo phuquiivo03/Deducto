@@ -3,7 +3,9 @@ import { cache } from "react";
 import { notFound, unstable_rethrow } from "next/navigation";
 
 import CaseSession from "@/components/case/case-session";
-import { SITE_NAME, siteUrl } from "@/config/site";
+import { siteUrl } from "@/config/site";
+import { bannerForDisplay } from "@/lib/case-banner-server";
+import { pageMetadata, shareImage } from "@/lib/page-metadata";
 import { isGameNotFound } from "@/features/game/game-errors";
 import type { IGame } from "@/features/game/game.schemas";
 import gameServices from "@/features/game/game.services";
@@ -54,27 +56,17 @@ export async function generateMetadata({
   }
 
   const path = `/case/${game.id}`;
-  const banner = game.banner?.trim();
-  return {
+  return pageMetadata({
     title: game.title,
     description: game.description,
-    alternates: { canonical: path },
-    robots: game.visibility === "private" ? { index: false, follow: false } : undefined,
-    openGraph: {
-      type: "website",
-      url: path,
-      locale: "vi_VN",
-      siteName: SITE_NAME,
-      title: game.title,
-      description: game.description,
-      images: banner ? [{ url: banner }] : undefined,
-    },
-    twitter: {
-      card: banner ? "summary_large_image" : "summary",
-      title: game.title,
-      description: game.description,
-    },
-  };
+    path,
+    openGraphType: "article",
+    images: [shareImage(bannerForDisplay(game.banner), game.title)],
+    robots:
+      game.visibility === "private"
+        ? { index: false, follow: false }
+        : undefined,
+  });
 }
 
 function breadcrumbJsonLd(game: IGame) {

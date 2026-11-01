@@ -6,9 +6,10 @@ export default function LoadingCase() {
     <main className="h-screen overflow-hidden">
       <Container>
         <CaseUnavailable
-          title="Opening the case file"
-          message="Fetching this mystery."
+          title="Đang mở hồ sơ vụ án"
+          message="Đang tải vụ án này."
           showStoreLink={false}
+          heading="p"
         />
       </Container>
     </main>

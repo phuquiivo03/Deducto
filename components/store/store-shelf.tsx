@@ -14,6 +14,7 @@ import { gameApi } from "@/lib/api/game";
 interface StoreShelfProps {
   initialQuery: string;
   tab: StoreTab;
+  publicGames?: IShortGame[];
 }
 
 function matchesQuery(game: IShortGame, query: string): boolean {
@@ -33,16 +34,26 @@ const EMPTY_BY_TAB: Record<StoreTab, string> = {
   my: "Bạn chưa tạo bất kỳ case nào.",
 };
 
-export function StoreShelf({ initialQuery, tab }: StoreShelfProps) {
+export function StoreShelf({
+  initialQuery,
+  tab,
+  publicGames,
+}: StoreShelfProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [priceFreeOnly, setPriceFreeOnly] = useState(true);
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
-  const { data: games, isLoading } = useQuery({
+  const isPublic = tab === "public";
+  const { data: fetched, isLoading } = useQuery({
     queryKey: ["games", tab],
     queryFn: () => gameApi.getGames(tab),
+    enabled: !isPublic,
   });
+  const games = useMemo(
+    () => (isPublic ? (publicGames ?? []) : fetched),
+    [fetched, isPublic, publicGames],
+  );
   const syncQueryToUrl = useCallback(
     (nextQuery: string) => {
       const params = new URLSearchParams({ tab });
@@ -65,7 +76,15 @@ export function StoreShelf({ initialQuery, tab }: StoreShelfProps) {
     syncQueryToUrl(value);
   };
 
-  if (games?.length === 0) {
+  if (!isPublic && (isLoading || games === undefined)) {
+    return (
+      <p className="text-center text-lg text-pencil/70 py-16">
+        Đang tải case…
+      </p>
+    );
+  }
+
+  if (!games || games.length === 0) {
     return (
       <p className="text-center text-lg text-pencil/70 py-16 max-w-md mx-auto">
         {EMPTY_BY_TAB[tab]}
@@ -152,7 +171,7 @@ list-none p-0 m-0
 "
         >
           {filtered.map((game, index) => (
-            <li key={index}>
+            <li key={game.id}>
               <CaseCard
                 game={game}
                 index={index}

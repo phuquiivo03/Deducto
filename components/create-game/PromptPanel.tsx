@@ -39,9 +39,9 @@ export default function PromptPanel({
   return (
     <Card decoration="tack" className="space-y-6 mb-0">
       <div>
-        <h1 className="font-heading text-3xl text-pencil">
+        <h2 className="font-heading text-3xl text-pencil">
           Thiết kế một case mới
-        </h1>
+        </h2>
         <p className="text-base text-pencil/80 mt-2">
           Mô tả cảnh, người bị hại, và tính cách. AI xây dựng một bài toán suy
           luận đầy đủ mà bạn có thể chỉnh sửa trước khi đăng.

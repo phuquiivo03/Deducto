@@ -156,9 +156,9 @@ export default function CreateGameWizard() {
   if (!user) {
     return (
       <Card decoration="tape" className="text-center space-y-4 mb-0">
-        <h1 className="font-heading text-3xl text-pencil">
+        <h2 className="font-heading text-3xl text-pencil">
           Sign in to create cases
-        </h1>
+        </h2>
         <p className="text-base text-pencil/80">
           Case generation uses AI and saves your work to your account.
         </p>

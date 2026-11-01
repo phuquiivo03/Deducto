@@ -21,6 +21,7 @@ import {
 import { assertOwnedCaseSlot } from "./game-errors";
 import {
   NEW_GAME_VISIBILITY,
+  readVisibility,
   type GameVisibility,
 } from "./game-visibility";
 
@@ -201,6 +202,39 @@ const createGame = async (
   return gameId;
 };
 
+/** Public catalog for cached pages. Prisma does not read request cookies. */
+const listPublic = async (): Promise<IShortGame[]> => {
+  const rows = await prisma.game.findMany({
+    where: { visibility: "public" },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      banner: true,
+      level: true,
+      visibility: true,
+      createdAt: true,
+      creator: { select: { name: true, avatar: true } },
+    },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    banner: row.banner,
+    level: row.level,
+    visibility: readVisibility(row.visibility),
+    created_at: row.createdAt.toISOString(),
+    creator: row.creator
+      ? {
+          name: row.creator.name,
+          avatar: row.creator.avatar ?? "",
+        }
+      : null,
+  }));
+};
+
 const findPublic = async (): Promise<IShortGame[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -270,6 +304,7 @@ const gameRepositories = {
   askAi,
   createGame,
   findPublic,
+  listPublic,
   findByUserId,
   findResolved,
   updateVisibility,
